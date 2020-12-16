@@ -1,0 +1,30 @@
+{
+	"authors": [
+		"soaku"
+	],
+	"copyright": "Copyright © 2020, soaku",
+	"description": "A small library for simple yet advanced isometric games",
+	"license": "BSL-1.0",
+	"name": "isodi-raylib",
+	"configurations": [
+		{
+			"name": "raylib",
+			"dependencies": {
+				"raylib-d": "~>3.0.3"
+			},
+			"libs": ["raylib"]
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"raylib-d": "~>3.0.3"
+			},
+			"targetType": "executable",
+			"mainSourceFile": "source/isodi/raylib/tests.d",
+			"libs": ["raylib"]
+		}
+	],
+	"buildRequirements": ["allowWarnings"],
+	"targetType": "library",
+	"targetPath": "build"
+}
