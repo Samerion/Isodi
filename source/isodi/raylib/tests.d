@@ -35,7 +35,16 @@ void main() {
     runner.runTests();
 
     // Run the tests
-    loop: while (!WindowShouldClose) {
+    loop: while (true) {
+
+        // Requested closing the window
+        if (WindowShouldClose) {
+
+            // Abort tests
+            runner.abortTests();
+            break;
+
+        }
 
         BeginDrawing();
 
@@ -54,7 +63,14 @@ void main() {
                 // Paused
                 case paused:
 
-                    // unimplemented
+                    // If pressing enter or space
+                    if (IsKeyPressed(KeyboardKey.KEY_SPACE) || IsKeyPressed(KeyboardKey.KEY_ENTER)) {
+
+                        // Continue to next task
+                        runner.nextTest();
+
+                    }
+
                     break;
 
                 // Finished
