@@ -109,7 +109,6 @@ struct TestRunner {
         import std.algorithm : map;
         import std.traits : EnumMembers;
 
-        // TODO: Implement this in nextTest
         statusMessage = "";
 
         // Create the queue
@@ -142,6 +141,8 @@ struct TestRunner {
 
         // Check if the tester should proceed
         if (!proceed) return;
+
+        statusMessage = lastType.format!"Running %s tests... %s/%s completed"(typePassed, typeExecuted);
 
         // Count the test
         typeExecuted++;
@@ -178,6 +179,9 @@ struct TestRunner {
                 // Display test, need to wait for user input
                 case display:
                     status = Status.paused;
+                    statusMessage = format!"Display test %s/%s. Press <Enter> to continue."(
+                        typeExecuted, tests[display].length
+                    );
                     break;
 
                 // Benchmark, should probably wait for some callback
@@ -205,6 +209,8 @@ struct TestRunner {
             // Start them
             import core.runtime : runModuleUnitTests;
 
+            statusMessage = "Running unit tests...";
+
             // Run the tests
             const result = runModuleUnitTests();
 
@@ -215,6 +221,8 @@ struct TestRunner {
 
         // Check if there are any tests left
         if (!testQueue.length) {
+
+            statusMessage = "All done! Finishing...";
 
             endSection();
             status = Status.finished;
@@ -245,7 +253,7 @@ struct TestRunner {
 
         // Prepare output
         const output = format!"tests aborted. %s/%s passed, %s left unfinished."(
-            totalPassed - 1, totalExecuted, testQueue.length + 1
+            totalPassed - 1, totalExecuted - 1, testQueue.length + 1
         );
 
         // Output as failure

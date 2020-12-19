@@ -48,6 +48,8 @@ void main() {
 
         BeginDrawing();
 
+            import std.string : toStringz;
+
             ClearBackground(Colors.WHITE);
 
             with (TestRunner.Status)
@@ -83,6 +85,9 @@ void main() {
                 case working: break;
 
             }
+
+            // Output status message
+            DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
 
         EndDrawing();
 
