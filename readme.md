@@ -7,8 +7,7 @@ a special model for every object.
 
 The library uses Raylib to render by default, but it designed so it shouldn't be hard to bind it to another library.
 
-**Note:** Isodi is currently in early development, documentation isn't complete and not all features
-are implemented. Use with care.
+**Note:** Isodi is currently in early development, most features aren't implemented. Use with care.
 
 ## Documentation
 
