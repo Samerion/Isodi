@@ -8,8 +8,9 @@
 ///
 /// $(B Note:) Isodi is currently in early development, documentation isn't complete and not all features
 /// are implemented. Use with care.
+///
+/// See `isodi.display.Display` to get started!
 module isodi;
-
 public {
 
     import isodi.cell;

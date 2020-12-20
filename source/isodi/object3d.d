@@ -70,4 +70,12 @@ abstract class Object3D {
 
     }
 
+    /// Implement the position as a const property. `_position` must be set in constructor.
+    mixin template ImplementConst() {
+
+        private const Position _position;
+        override const(Position) position() { return _position; }
+
+    }
+
 }

@@ -12,12 +12,12 @@ import isodi.display;
 alias TestCallback = immutable void delegate(Display);
 
 /// Test type.
-private enum TestType {
+enum TestType {
 
     /// Unit test.
     unit,
 
-    /// This test is meant to check if everything is displayed correctly and requires human approval.
+    /// This test is meant to check if everything is displayed correctly and so requires human approval.
     display,
 
     /// This test is meant to measure performance of a certain feature.
@@ -30,13 +30,13 @@ private enum TestType {
 /// Register a display test
 mixin template DisplayTest(TestCallback callback) {
     version (unittest)
-    TestRunner.Register!(TestType.display, callback) register;
+    private TestRunner.Register!(TestType.display, callback) register;
 }
 
 /// Register a benchmark
 mixin template Benchmark(TestCallback callback) {
     version (unittest)
-    TestRunner.Register!(TestType.benchmark, callback) register;
+    private TestRunner.Register!(TestType.benchmark, callback) register;
 }
 
 /// Struct for running the tests.
@@ -201,6 +201,7 @@ struct TestRunner {
     /// Returns: true if the runner should proceed to the next test.
     private bool proceed() {
 
+        import std.conv : text;
         import std.range : front;
 
         // Waiting for unit tests
@@ -292,17 +293,3 @@ struct TestRunner {
     }
 
 }
-
-// Tests of tests. Necessary for now. Remove later
-mixin DisplayTest!((display) {
-
-    Renderer.log("test 1");
-
-});
-
-// Tests of tests. Necessary for now. Remove later
-mixin DisplayTest!((display) {
-
-    Renderer.log("test 2");
-
-});

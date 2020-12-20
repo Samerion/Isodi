@@ -24,6 +24,9 @@ shared static this() {
 
 void main() {
 
+    // Restore original test runner
+    Runtime.extendedModuleUnitTester = null;
+
     // Create the window
     SetConfigFlags(ConfigFlag.FLAG_WINDOW_RESIZABLE);
     InitWindow(1600, 900, "unittest");
