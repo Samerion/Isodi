@@ -3,6 +3,8 @@
 /// All functions in this module should be implemented by the bindings.
 module isodi.bind;
 
+public import isodi.display;
+
 /// Defines type of a log message
 enum LogType {
 
@@ -27,6 +29,11 @@ interface Bindings {
     ///     text = Text to output.
     ///     type = Type of the log message.
     void log(string text, LogType type = LogType.info);
+
+    /// Create an instance of the `Display` in order to fit the needs of the renderer.
+    ///
+    /// Some renderers may want to bind events to method calls of `Display`.
+    Display createDisplay();
 
     /// Register a binding object
     mixin template Register(T) {

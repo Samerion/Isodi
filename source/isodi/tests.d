@@ -83,6 +83,10 @@ struct TestRunner {
         /// Message about the current status for the user.
         string statusMessage;
 
+        /// Temporary display this test is running in. The object this points to will change every test, so make
+        /// sure to not save the pointer, but use this reference instead.
+        Display display;
+
     }
 
     // Private data used by the runner
@@ -154,7 +158,8 @@ struct TestRunner {
             alias QuietThrowable = Throwable;
 
             // Create a display
-            auto display = new Display;
+            display = Display.make;
+            display.loadPacks();
 
             // Run the test
             try {

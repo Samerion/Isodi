@@ -4,6 +4,7 @@ import raylib;
 import core.runtime;
 
 import isodi.tests;
+import isodi.raylib.display;
 
 version (unittest):
 
@@ -88,6 +89,11 @@ void main() {
                 case working: break;
 
             }
+
+            import std.conv : to;
+
+            // Draw the frame
+            runner.display.to!RaylibDisplay.draw();
 
             // Output status message
             DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
