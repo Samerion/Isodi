@@ -1,0 +1,3 @@
+[submodule "res/samerion-retro"]
+	path = res/samerion-retro
+	url = https://github.com/samerion/samerionretro

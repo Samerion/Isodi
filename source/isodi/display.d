@@ -46,11 +46,6 @@ abstract class Display {
 
     }
 
-    /// Load, or reload, all the packs.
-    ///
-    /// TODO: Implement this.
-    void loadPacks() { }
-
     /// Add a new cell to the display.
     /// Params:
     ///     position = Position of the cell in the display.

@@ -11,5 +11,5 @@ The library uses Raylib to render by default, but it designed so it shouldn't be
 
 ## Documentation
 
-Isodi is still in early development, so the documentation may be incomplete. It attempts to be compatible with DDox,
+Isodi is still in early development, so the documentation may be incomplete. It aims to be compatible with DDox,
 meaning you can build the documentation using `dub build -b=ddox`
