@@ -10,9 +10,6 @@ import rcjson;
 import isodi.pack;
 import isodi.exceptions;
 
-// Use this over Pack[], as PackList will eventually be its own object.
-alias PackList = Pack[];
-
 /// Iterate on file ancestors starting from root, ending on and including the file itself.
 private auto ancestors(wstring dir) {
 
@@ -255,9 +252,9 @@ string[] packGlob(const PackList packList, const string path) {
 // Barely an unittest, needs more packs to work
 unittest {
 
-    auto packs = [
+    auto packs = PackList.make(
         getPack("res/samerion-retro/pack.json")
-    ];
+    );
 
     // Get a list of grass textures
     auto files = packs.packGlob("cells/grass/tile/*.png");

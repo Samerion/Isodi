@@ -4,6 +4,7 @@
 module isodi.bind;
 
 public import isodi.display;
+public import isodi.pack_list;
 
 /// Defines type of a log message
 enum LogType {
@@ -34,6 +35,11 @@ interface Bindings {
     ///
     /// Some renderers may want to bind events to method calls of `Display`.
     Display createDisplay();
+
+    /// Create a pack list to manage packs.
+    ///
+    /// The renderer should override appropriate functions to implement resource loading and cache.
+    PackList createPackList();
 
     /// Register a binding object
     mixin template Register(T) {

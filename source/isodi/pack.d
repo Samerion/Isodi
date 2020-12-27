@@ -13,7 +13,12 @@ module isodi.pack;
 
 import rcjson;
 
-public import isodi.pack_impl;
+public {
+
+    import isodi.pack_list;
+    import isodi.pack_impl;
+
+}
 
 /// Resource options
 struct ResourceOptions {

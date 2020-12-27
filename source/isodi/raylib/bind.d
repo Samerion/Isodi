@@ -26,4 +26,12 @@ class RaylibBinds : Bindings {
 
     }
 
+    /// Create a pack list
+    PackList createPackList() {
+
+        import isodi.raylib.pack_list : RaylibPackList;
+        return new RaylibPackList;
+
+    }
+
 }

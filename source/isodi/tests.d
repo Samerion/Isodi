@@ -6,6 +6,7 @@ import std.format;
 import std.typecons;
 
 import isodi.bind;
+import isodi.pack;
 import isodi.display;
 
 /// Type of the test callback.
@@ -159,7 +160,9 @@ struct TestRunner {
 
             // Create a display
             display = Display.make;
-            display.loadPacks();
+            display.packs = PackList.make(
+                getPack("res/samerion-retro/pack.json")
+            );
 
             // Run the test
             try {

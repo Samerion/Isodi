@@ -3,6 +3,7 @@ module isodi.display;
 
 import isodi.bind;
 import isodi.cell;
+import isodi.pack;
 import isodi.tests;
 import isodi.camera;
 import isodi.position;
@@ -23,12 +24,22 @@ abstract class Display {
         /// Active camera.
         Camera camera;
 
+        /// Used pack list
+        PackList packs;
+
     }
 
     protected {
 
         /// Registered cells
         Cell[UniquePosition] cellsMap;
+
+    }
+
+    ///
+    this() {
+
+        packs = PackList.make();
 
     }
 
