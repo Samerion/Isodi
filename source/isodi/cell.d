@@ -1,10 +1,13 @@
 ///
 module isodi.cell;
 
+import std.traits;
+
+import isodi.bind;
 import isodi.object3d;
 
 /// Represents a single cell in the Isodi 3D space.
-final class Cell : Object3D {
+abstract class Cell : Object3D {
 
     mixin Object3D.ImplementConst;
 
@@ -20,6 +23,13 @@ final class Cell : Object3D {
         super(display);
         this._position = position;
         this.type = type;
+
+    }
+
+    /// Create a cell with the current renderer.
+    static Cell make(const Display display, const Position position, const string type) {
+
+        return Renderer.createCell(display, position, type);
 
     }
 

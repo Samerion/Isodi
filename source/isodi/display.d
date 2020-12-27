@@ -63,7 +63,7 @@ abstract class Display {
     ///     type     = Type of the cell.
     void addCell(const Position position, const string type) {
 
-        cellsMap[position.toUnique] = new Cell(this, position, type);
+        cellsMap[position.toUnique] = Cell.make(this, position, type);
 
     }
 

@@ -3,8 +3,13 @@
 /// All functions in this module should be implemented by the bindings.
 module isodi.bind;
 
-public import isodi.display;
-public import isodi.pack_list;
+import isodi.position;
+
+public {
+    import isodi.cell;
+    import isodi.display;
+    import isodi.pack_list;
+}
 
 /// Defines type of a log message
 enum LogType {
@@ -32,14 +37,13 @@ interface Bindings {
     void log(string text, LogType type = LogType.info);
 
     /// Create an instance of the `Display` in order to fit the needs of the renderer.
-    ///
-    /// Some renderers may want to bind events to method calls of `Display`.
     Display createDisplay();
 
     /// Create a pack list to manage packs.
-    ///
-    /// The renderer should override appropriate functions to implement resource loading and cache.
     PackList createPackList();
+
+    /// Create a cell.
+    Cell createCell(const Display display, const Position position, const string type);
 
     /// Register a binding object
     mixin template Register(T) {
@@ -50,6 +54,21 @@ interface Bindings {
             Bindings.inst = new T;
 
         }
+
+    }
+
+    /// Register a constructor.
+    mixin template Constructor(BaseType, Extension) {
+
+        import std.traits : Parameters;
+
+        private enum Name = "create" ~ __traits(identifier, BaseType);
+
+        mixin("BaseType " ~ Name ~ q{ (Parameters!(__traits(getMember, Bindings, Name)) args) {
+
+            return new Extension(args);
+
+        }});
 
     }
 

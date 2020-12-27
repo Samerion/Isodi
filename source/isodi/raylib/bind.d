@@ -1,12 +1,19 @@
 module isodi.raylib.bind;
 
 import isodi.bind;
+
+import isodi.raylib.cell;
+import isodi.raylib.display;
 import isodi.raylib.internal;
+import isodi.raylib.pack_list;
 
 /// Raylib bindings for Isodi.
 class RaylibBinds : Bindings {
 
-    mixin Bindings.Register!RaylibBinds;
+    mixin Register!RaylibBinds;
+    mixin Constructor!(Display,  RaylibDisplay);
+    mixin Constructor!(PackList, RaylibPackList);
+    mixin Constructor!(Cell,     RaylibCell);
 
     /// Logging implementation. Simply wraps `writeln` and, on Posix platforms, add ANSI escape codes.
     void log(string text, LogType type) {
@@ -15,22 +22,6 @@ class RaylibBinds : Bindings {
         import std.format : format;
 
         text.colorText(type).writeln;
-
-    }
-
-    /// Create a display.
-    Display createDisplay() {
-
-        import isodi.raylib.display : RaylibDisplay;
-        return new RaylibDisplay;
-
-    }
-
-    /// Create a pack list
-    PackList createPackList() {
-
-        import isodi.raylib.pack_list : RaylibPackList;
-        return new RaylibPackList;
 
     }
 
