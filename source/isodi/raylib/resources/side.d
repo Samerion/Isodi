@@ -88,7 +88,7 @@ struct Side {
                 }
 
                 const texture = textures[side];
-                const targetDepth = cell.position.height.depth;
+                const targetDepth = cell.position.height.depth * texture.width;
 
                 float drawn = 0;
                 size_t start = 0;
@@ -100,22 +100,40 @@ struct Side {
                     const drawAvailable = texture.height - start;
 
                     /// Space left to draw
-                    const drawLeft = texture.width * (targetDepth - drawn);
+                    const drawLeft = targetDepth - drawn;
 
                     /// Get space to draw
                     const drawSpace = drawLeft < drawAvailable
                         ? drawLeft
                         : drawAvailable;
 
+                    rlPushMatrix();
+
+                        // Push the texture down
+                        rlTranslatef(0, drawn, 0);
+
+                        // Draw the texture
+                        textures[side].DrawTextureRec(
+                            Rectangle(
+                                0,             start,
+                                texture.width, drawSpace,
+                            ),
+                            Vector2(0, 0),
+                            Colors.WHITE
+                        );
+
+                    rlPopMatrix();
+
+                    // Mark as drawn
                     drawn += drawSpace;
-                    textures[side].DrawTextureRec(
-                        Rectangle(
-                            0,             start,
-                            texture.width, drawSpace,
-                        ),
-                        Vector2(0, 0),
-                        Colors.WHITE
-                    );
+
+                    // Texture is higher than wide
+                    if (!start && texture.height > texture.width) {
+
+                        // Move start
+                        start = texture.height - texture.width;
+
+                    }
 
                 }
 
