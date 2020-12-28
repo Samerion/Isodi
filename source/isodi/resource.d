@@ -10,7 +10,7 @@ interface WithResources {
     /// Reload the resource's dependencies using the given pack list.
     ///
     /// Those dependencies are usually textures, audio files, etc.
-    void reload(PackList packList);
+    void reload();
 
 }
 

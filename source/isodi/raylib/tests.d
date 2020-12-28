@@ -103,7 +103,7 @@ void main() {
 
             // Draw a helper grid
             BeginMode3D(display.camera);
-                rlOrtho(-10, 10, -10, 10, 0.1, 10_000);
+                display.ortho();
                 DrawGrid(50, 100);
             EndMode3D();
 

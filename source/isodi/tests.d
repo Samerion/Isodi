@@ -9,6 +9,20 @@ import isodi.bind;
 import isodi.pack;
 import isodi.display;
 
+// Disable cylic dependency checks while unittesting
+//
+// This thing  is madness and should  be disabled by default.  It causes more problems  than it fixes due  to how many
+// false-positives it  catches. It makes  it impossible to  create custom inline tests,  because "oh module  1 imports
+// module 2  and they  both have  tests! oh no!".  It's annoying.  And I feel  stupid making  a separate  directory or
+// something just for testing.  Tests are better inline. Wait, did  I mention this is a RUNTIME  feature? It should be
+// done by the compiler. I don't mean just speed, but... why runtime?
+//
+// Well, I probably should use `unittest` blocks with  decorators `@DisplayTest` and `@Benchmark`, but that comes with
+// a problem:  there's no  way to  list all  modules compile-time  (wtf?) which  would be  necessary to  load unittest
+// attributes. Same if I used some magic property or function to define tests.
+version (unittest)
+private extern(C) __gshared string[] rt_options = ["oncycle=ignore"];
+
 /// Type of the test callback.
 alias TestCallback = immutable void delegate(Display);
 

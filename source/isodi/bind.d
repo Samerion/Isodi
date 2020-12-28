@@ -43,7 +43,7 @@ interface Bindings {
     PackList createPackList();
 
     /// Create a cell.
-    Cell createCell(Display display, const Position position, const string type);
+    Cell createCell(const Display display, const Position position, const string type);
 
     /// Register a binding object
     mixin template Register(T) {

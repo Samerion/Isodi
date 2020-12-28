@@ -8,28 +8,38 @@ import isodi.resource;
 import isodi.position;
 import isodi.pack_list;
 import isodi.raylib.display;
+import isodi.raylib.resources;
 
 /// Cell implementation with Raylib.
 ///
 /// DrawableResource is implemented as a wrapper for the cell's resource calls.
-final class RaylibCell : Cell {
+final class RaylibCell : Cell, WithDrawableResources {
 
-    ///
-    this(Display display, const Position position, const string type) {
+    private {
 
-        super(display, position, type);
-
-        // TODO Create the resources
+        Tile tile;
 
     }
 
     ///
-    void reload(PackList) {
+    this(const Display display, const Position position, const string type) {
+
+        super(display, position, type);
+        reload();
+
+    }
+
+    ///
+    void reload() {
+
+        tile = Tile(this);
 
     }
 
     ///
     void draw() {
+
+        tile.draw();
 
     }
 

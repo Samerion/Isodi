@@ -20,7 +20,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     ///     display = Display to place the cell in.
     ///     position = Position of the cell.
     ///     type = Type of the cell, eg. "grass".
-    this(Display display, const Position position, const string type) {
+    this(const Display display, const Position position, const string type) {
 
         super(display);
         this._position = position;
@@ -29,17 +29,10 @@ abstract class Cell : Object3D, WithDrawableResources {
     }
 
     /// Create a cell with the current renderer.
-    static Cell make(Display display, const Position position, const string type) {
+    static Cell make(const Display display, const Position position, const string type) {
 
         return Renderer.createCell(display, position, type);
 
     }
 
 }
-
-mixin DisplayTest!((display) {
-
-    display.addCell(position(1, 1), "grass");
-    display.addCell(position(0, 1), "grass");
-
-});

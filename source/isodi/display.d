@@ -72,23 +72,10 @@ abstract class Display {
 
 }
 
-version (unittest) {
+mixin DisplayTest!((display) {
 
-    /// A non-abstract version of the display, just for unit testing.
-    private class TestDisplay : Display {
-        override void reloadResources() { }
-    }
+    display.addCell(position(0, 0), "grass");
+    display.addCell(position(1, 0, Height(0.2)), "grass");
+    assert(display.cellsMap[UniquePosition(0, 0, 0)].type == "grass");
 
-    unittest {
-
-        with (new TestDisplay) {
-
-            addCell(position(0, 0), "grass");
-            addCell(position(1, 0, Height(0.2)), "grass");
-            assert(cellsMap[UniquePosition(0, 0, 0)].type == "grass");
-
-        }
-
-    }
-
-}
+});

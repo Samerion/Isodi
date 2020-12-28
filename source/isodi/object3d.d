@@ -74,7 +74,7 @@ abstract class Object3D {
     mixin template ImplementConst() {
 
         private const Position _position;
-        override const(Position) position() { return _position; }
+        override const(Position) position() const { return _position; }
 
     }
 
