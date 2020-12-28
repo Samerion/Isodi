@@ -75,7 +75,17 @@ abstract class Display {
 mixin DisplayTest!((display) {
 
     display.addCell(position(0, 0), "grass");
-    display.addCell(position(1, 0, Height(0.2)), "grass");
-    assert(display.cellsMap[UniquePosition(0, 0, 0)].type == "grass");
+    display.addCell(position(0, 1), "grass");
+    display.addCell(position(0, 2), "grass");
+
+});
+
+mixin DisplayTest!((display) {
+
+    display.addCell(position(0, 0), "grass");
+    display.addCell(position(1, 0, Height(0.2, 1.2)), "grass");
+    display.addCell(position(2, 0, Height(0.4, 1.4)), "grass");
+    display.addCell(position(3, 0, Height(0.6, 1.6)), "grass");
+    display.addCell(position(4, 0, Height(0.8, 1.8)), "grass");
 
 });

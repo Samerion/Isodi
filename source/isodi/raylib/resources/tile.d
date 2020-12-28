@@ -13,9 +13,9 @@ import isodi.pack;
 /// A tile resource.
 struct Tile {
 
-    // Later: implement cache.
+    // TODO: Implement cache.
 
-    /// Parent cell.
+    /// Owner object.
     Cell cell;
 
     /// Loaded texture.
@@ -46,7 +46,7 @@ struct Tile {
     /// Draw the tile
     void draw() {
 
-        auto cellSize = cell.display.cellSize;
+        const cellSize = cell.display.cellSize;
 
         rlPushMatrix();
 

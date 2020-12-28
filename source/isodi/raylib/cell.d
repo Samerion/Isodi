@@ -18,6 +18,7 @@ final class RaylibCell : Cell, WithDrawableResources {
     private {
 
         Tile tile;
+        Side side;
 
     }
 
@@ -33,6 +34,7 @@ final class RaylibCell : Cell, WithDrawableResources {
     void reload() {
 
         tile = Tile(this);
+        side = Side(this);
 
     }
 
@@ -40,6 +42,7 @@ final class RaylibCell : Cell, WithDrawableResources {
     void draw() {
 
         tile.draw();
+        side.draw();
 
     }
 
