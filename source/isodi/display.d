@@ -50,6 +50,9 @@ abstract class Display {
 
     }
 
+    /// Reload all resources in the display. Make sure to call `PackList.clearCache`.
+    abstract void reloadResources();
+
     /// Iterate on all cells
     auto cells() {
 
@@ -72,9 +75,11 @@ abstract class Display {
 version (unittest) {
 
     /// A non-abstract version of the display, just for unit testing.
-    private class TestDisplay : Display { }
+    private class TestDisplay : Display {
+        override void reloadResources() { }
+    }
 
-    mixin DisplayTest!((display) {
+    unittest {
 
         with (new TestDisplay) {
 
@@ -84,6 +89,6 @@ version (unittest) {
 
         }
 
-    });
+    }
 
 }

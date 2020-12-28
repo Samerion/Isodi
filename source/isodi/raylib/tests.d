@@ -90,10 +90,22 @@ void main() {
 
             }
 
-            import std.conv : to;
+            auto display = cast(RaylibDisplay) runner.display;
 
             // Draw the frame
-            runner.display.to!RaylibDisplay.draw();
+            display.draw();
+
+            // Make sure the camera is free
+            SetCameraMode(display.camera, CameraMode.CAMERA_FREE);
+
+            // Update it
+            UpdateCamera(&display.camera);
+
+            // Draw a helper grid
+            BeginMode3D(display.camera);
+                rlOrtho(-10, 10, -10, 10, 0.1, 10_000);
+                DrawGrid(50, 100);
+            EndMode3D();
 
             // Output status message
             DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);

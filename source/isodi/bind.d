@@ -43,7 +43,7 @@ interface Bindings {
     PackList createPackList();
 
     /// Create a cell.
-    Cell createCell(const Display display, const Position position, const string type);
+    Cell createCell(Display display, const Position position, const string type);
 
     /// Register a binding object
     mixin template Register(T) {
@@ -63,8 +63,9 @@ interface Bindings {
         import std.traits : Parameters;
 
         private enum Name = "create" ~ __traits(identifier, BaseType);
+        private alias ParamTypes = Parameters!(__traits(getMember, Bindings, Name));
 
-        mixin("BaseType " ~ Name ~ q{ (Parameters!(__traits(getMember, Bindings, Name)) args) {
+        mixin("BaseType " ~ Name ~ q{ (ParamTypes args) {
 
             return new Extension(args);
 
