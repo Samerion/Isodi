@@ -4,6 +4,7 @@ import raylib;
 import core.runtime;
 
 import isodi.tests;
+import isodi.raylib.camera;
 import isodi.raylib.display;
 
 version (unittest):
@@ -34,15 +35,37 @@ void main() {
     SetWindowMinSize(800, 600);
     SetTargetFPS(60);
 
+    // Set camera keybinds
+    // Too bad with() changes scope
+    const CameraKeybindings keybinds = {
+
+        zoomIn:  KeyboardKey.KEY_EQUAL,
+        zoomOut: KeyboardKey.KEY_MINUS,
+
+        rotateLeft:  KeyboardKey.KEY_Q,
+        rotateRight: KeyboardKey.KEY_E,
+        rotateUp:    KeyboardKey.KEY_R,
+        rotateDown:  KeyboardKey.KEY_F,
+
+        moveLeft:  KeyboardKey.KEY_A,
+        moveRight: KeyboardKey.KEY_D,
+        moveDown:  KeyboardKey.KEY_S,
+        moveUp:    KeyboardKey.KEY_W,
+        moveBelow: KeyboardKey.KEY_PAGE_DOWN,
+        moveAbove: KeyboardKey.KEY_PAGE_UP,
+
+    };
+
     // Create a test runner
     TestRunner runner;
     runner.runTests();
 
-    // Add grid to the display
-    void addGrid() {
+    // Prepre the display for the next test
+    void prepare() {
 
         import std.conv : to;
 
+        // Add grid
         runner.display
             .to!RaylibDisplay
             .addAnchor({
@@ -50,6 +73,10 @@ void main() {
                 DrawGrid(50, 100);
 
             });
+
+        // Add a camera
+        auto camAnchor = runner.display.addAnchor;
+        runner.display.camera.follow = camAnchor;
 
     }
 
@@ -79,7 +106,7 @@ void main() {
 
                     // Order next task
                     runner.nextTest();
-                    addGrid();
+                    prepare();
                     break;
 
                 // Paused
@@ -90,7 +117,7 @@ void main() {
 
                         // Continue to next task
                         runner.nextTest();
-                        addGrid();
+                        prepare();
 
                     }
 
@@ -110,6 +137,7 @@ void main() {
             auto display = cast(RaylibDisplay) runner.display;
 
             // Draw the frame
+            display.camera.updateCamera(keybinds);
             display.draw();
 
             // Output status message

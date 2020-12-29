@@ -19,6 +19,7 @@ final class RaylibAnchor : Anchor {
     this(const Display display) {
 
         super(display);
+        draw = { };
 
     }
 

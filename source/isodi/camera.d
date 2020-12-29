@@ -2,11 +2,20 @@
 module isodi.camera;
 
 import std.math;
+import std.typecons;
 
 import isodi.object3d;
 
+private immutable rad = PI / 180;
+
 /// Represents a camera, giving a view into the Isodi world.
 struct Camera {
+
+    alias Offset = Tuple!(
+        float, "x",
+        float, "y",
+        float, "height",
+    );
 
     /// Represents the angle the camera is looking at.
     struct Angle {
@@ -58,5 +67,26 @@ struct Camera {
     ///
     /// Uses cells as the unit. `display.cellSize * distance` will be the cell distance in the renderer.
     float distance = 10;
+
+    /// Offset between camera and the followed object.
+    auto offset = Offset(0, 0, 0);
+
+    /// Change the offset relative to the screen
+    void offsetScreenX(float value) {
+
+        const alpha = (angle.x+90) * rad;
+        offset.x += value * alpha.sin;
+        offset.y += value * alpha.cos;
+
+    }
+
+    /// Change the offset relative to the screen
+    void offsetScreenY(float value) {
+
+        const alpha = angle.x * rad;
+        offset.x += value * alpha.sin;
+        offset.y += value * alpha.cos;
+
+    }
 
 }

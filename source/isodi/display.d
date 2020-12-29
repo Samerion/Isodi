@@ -82,26 +82,29 @@ abstract class Display {
     /// Params:
     ///     position = Position of the cell in the display.
     ///     type     = Type of the cell.
-    void addCell(const Position position, const string type) {
+    /// Returns: The created cell.
+    Cell addCell(const Position position, const string type) {
 
-        cellMap[position.toUnique] = Cell.make(this, position, type);
+        auto cell = Cell.make(this, position, type);
+        cellMap[position.toUnique] = cell;
+        return cell;
 
     }
 
     /// Add a new anchor to the display.
-    /// Params:
-    ///     cb = Callback with a reference to the created anchor.
-    /// Returns: ID of the anchor, used to remove it from the display.
-    size_t addAnchor(void delegate(scope Anchor) cb) {
+    /// Returns: The created anchor.
+    Anchor addAnchor() {
 
         // Create the anchor
         auto anchor = Anchor.make(this);
-        cb(anchor);
 
+        // IDs should be implemented as internal anchor fields to keep track of them.
+        // Alternatively, the map could be changed to Anchor[Anchor] or something like that.
+        // RedBlackTree isn't too easy to implement
         const id = lastAnchor++;
         anchorMap[id] = anchor;
 
-        return id;
+        return anchor;
 
     }
 
