@@ -6,8 +6,10 @@ import std.string;
 
 public {
 
-    import isodi.position;
+    import isodi.bind;
     import isodi.display;
+    import isodi.position;
+    import isodi.resource;
 
 }
 

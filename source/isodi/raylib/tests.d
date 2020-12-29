@@ -38,6 +38,21 @@ void main() {
     TestRunner runner;
     runner.runTests();
 
+    // Add grid to the display
+    void addGrid() {
+
+        import std.conv : to;
+
+        runner.display
+            .to!RaylibDisplay
+            .addAnchor({
+
+                DrawGrid(50, 100);
+
+            });
+
+    }
+
     // Run the tests
     loop: while (true) {
 
@@ -64,6 +79,7 @@ void main() {
 
                     // Order next task
                     runner.nextTest();
+                    addGrid();
                     break;
 
                 // Paused
@@ -74,6 +90,7 @@ void main() {
 
                         // Continue to next task
                         runner.nextTest();
+                        addGrid();
 
                     }
 
@@ -94,12 +111,6 @@ void main() {
 
             // Draw the frame
             display.draw();
-
-            // Draw a helper grid
-            BeginMode3D(display.raylibCamera);
-                display.ortho();
-                DrawGrid(50, 100);
-            EndMode3D();
 
             // Output status message
             DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);

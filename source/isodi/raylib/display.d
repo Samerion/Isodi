@@ -9,11 +9,11 @@ import std.container;
 import raylib;
 
 import isodi.bind;
-import isodi.cell;
 import isodi.display;
 import isodi.position;
 import isodi.resource;
 import isodi.raylib.cell;
+import isodi.raylib.anchor;
 import isodi.raylib.internal;
 
 ///
@@ -73,6 +73,7 @@ final class RaylibDisplay : Display {
 
             ortho();
             foreach (cell; cells) cell.draw();
+            foreach (anchor; anchors) anchor.to!RaylibAnchor.draw();
 
         EndMode3D();
 
@@ -83,6 +84,20 @@ final class RaylibDisplay : Display {
 
         // TODO: Remove this from public once anchors are implemented.
         rlOrtho(0, 1, 1, 0, 0.1, 10_000);
+
+    }
+
+    /// Add Raylib anchor. See `isodi.Anchor` for reference.
+    /// Params:
+    ///     callback = Function that will be called every frame in order to draw the anchor content.
+    /// Returns: ID of the created anchor.
+    size_t addAnchor(void delegate() callback) {
+
+        return super.addAnchor((anchor) {
+
+            anchor.to!RaylibAnchor.draw = callback;
+
+        });
 
     }
 

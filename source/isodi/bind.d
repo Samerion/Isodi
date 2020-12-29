@@ -3,10 +3,12 @@
 /// All functions in this module should be implemented by the bindings.
 module isodi.bind;
 
+import isodi.anchor;
 import isodi.position;
 
 public {
     import isodi.cell;
+    import isodi.anchor;
     import isodi.display;
     import isodi.pack_list;
 }
@@ -44,6 +46,9 @@ interface Bindings {
 
     /// Create a cell.
     Cell createCell(const Display display, const Position position, const string type);
+
+    /// Create an anchor
+    Anchor createAnchor(const Display);
 
     /// Register a binding object
     mixin template Register(T) {

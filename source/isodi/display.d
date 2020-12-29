@@ -5,6 +5,7 @@ import isodi.bind;
 import isodi.cell;
 import isodi.pack;
 import isodi.tests;
+import isodi.anchor;
 import isodi.camera;
 import isodi.position;
 
@@ -32,7 +33,17 @@ abstract class Display {
     protected {
 
         /// Registered cells
-        Cell[UniquePosition] cellsMap;
+        Cell[UniquePosition] cellMap;
+
+        /// Registered anchors
+        Anchor[size_t] anchorMap;
+
+    }
+
+    private {
+
+        /// ID of the last added anchor
+        size_t lastAnchor;
 
     }
 
@@ -56,7 +67,14 @@ abstract class Display {
     /// Iterate on all cells
     auto cells() {
 
-        return cellsMap.byValue;
+        return cellMap.byValue;
+
+    }
+
+    /// Iterate on all anchors
+    auto anchors() {
+
+        return anchorMap.byValue;
 
     }
 
@@ -66,34 +84,38 @@ abstract class Display {
     ///     type     = Type of the cell.
     void addCell(const Position position, const string type) {
 
-        cellsMap[position.toUnique] = Cell.make(this, position, type);
+        cellMap[position.toUnique] = Cell.make(this, position, type);
+
+    }
+
+    /// Add a new anchor to the display.
+    /// Params:
+    ///     cb = Callback with a reference to the created anchor.
+    /// Returns: ID of the anchor, used to remove it from the display.
+    size_t addAnchor(void delegate(scope Anchor) cb) {
+
+        // Create the anchor
+        auto anchor = Anchor.make(this);
+        cb(anchor);
+
+        const id = lastAnchor++;
+        anchorMap[id] = anchor;
+
+        return id;
+
+    }
+
+    // TODO
+    version (None) {
+
+        /// Remove the cell at given position.
+        void removeCell(UniquePosition);
+
+        /// Remove given anchor.
+        ///
+        /// Returns: `true` if the anchor was actually removed, `false` otherwise.
+        bool removeAnchor(size_t);
 
     }
 
 }
-
-mixin DisplayTest!((display) {
-
-    display.addCell(position(0, 0, Height(0.2)), "grass");
-    display.addCell(position(0, 1), "grass");
-    display.addCell(position(0, 2), "grass");
-
-});
-
-mixin DisplayTest!((display) {
-
-    display.addCell(position(0, 0), "grass");
-    display.addCell(position(1, 0, Height(0.2, 1.2)), "grass");
-    display.addCell(position(2, 0, Height(0.4, 1.4)), "grass");
-    display.addCell(position(3, 0, Height(0.6, 1.6)), "grass");
-    display.addCell(position(4, 0, Height(0.8, 1.8)), "grass");
-
-});
-
-mixin DisplayTest!((display) {
-
-    display.addCell(position(0, 0, Height(5, 1)), "grass");
-    display.addCell(position(1, 0, Height(5, 5)), "grass");
-    display.addCell(position(2, 0, Height(5, 10)), "grass");
-
-});
