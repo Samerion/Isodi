@@ -9,11 +9,10 @@ import std.exception;
 import isodi.bind;
 import isodi.cell;
 import isodi.pack;
+import isodi.raylib.internal;
 
 /// A tile resource.
 struct Tile {
-
-    // TODO: Implement cache.
 
     /// Owner object.
     Cell cell;
@@ -50,18 +49,17 @@ struct Tile {
 
         rlPushMatrix();
 
+            // Move to the appropriate position
+            rlTranslatef(cell.position.toTuple3(cellSize).expand);
+
             // Rotate to make it lay
             rlRotatef(-90, 1, 0, 0);
 
-            // Move to the appropriate position
-            rlTranslatef(
-                cell.position.x * cellSize,
-                cell.position.y * cellSize,
-                scale - cell.position.height.top * cellSize
-            );
-
             // Scale the tile to fit cell size
             rlScalef(scale, scale, scale);
+
+            // Correct position
+            rlTranslatef(0, 0, 1);
 
             // Draw
             texture.DrawTexture(0, 0, Colors.WHITE);

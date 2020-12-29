@@ -11,7 +11,7 @@ struct Camera {
     /// Represents the angle the camera is looking at.
     struct Angle {
 
-        private float _x = 0;
+        private float _x = 45;
         invariant(_x >= 0, "Somehow camera angle X is negative, this shouldn't be possible.");
         invariant(_x < 360, "Somehow camera angle X is >= 360, this shouldn't be possible.");
         invariant(!_x.isNaN, "Camera angle X is NaN, did you forget to initialize a float?");
@@ -53,5 +53,10 @@ struct Camera {
 
     /// Angle the camera is looking from.
     Angle angle;
+
+    /// Distance between the camera and the followed object.
+    ///
+    /// Uses cells as the unit. `display.cellSize * distance` will be the cell distance in the renderer.
+    float distance = 10;
 
 }

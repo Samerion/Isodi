@@ -245,10 +245,8 @@ struct TestRunner {
         // Check if there are any tests left
         if (!testQueue.length) {
 
-            statusMessage = "All done! Finishing...";
-
             endSection();
-            status = Status.finished;
+            endTests();
 
             return false;
 
@@ -310,6 +308,7 @@ struct TestRunner {
         // Output
         Renderer.log(output, totalPassed == totalExecuted ? LogType.success : LogType.error);
 
+        statusMessage = "All done! Finishing...";
         status = Status.finished;
 
     }

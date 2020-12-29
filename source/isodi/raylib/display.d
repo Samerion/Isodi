@@ -1,6 +1,9 @@
+///
 module isodi.raylib.display;
 
 import std.conv;
+import std.math;
+import std.typecons;
 import std.container;
 
 import raylib;
@@ -8,27 +11,30 @@ import raylib;
 import isodi.bind;
 import isodi.cell;
 import isodi.display;
+import isodi.position;
 import isodi.resource;
 import isodi.raylib.cell;
+import isodi.raylib.internal;
 
 ///
 final class RaylibDisplay : Display {
 
     /// Underlying raylib camera.
-    ///
-    /// Changes to this structs are likely to be overriden when changing properties of the main camera.
-    raylib.Camera camera;
+    private raylib.Camera raycam;
 
     ///
     this() {
 
-        // Set default parameters for the camera
-        const fovy = 100;
-        camera.fovy = fovy;
-        camera.target = Vector3(0.0, 0.0, 0.0);
-        camera.position = camera.target + fovy;
-        camera.up = Vector3(0.0, 1.0, 0.0);
-        camera.type = CameraType.CAMERA_ORTHOGRAPHIC;
+        // Set camera constants
+        raycam.up = Vector3(0.0, 1.0, 0.0);
+        raycam.type = CameraType.CAMERA_ORTHOGRAPHIC;
+
+    }
+
+    /// Get the underlying Raylib camera.
+    const(raylib.Camera) raylibCamera() {
+
+        return raycam;
 
     }
 
@@ -43,7 +49,27 @@ final class RaylibDisplay : Display {
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
     void draw() {
 
-        BeginMode3D(camera);
+        const rad = std.math.PI / 180;
+        const radX = camera.angle.x * rad;
+        const radY = camera.angle.y * rad;
+        const cosY = cos(camera.angle.y * rad);
+        const target = camera.follow is null
+            ? Position()
+            : camera.follow.position;
+
+        // Update the camera
+        // not sure how to get the correct fovy from distance, this is just close to the expected result.
+        // TODO: figure it out.
+        raycam.fovy = camera.distance * cellSize;
+        raycam.target = target.toVector3(cellSize, Yes.center);
+        raycam.position = raycam.target + Vector3(
+            radX.sin * cosY,
+            radY.sin,
+            radX.cos * cosY,
+        ) * camera.distance;
+
+        // Draw
+        BeginMode3D(raycam);
 
             ortho();
             foreach (cell; cells) cell.draw();
@@ -56,8 +82,7 @@ final class RaylibDisplay : Display {
     void ortho() {
 
         // TODO: Remove this from public once anchors are implemented.
-
-        rlOrtho(0, 10, 10, 0, 0.1, 10_000);
+        rlOrtho(0, 1, 1, 0, 0.1, 10_000);
 
     }
 

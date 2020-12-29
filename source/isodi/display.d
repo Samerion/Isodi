@@ -74,7 +74,7 @@ abstract class Display {
 
 mixin DisplayTest!((display) {
 
-    display.addCell(position(0, 0), "grass");
+    display.addCell(position(0, 0, Height(0.2)), "grass");
     display.addCell(position(0, 1), "grass");
     display.addCell(position(0, 2), "grass");
 

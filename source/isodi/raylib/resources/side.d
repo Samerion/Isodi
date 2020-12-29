@@ -7,11 +7,10 @@ import std.random;
 
 import isodi.cell;
 import isodi.pack;
+import isodi.raylib.internal;
 
 /// A side resource.
 struct Side {
-
-    // TODO: Implement cache.
 
     /// Owner object.
     Cell cell;
@@ -63,17 +62,13 @@ struct Side {
                 {
 
                     // Move to an appropriate position
-                    rlTranslatef(
-                        cell.position.x * cellSize,
-                        -cell.position.height.top * cellSize,
-                        -(cell.position.y + 1) * cellSize
-                    );
+                    rlTranslatef(cell.position.toTuple3(cellSize).expand);
 
                     // Correct positions
                     rlTranslatef(
                         cellSize * (side == 1 || side == 2),
                         0,
-                        cellSize * (side == 2 || side == 3)
+                        cellSize * (side == 2 || side == 3) - cellSize
                     );
 
                     // Rotate appropriately

@@ -95,14 +95,8 @@ void main() {
             // Draw the frame
             display.draw();
 
-            // Make sure the camera is free
-            SetCameraMode(display.camera, CameraMode.CAMERA_FREE);
-
-            // Update it
-            UpdateCamera(&display.camera);
-
             // Draw a helper grid
-            BeginMode3D(display.camera);
+            BeginMode3D(display.raylibCamera);
                 display.ortho();
                 DrawGrid(50, 100);
             EndMode3D();
