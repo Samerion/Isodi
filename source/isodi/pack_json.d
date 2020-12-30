@@ -1,8 +1,8 @@
-/// This module implements basic pack loading and general pack management functions.
+/// This module implements basic pack loading.
 ///
 /// See_Also:
 ///     `isodi.pack`
-module isodi.pack_impl;
+module isodi.pack_json;
 
 import std;  // Too many imports, stopped making sense to list them. Sorry.
 import rcjson;
@@ -206,65 +206,5 @@ unittest {
 
     // Check if getOptions correctly handles resources that don't have any options set directly
     assert(pack.getOptions("cells/grass") is pack.getOptions("cells/grass/not-existing"));
-
-}
-
-/// List matching files in the first matching pack.
-///
-/// Throws: [IsodiException] if the path wasn't found in any of the packs.
-string[] packGlob(const PackList packList, const string path) {
-
-    /// Pack cache — TODO rework
-    static string[][string][PackList] cache;
-    // Given the packlist and resource path, returns a list of file names that would normally be returned by this
-    // function. This is a simple and quick but bad approach that will eventually succumb to membery leaks if the user
-    // often changes pack lists. It also makes it impossible to reload the cache.
-    // Pack lists should be rewritten to be struct wrappers over arrays using `alias this`. Each pack list should
-    // keep its own cache, which should make it possible to control all this options.
-
-    // Attempt to read from the cache
-    auto listCache = cache.require(packList);
-    auto cached = listCache.get(path, null);
-    if (cached) return cached;
-
-    // Not in the cache, load it
-    foreach (pack; packList) {
-
-        // The pack must exist
-        enforce!PackException(pack.path.exists, pack.path.format!"Pack %s doesn't exist");
-
-        // Get paths to the resource
-        const resPath = pack.path.buildPath(path);
-        const resDir = resPath.dirName;
-
-        // This directory must exist
-        if (!resDir.exists || !resDir.isDir) continue;
-
-        // List all files inside
-        return listCache[path] = resDir.dirEntries(resPath.baseName, SpanMode.shallow).array.to!(string[]);
-
-    }
-
-    throw new PackException(path.format!"Texture %s wasn't found in any pack");
-
-}
-
-// Barely an unittest, needs more packs to work
-unittest {
-
-    auto packs = PackList.make(
-        getPack("res/samerion-retro/pack.json")
-    );
-
-    // Get a list of grass textures
-    auto files = packs.packGlob("cells/grass/tile/*.png");
-    assert(files.length);
-
-    // Check all
-    foreach (file; files) {
-
-        assert(file.endsWith(".png"));
-
-    }
 
 }

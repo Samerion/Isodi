@@ -18,7 +18,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     ///     display = Display to place the cell in.
     ///     position = Position of the cell.
     ///     type = Type of the cell, eg. "grass".
-    this(const Display display, const Position position, const string type) {
+    this(Display display, const Position position, const string type) {
 
         super(display);
         this._position = position;
@@ -27,7 +27,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     }
 
     /// Create a cell with the current renderer.
-    static Cell make(const Display display, const Position position, const string type) {
+    static Cell make(Display display, const Position position, const string type) {
 
         return Renderer.createCell(display, position, type);
 

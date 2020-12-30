@@ -11,12 +11,15 @@
 ///     TCOLON = $0:
 module isodi.pack;
 
+import std.string;
 import rcjson;
+
+import isodi.internal;
 
 public {
 
     import isodi.pack_list;
-    import isodi.pack_impl;
+    import isodi.pack_json;
 
 }
 
@@ -109,5 +112,40 @@ struct Pack {
     /// Fields missing in the JSON will be inherited from parent directories or will use the default value.
     @JSONExclude
     ResourceOptions[string] fileOptions;
+
+    /// Read options of the given resource.
+    /// Params:
+    ///     pack = Pack to read from.
+    ///     path = Relative path to the resource.
+    /// Returns: A pointer to the resource's options.
+    const(ResourceOptions)* getOptions(string path) const {
+
+        /// Search for the closest matching resource
+        foreach (file; path.stripRight("/").deepAncestors) {
+
+            // Return the first one found
+            if (auto p = file in fileOptions) return p;
+
+        }
+
+        assert(0, name.format!"Internal error: Root options missing for pack %s");
+
+    }
+
+    ///
+    unittest {
+
+        // Load the pack
+        auto pack = getPack("res/samerion-retro/pack.json");
+
+        // Check root options
+        const rootOptions = pack.getOptions("");
+        assert(!rootOptions.filter);
+        assert(rootOptions.tileSize == 128);
+
+        // Check if getOptions correctly handles resources that don't have any options set directly
+        assert(pack.getOptions("cells/grass") is pack.getOptions("cells/grass/not-existing"));
+
+    }
 
 }

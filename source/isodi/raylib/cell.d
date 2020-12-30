@@ -19,7 +19,7 @@ final class RaylibCell : Cell, WithDrawableResources {
     }
 
     ///
-    this(const Display display, const Position position, const string type) {
+    this(Display display, const Position position, const string type) {
 
         super(display, position, type);
         reload();

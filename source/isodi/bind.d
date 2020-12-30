@@ -45,10 +45,10 @@ interface Bindings {
     PackList createPackList();
 
     /// Create a cell.
-    Cell createCell(const Display display, const Position position, const string type);
+    Cell createCell(Display display, const Position position, const string type);
 
     /// Create an anchor
-    Anchor createAnchor(const Display);
+    Anchor createAnchor(Display);
 
     /// Register a binding object
     mixin template Register(T) {

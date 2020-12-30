@@ -32,13 +32,14 @@ struct Side {
 
         // Get possible sides
         const path = cell.type.format!"cells/%s/side/*.png";
+        auto glob = cell.display.packs.packGlob(path);
 
         // Generate each side
         foreach (side; 0..4) {
 
             // Get a random file
             rng.seed(seed + side + 1);
-            const file = cell.display.packs.packGlob(path).choice(rng);
+            const file = glob.files.choice(rng);
 
             // Load the texture
             textures[side] = LoadTexture(file.toStringz);

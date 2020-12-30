@@ -17,14 +17,14 @@ public {
 abstract class Object3D {
 
     /// Display this object is connected to.
-    const Display display;
+    Display display;
 
     /// Get the current position of the object.
     abstract const(Position) position();
 
     /// Params:
     ///     display = Display to connect to.
-    this(const Display display) {
+    this(Display display) {
 
         this.display = display;
 

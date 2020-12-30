@@ -13,14 +13,14 @@ abstract class Anchor : Object3D {
     mixin Object3D.Implement;
 
     ///
-    this(const Display display) {
+    this(Display display) {
 
         super(display);
 
     }
 
     /// Make an anchor with the current renderer.
-    static Anchor make(const Display display) {
+    static Anchor make(Display display) {
 
         return Renderer.createAnchor(display);
 

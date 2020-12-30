@@ -16,7 +16,7 @@ final class RaylibAnchor : Anchor {
     void delegate() draw;
 
     ///
-    this(const Display display) {
+    this(Display display) {
 
         super(display);
         draw = { };

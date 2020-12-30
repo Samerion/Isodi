@@ -20,6 +20,7 @@ class RaylibPackList : PackList {
 
     override void clearCache() {
 
+        super.clearCache();
         cache.clear();
 
     }
