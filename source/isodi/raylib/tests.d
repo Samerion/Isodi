@@ -30,6 +30,7 @@ void main() {
     Runtime.extendedModuleUnitTester = null;
 
     // Create the window
+    SetTraceLogLevel(TraceLogType.LOG_WARNING);
     SetConfigFlags(ConfigFlag.FLAG_WINDOW_RESIZABLE);
     InitWindow(1600, 900, "unittest");
     SetWindowMinSize(800, 600);

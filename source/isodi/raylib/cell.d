@@ -11,10 +11,11 @@ import isodi.raylib.resources;
 /// DrawableResource is implemented as a wrapper for the cell's resource calls.
 final class RaylibCell : Cell, WithDrawableResources {
 
-    private {
+    package {
 
         Tile tile;
         Side side;
+        Decoration decoration;
 
     }
 
@@ -31,6 +32,7 @@ final class RaylibCell : Cell, WithDrawableResources {
 
         tile = Tile(this);
         side = Side(this);
+        decoration = Decoration(this);
 
     }
 
@@ -39,6 +41,7 @@ final class RaylibCell : Cell, WithDrawableResources {
 
         tile.draw();
         side.draw();
+        decoration.draw();
 
     }
 

@@ -23,6 +23,9 @@ struct Tile {
     /// Display scale of the tile.
     float scale;
 
+    /// Tile optoins loaded
+    const(ResourceOptions)* options;
+
     /// Create the tile and load textures.
     this(Cell cell) {
 
@@ -36,6 +39,7 @@ struct Tile {
         const path = cell.type.format!"cells/%s/tile/*.png";
         auto glob = cell.display.packs.packGlob(path);
         const file = glob.files.choice(rng);
+        options = glob.pack.getOptions(file);
 
         // Load the texture
         texture = LoadTexture(file.toStringz);

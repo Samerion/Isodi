@@ -27,7 +27,7 @@ public {
 struct ResourceOptions {
 
     /// If true, a filter will be applied to smooth out the texture. This should be off for pixel art packs.
-    bool filter = true;
+    bool interpolate = true;
 
     /// Tile size assumed by the pack. It doesn't affect tiles themselves, but any other resource relying on
     /// that number will use this field.
@@ -47,14 +47,6 @@ struct ResourceOptions {
     /// Defaults to `4`.
     uint angles = 4;
 
-    /// 0-indexed position of the "anchor" in each image. The pixel marked with this property will be placed
-    /// at the position of the sprite.
-    ///
-    /// This currently only affects decorations.
-    ///
-    /// Defaults to the bottom center part of the texture.
-    deprecated uint[2] anchor;
-
     /// $(TCOLON Decoration) Rectangle in the texture that will stick to the original tile.
     ///
     /// $(TCOLON Format) `[position x, position y, size x, size y]`. The top-left corner of each angle texture is at
@@ -63,7 +55,7 @@ struct ResourceOptions {
     /// Defaults to a single pixel in the bottom middle part of the texture.
     uint[4] hardArea;
 
-    /// $(TCOLON Tiles) Amount of space that will be availabe to be spanned by decoration. See `decorationWeight`.
+    /// $(TCOLON Tiles) Amount of space that will be available to be spanned by decoration. See `decorationWeight`.
     /// for more info.
     ///
     /// This is a range. A random number will be chosen in it to select the actual value.
@@ -116,12 +108,15 @@ struct Pack {
     /// Read options of the given resource.
     /// Params:
     ///     pack = Pack to read from.
-    ///     path = Relative path to the resource.
+    ///     res  = Relative path to the resource.
     /// Returns: A pointer to the resource's options.
-    const(ResourceOptions)* getOptions(string path) const {
+    const(ResourceOptions)* getOptions(string res) const {
+
+        // Remove prefixes
+        res = res.chompPrefix(path).stripLeft("/");
 
         /// Search for the closest matching resource
-        foreach (file; path.stripRight("/").deepAncestors) {
+        foreach (file; res.stripRight("/").deepAncestors) {
 
             // Return the first one found
             if (auto p = file in fileOptions) return p;
@@ -140,8 +135,8 @@ struct Pack {
 
         // Check root options
         const rootOptions = pack.getOptions("");
-        assert(!rootOptions.filter);
-        assert(rootOptions.tileSize == 128);
+        assert(!rootOptions.interpolate);
+        assert(rootOptions.tileSize == 32);
 
         // Check if getOptions correctly handles resources that don't have any options set directly
         assert(pack.getOptions("cells/grass") is pack.getOptions("cells/grass/not-existing"));

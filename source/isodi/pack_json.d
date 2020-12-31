@@ -164,12 +164,12 @@ unittest {
 
     // Check the options of
     const rootOptions = pack.fileOptions[""];
-    assert(!rootOptions.filter);
-    assert(rootOptions.tileSize == 128);
+    assert(!rootOptions.interpolate);
+    assert(rootOptions.tileSize == 32);
 
     const grassOptions = pack.fileOptions["cells/grass"];
-    assert(!grassOptions.filter);
-    assert(grassOptions.tileSize == 128);
+    assert(!grassOptions.interpolate);
+    assert(grassOptions.tileSize == 32);
     assert(grassOptions.decorationWeight == 20);
 
 }
@@ -201,8 +201,8 @@ unittest {
 
     // Check root options
     const rootOptions = pack.getOptions("");
-    assert(!rootOptions.filter);
-    assert(rootOptions.tileSize == 128);
+    assert(!rootOptions.interpolate);
+    assert(rootOptions.tileSize == 32);
 
     // Check if getOptions correctly handles resources that don't have any options set directly
     assert(pack.getOptions("cells/grass") is pack.getOptions("cells/grass/not-existing"));

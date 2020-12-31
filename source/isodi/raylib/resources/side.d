@@ -27,7 +27,7 @@ struct Side {
         this.cell = cell;
 
         // Create RNG
-        const seed = cast(ulong) cell.position.toHash;
+        const seed = cast(ulong) cell.position.toHash + 1;
         Mt19937_64 rng;
 
         // Get possible sides
@@ -38,7 +38,7 @@ struct Side {
         foreach (side; 0..4) {
 
             // Get a random file
-            rng.seed(seed + side + 1);
+            rng.seed(seed + side);
             const file = glob.files.choice(rng);
 
             // Load the texture
