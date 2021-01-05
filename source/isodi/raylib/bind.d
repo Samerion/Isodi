@@ -3,6 +3,7 @@ module isodi.raylib.bind;
 import isodi.bind;
 
 import isodi.raylib.cell;
+import isodi.raylib.model;
 import isodi.raylib.anchor;
 import isodi.raylib.display;
 import isodi.raylib.internal;
@@ -16,6 +17,7 @@ class RaylibBinds : Bindings {
     mixin Constructor!(PackList, RaylibPackList);
     mixin Constructor!(Cell,     RaylibCell);
     mixin Constructor!(Anchor,   RaylibAnchor);
+    mixin Constructor!(Model,    RaylibModel);
 
     /// Logging implementation. Simply wraps `writeln` and, on Posix platforms, add ANSI escape codes.
     void log(string text, LogType type) {

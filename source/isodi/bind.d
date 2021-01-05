@@ -8,6 +8,7 @@ import isodi.position;
 
 public {
     import isodi.cell;
+    import isodi.model;
     import isodi.anchor;
     import isodi.display;
     import isodi.pack_list;
@@ -49,6 +50,9 @@ interface Bindings {
 
     /// Create an anchor
     Anchor createAnchor(Display);
+
+    /// Create a model
+    Model createModel(Display, const string type);
 
     /// Register a binding object
     mixin template Register(T) {
