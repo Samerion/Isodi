@@ -64,17 +64,6 @@ void main() {
     // Prepre the display for the next test
     void prepare() {
 
-        import std.conv : to;
-
-        // Add grid
-        runner.display
-            .to!RaylibDisplay
-            .addAnchor({
-
-                DrawGrid(50, 100);
-
-            });
-
         // Add a camera
         auto camAnchor = runner.display.addAnchor;
         runner.display.camera.follow = camAnchor;

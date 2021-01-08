@@ -41,6 +41,14 @@ mixin DisplayTest!((display) {
     display.addCell(position(0, 1), "grass");
     display.addCell(position(0, 2), "grass");
 
+    display.addCell(position(1, 0), "grass");
+    display.addCell(position(1, 1), "grass");
+    display.addCell(position(1, 2), "grass");
+
+    display.addCell(position(2, 0), "grass");
+    display.addCell(position(2, 1), "grass");
+    display.addCell(position(2, 2), "grass");
+
 });
 
 mixin DisplayTest!((display) {
