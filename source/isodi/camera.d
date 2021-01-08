@@ -37,7 +37,7 @@ struct Camera {
         ///
         /// Automatically modulated by 360°.
         @property
-        float x() { return _x; }
+        float x() const { return _x; }
 
         /// Ditto
         @property

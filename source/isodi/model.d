@@ -1,12 +1,16 @@
 ///
 module isodi.model;
 
+import rcjson;
+
 import isodi.tests;
 import isodi.object3d;
 
-/// Represents a 3D model
+/// Represents a 3D model.
 abstract class Model : Object3D, WithDrawableResources {
 
+    /// Position in the model is relative to the model's bottom, so if a cell is placed at the same position
+    /// as the model, the model will be standing on the cell.
     mixin Object3D.Implement;
 
     /// Type of the model.
@@ -15,8 +19,10 @@ abstract class Model : Object3D, WithDrawableResources {
     /// Create a new model.
     /// Params:
     ///     display = Display to create the model for.
-    ///     type    = Type of the model to make. Leave empty to build a new model instead of loading.
+    ///     type    = Skeleton to use for the model.
     this(Display display, const string type) {
+
+        // TODO: ModelBuilder for Isodi editors.
 
         super(display);
         this.type = type;
@@ -45,22 +51,23 @@ abstract class Model : Object3D, WithDrawableResources {
 
     }
 
-    /// Load a bone for the given skeleton node.
-    ///
-    /// This is called from the model's constructor while loading the skeleton for every node it contains, in a push
-    /// parser fashion.
-    ///
-    /// Params:
-    ///     id   = ID of the skeleton node.
-    ///     node = Node to load.
-    abstract protected void loadBone(size_t id, SkeletonNode node);
-
 }
+
+mixin DisplayTest!((display) {
+
+    display.addCell(Position(), "grass");
+    display.addModel(Position(), "wraith-white");
+
+    // Add a cell behind
+    display.addCell(position(0, 1, Height(4, 5)), "grass");
+
+});
 
 /// Represents a node in the skeleton.
 struct SkeletonNode {
 
     /// Parent index
+    @JSONExclude
     size_t parent;
 
     /// If true, this node shouldn't be displayed and its bone resource shouldn't be loaded.
@@ -76,5 +83,10 @@ struct SkeletonNode {
 
     /// Position of this node relative to the parent node.
     int[3] position;
+
+    /// Rotation of the node.
+    ushort rotation;
+    invariant(rotation >= 0);
+    invariant(rotation < 360);
 
 }

@@ -1,10 +1,11 @@
 /// This module contains structs containing data relating to packs.
 ///
-/// To load packs, use `rcjson.JSONParser` along with `isodi.pack_impl.getPack`, see examples attached to it.
+/// To load packs, use `isodi.pack_json.getPack`, see examples attached to it.
 ///
 /// Public_imports:
 ///     $(UL
-///         $(LI `isodi.pack_impl` with pack management functions)
+///         $(LI `isodi.pack_list` with pack management functions)
+///         $(LI `isodi.pack_json` with pack loading functions)
 ///     )
 ///
 /// Macros:
@@ -14,7 +15,9 @@ module isodi.pack;
 import std.string;
 import rcjson;
 
+import isodi.model;
 import isodi.internal;
+import isodi.exceptions;
 
 public {
 
@@ -107,8 +110,7 @@ struct Pack {
 
     /// Read options of the given resource.
     /// Params:
-    ///     pack = Pack to read from.
-    ///     res  = Relative path to the resource.
+    ///     res = Relative path to the resource.
     /// Returns: A pointer to the resource's options.
     const(ResourceOptions)* getOptions(string res) const {
 
@@ -140,6 +142,67 @@ struct Pack {
 
         // Check if getOptions correctly handles resources that don't have any options set directly
         assert(pack.getOptions("cells/grass") is pack.getOptions("cells/grass/not-existing"));
+
+    }
+
+    /// Get a skeleton from this pack
+    /// Params:
+    ///     name = Name of the skeleton to load.
+    /// Returns: List of nodes in the skeleton.
+    /// Throws:
+    ///     $(UL
+    ///         $(LI `PackException` if the skeleton doesn't exist.)
+    ///         $(LI `rcjson.JSONException` if the skeleton isn't valid.)
+    ///     )
+    SkeletonNode[] getSkeleton(const string name) {
+
+        import std.path : buildPath;
+        import std.file : readText;
+
+        // Get the path
+        const path = path.buildPath(name.format!"models/skeleton/%s.json");
+
+        // Read the file
+        auto json = JSONParser(path.readText);
+
+        return getSkeletonImpl(json, name, 0, 0);
+
+    }
+
+    private SkeletonNode[] getSkeletonImpl(ref JSONParser json, const string name, const size_t parent,
+        const size_t id) {
+
+        // Get the nodes
+        SkeletonNode[] children;
+        auto root = json.getStruct!SkeletonNode((ref obj, key) {
+
+            // Check the key — note most of the keys are handled automatically
+            switch (key) {
+
+                case "display":  // possibly deprecated, "hidden" is preferred
+                    obj.hidden = !json.getBoolean;
+                    break;
+
+                // Children nodes
+                case "nodes":
+
+                    // Check each node
+                    foreach (index; json.getArray) {
+
+                        children ~= getSkeletonImpl(json, name, id, id + children.length + 1);
+
+                    }
+                    break;
+
+                default:
+                    throw new JSONException(format!"Unknown skeleton field '%s' (skeleton '%s')"(key, name));
+
+            }
+
+        });
+        root.parent = parent;
+
+        return [root] ~ children;
 
     }
 

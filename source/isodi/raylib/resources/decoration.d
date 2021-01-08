@@ -52,7 +52,7 @@ struct Decoration {
             // Get a random file
             const path = cell.type.format!"cells/%s/decoration/*.png";
             auto glob = cell.display.packs.packGlob(path);
-            const file = glob.files.choice(rng);
+            const file = glob.matches.choice(rng);
             const options = glob.pack.getOptions(file);
 
             // Stop if there's no space

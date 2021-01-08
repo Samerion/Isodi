@@ -38,12 +38,18 @@ abstract class Display {
         /// Registered anchors
         Anchor[size_t] anchorMap;
 
+        /// Registered models
+        Model[size_t] modelMap;
+
     }
 
     private {
 
         /// ID of the last added anchor
         size_t lastAnchor;
+
+        /// ID of the last added model
+        size_t lastModel;
 
     }
 
@@ -71,6 +77,13 @@ abstract class Display {
 
     }
 
+    /// Iterate on all models
+    auto models() {
+
+        return modelMap.byValue;
+
+    }
+
     /// Iterate on all anchors
     auto anchors() {
 
@@ -91,9 +104,35 @@ abstract class Display {
 
     }
 
+    /// Add a new model to the display.
+    /// Params:
+    ///     position = Position to place the model on.
+    ///     type     = Skeleton for the model
+    Model addModel(const string type) {
+
+        // Create the model
+        auto model = Model.make(this, type);
+
+        // See `addAnchor` for why is this wrong
+        const id = lastModel++;
+        modelMap[id] = model;
+
+        return model;
+
+    }
+
+    /// Ditto
+    Model addModel(Position position, const string type) {
+
+        auto model = addModel(type);
+        model.position = position;
+        return model;
+
+    }
+
     /// Add a new anchor to the display.
     /// Returns: The created anchor.
-    Anchor addAnchor() {
+    Anchor addAnchor(Position position = Position.init) {
 
         // Create the anchor
         auto anchor = Anchor.make(this);
@@ -103,6 +142,9 @@ abstract class Display {
         // RedBlackTree isn't too easy to implement
         const id = lastAnchor++;
         anchorMap[id] = anchor;
+
+        // Set the position
+        anchor.position = position;
 
         return anchor;
 
@@ -114,10 +156,15 @@ abstract class Display {
         /// Remove the cell at given position.
         void removeCell(UniquePosition);
 
-        /// Remove given anchor.
+        /// Remove the given model.
+        ///
+        /// Returns: `true` if the model was actually removed, `false` otherwise.
+        bool removeModel(Model);
+
+        /// Remove the given anchor.
         ///
         /// Returns: `true` if the anchor was actually removed, `false` otherwise.
-        bool removeAnchor(size_t);
+        bool removeAnchor(Anchor);
 
     }
 

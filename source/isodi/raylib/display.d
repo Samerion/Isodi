@@ -20,7 +20,7 @@ import isodi.raylib.internal;
 final class RaylibDisplay : Display {
 
     /// Underlying raylib camera.
-    private raylib.Camera raycam;
+    package raylib.Camera raycam;
 
     ///
     this() {
@@ -41,6 +41,7 @@ final class RaylibDisplay : Display {
     override void reloadResources() {
 
         foreach (cell; cells) cell.reload();
+        foreach (model; models) model.reload();
 
     }
 
@@ -48,6 +49,22 @@ final class RaylibDisplay : Display {
     ///
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
     void draw() {
+
+        updateCamera();
+
+        // Draw
+        BeginMode3D(raycam);
+
+            rlOrtho(0, 1, 1, 0, 0.1, 10_000);
+            foreach (cell; cells) cell.draw();
+            foreach (model; models) model.draw();
+            foreach (anchor; anchors) anchor.to!RaylibAnchor.draw();
+
+        EndMode3D();
+
+    }
+
+    private void updateCamera() {
 
         const rad = std.math.PI / 180;
         const radX = camera.angle.x * rad;
@@ -78,15 +95,6 @@ final class RaylibDisplay : Display {
             radY.sin,
             radX.cos * cosY,
         ) * camera.distance;
-
-        // Draw
-        BeginMode3D(raycam);
-
-            rlOrtho(0, 1, 1, 0, 0.1, 10_000);
-            foreach (cell; cells) cell.draw();
-            foreach (anchor; anchors) anchor.to!RaylibAnchor.draw();
-
-        EndMode3D();
 
     }
 

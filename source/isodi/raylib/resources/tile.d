@@ -38,7 +38,7 @@ struct Tile {
         // Get a random file
         const path = cell.type.format!"cells/%s/tile/*.png";
         auto glob = cell.display.packs.packGlob(path);
-        const file = glob.files.choice(rng);
+        const file = glob.matches.choice(rng);
         options = glob.pack.getOptions(file);
 
         // Load the texture
