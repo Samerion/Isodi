@@ -132,6 +132,7 @@ void main() {
 
             // Output status message
             DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
+            DrawFPS(10, GetScreenHeight - 20);
 
         EndDrawing();
 

@@ -66,7 +66,7 @@ struct Camera {
     /// Distance between the camera and the followed object.
     ///
     /// Uses cells as the unit. `display.cellSize * distance` will be the cell distance in the renderer.
-    float distance = 10;
+    float distance = 15;
 
     /// Offset between camera and the followed object.
     auto offset = Offset(0, 0, 0);
