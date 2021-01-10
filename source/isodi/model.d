@@ -81,12 +81,23 @@ struct SkeletonNode {
     /// If this is empty, all variants are allowed.
     string[] variants;
 
-    /// Position of this node relative to the parent node.
-    int[3] position;
+    /// Offset for the bone's start relative to the parent's end.
+    ///
+    /// If the node is rotated, the whole bone will be rotated relative to this point.
+    float[3] boneStart = [0, 0, 0];
+
+    /// Position of the bone's end, relative to this node's start.
+    float[3] boneEnd = [0, 0, 0];
+
+    /// Position of the bone's texture relative to this node's start.
+    float[3] texturePosition = [0, 0, 0];
 
     /// Rotation of the node.
     ushort rotation;
     invariant(rotation >= 0);
     invariant(rotation < 360);
+
+    /// $(TCOLON Bone) If true, the bone textures will be mirrored.
+    bool mirror;
 
 }

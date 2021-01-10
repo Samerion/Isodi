@@ -52,16 +52,19 @@ final class RaylibModel : Model, WithDrawableResources {
         bones = [];
 
         // Get the bones
-        bones = display.packs.getSkeleton(type)
-            .matches
-            .map!(node => Bone(this, node))
-            .array;
+        auto skeleton = display.packs.getSkeleton(type);
+        foreach (node; skeleton.matches) {
+
+            bones ~= Bone(this, node);
+
+        }
 
     }
 
     ///
     void draw() {
 
+        // TODO Depth sort based on x.sin and z.sin
         foreach (bone; bones) bone.draw();
 
     }

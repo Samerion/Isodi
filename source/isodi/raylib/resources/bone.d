@@ -14,23 +14,47 @@ import isodi.raylib.internal;
 /// A bone resource.
 struct Bone {
 
-    /// Owner object.
-    RaylibModel model;
+    /// Enable debugging bone ends
+    private enum BoneDebug = false;
 
-    /// Skeleton node represented by this bone.
-    SkeletonNode node;
+    // Data
+    public {
 
-    /// Scale to be applied to textures.
-    float scale;
+        /// Owner object.
+        RaylibModel model;
 
-    /// Offset calculated based on the parent node.
-    Vector3 offset;
+        /// Skeleton node represented by this bone.
+        SkeletonNode node;
 
-    /// Texture of the bone.
-    Texture2D texture;
+    }
 
-    /// Options of the resource.
-    const(ResourceOptions)* options;
+    // Recursively calculated points, relatively to model start point.
+    public {
+
+        /// Bone start position.
+        Vector3 boneStart;
+
+        /// Bone end position.
+        Vector3 boneEnd;
+
+        /// Position of the texture.
+        Vector3 texturePosition;
+
+    }
+
+    // Other data
+    public {
+
+        /// Scale to be applied to textures.
+        float scale;
+
+        /// Texture of the bone.
+        Texture2D texture;
+
+        /// Options of the resource.
+        const(ResourceOptions)* options;
+
+    }
 
     /// Create the bone and load resources.
     this(RaylibModel model, SkeletonNode node) {
@@ -59,17 +83,27 @@ struct Bone {
         // Get the scale
         this.scale = cast(float) display.cellSize / options.tileSize;
 
-        // Get the offset from parent
-        if (model.bones.length) {
+        Vector3 toVector3(float[3] array) {
 
-            offset = model.bones[node.parent].offset;
+            return Vector3(
+                array[0],
+                array[1],
+                array[2],
+            );
 
         }
 
-        // Load by custom offset
-        offset.x -= node.position[0];
-        offset.y -= node.position[1];
-        offset.z -= node.position[2];
+        // If there is a parent
+        if (model.bones.length) {
+
+            // Inherit start from parent
+            boneStart = model.bones[node.parent].boneEnd;
+        }
+
+        // Calculate points
+        boneStart = boneStart + toVector3(node.boneStart);
+        boneEnd = boneStart + toVector3(node.boneEnd);
+        texturePosition = boneStart + toVector3(node.texturePosition);
 
     }
 
@@ -93,29 +127,75 @@ struct Bone {
 
             // Rotate to counter the camera
             const camAngle = display.camera.angle;
-            //rlRotatef(display.camera.angle.x, 0, 1, 0);
-            //rlRotatef(-camAngle.x, 0, 0, 1);
             rlRotatef(camAngle.x, 0, 1, 0);
             rlRotatef(-camAngle.y, 1, 0, 0);
             rlRotatef(-camAngle.x, 0, 1, 0);
 
-            // Center before rotating
-            rlTranslatef(atlasWidth/-2.0, -texture.height, 0);
+            // Correct translation
+            rlTranslatef(0, 0, 1);
 
-            // Set the offset
-            rlTranslatef(offset.x, offset.y, offset.z + 1);
+            rlPushMatrix();
 
-            // Draw the texture
-            texture.DrawTextureRec(
-                Rectangle(
-                    atlasWidth * angle, 0,
-                    atlasWidth, texture.height
-                ),
-                Vector2(),
-                Colors.WHITE
-            );
+                // Set the offset
+                translateVec(texturePosition);
+
+                // Get the mirror scale
+                const mirrorScale = node.mirror ? -1 : 1;
+
+                // Draw the texture
+                texture.DrawTextureRec(
+                    Rectangle(
+                        atlasWidth * angle, 0,
+                        mirrorScale * cast(int) atlasWidth, texture.height
+                    ),
+                    Vector2(),
+                    Colors.WHITE
+                );
+
+                // Debug
+                static if (BoneDebug)
+                DrawCircle3D(
+                    Vector3(0.1, 0.1, -1), 0.2,
+                    Vector3(), 1,
+                    Colors.BLUE
+                );
+
+            rlPopMatrix();
+
+            static if (BoneDebug) {
+
+                rlPushMatrix();
+
+                    // Draw the bone start position
+                    translateVec(boneStart);
+                    DrawCircle3D(
+                        Vector3(0.2, 0.2, -1), 0.4,
+                        Vector3(), 1,
+                        Colors.GREEN
+                    );
+
+                rlPopMatrix();
+
+                rlPushMatrix();
+
+                    translateVec(boneEnd);
+                    DrawCircle3D(
+                        Vector3(0.2, 0.2, -1), 0.4,
+                        Vector3(), 1,
+                        Colors.RED
+                    );
+
+                rlPopMatrix();
+
+            }
 
         rlPopMatrix();
+
+    }
+
+    private void translateVec(Vector3 vec) {
+
+        rlTranslatef(vec.x, vec.y, vec.z);
 
     }
 
