@@ -64,17 +64,6 @@ void main() {
     // Prepre the display for the next test
     void prepare() {
 
-        import std.conv : to;
-
-        // Add grid
-        runner.display
-            .to!RaylibDisplay
-            .addAnchor({
-
-                DrawGrid(50, 100);
-
-            });
-
         // Add a camera
         auto camAnchor = runner.display.addAnchor;
         runner.display.camera.follow = camAnchor;
@@ -143,6 +132,7 @@ void main() {
 
             // Output status message
             DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
+            DrawFPS(10, GetScreenHeight - 20);
 
         EndDrawing();
 

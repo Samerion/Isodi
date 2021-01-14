@@ -1,3 +1,4 @@
+///
 module isodi.pack_list;
 
 import std.conv;
@@ -10,6 +11,7 @@ import std.exception;
 
 import isodi.bind;
 import isodi.pack;
+import isodi.model;
 import isodi.exceptions;
 
 /// Represents a pack list.
@@ -19,20 +21,21 @@ abstract class PackList {
     Pack[] packList;
     alias packList this;
 
-    /// `packGlob` result.
+    /// Result of globbing functions.
     ///
     /// $(UL
-    ///     $(LI `files` — Matched files)
+    ///     $(LI `matches` — Matched objects)
     ///     $(LI `pack` — Pack the files come from)
     /// )
-    alias GlobResult = Tuple!(
-        string[], "files",
+    alias Result(T) = Tuple!(
+        T[],      "matches",
         Pack*,    "pack",
     );
 
     private {
 
-        GlobResult[string] packGlobCache;
+        Result!string[string] packGlobCache;
+        Result!SkeletonNode[string] getSkeletonCache;
 
     }
 
@@ -61,6 +64,7 @@ abstract class PackList {
     abstract void clearCache() {
 
         packGlobCache.clear();
+        getSkeletonCache.clear();
 
     }
 
@@ -69,7 +73,7 @@ abstract class PackList {
     ///     path = File path to look for.
     /// Returns: A [GlobResult] tuple with the result.
     /// Throws: [IsodiException] if the path wasn't found in any of the packs.
-    GlobResult packGlob(string path) {
+    Result!string packGlob(string path) {
 
         // Attempt to read from the cache
         if (auto cached = path in packGlobCache) {
@@ -79,9 +83,6 @@ abstract class PackList {
         // Not in the cache, load it
         foreach (ref pack; packList) {
 
-            // The pack must exist
-            enforce!PackException(pack.path.exists, pack.path.format!"Pack %s doesn't exist");
-
             // Get paths to the resource
             const resPath = pack.path.buildPath(path);
             const resDir = resPath.dirName;
@@ -90,7 +91,7 @@ abstract class PackList {
             if (!resDir.exists || !resDir.isDir) continue;
 
             // List all files inside
-            return packGlobCache[path] = GlobResult(
+            return packGlobCache[path] = Result!string(
                 resDir.dirEntries(resPath.baseName, SpanMode.shallow).array.to!(string[]),
                 &pack
             );
@@ -111,14 +112,45 @@ abstract class PackList {
         // Get a list of grass textures
         auto glob = packs.packGlob("cells/grass/tile/*.png");
         assert(glob.pack.name == "SamerionRetro");
-        assert(glob.files.length);
+        assert(glob.matches.length);
 
         // Check all
-        foreach (file; glob.files) {
+        foreach (file; glob.matches) {
 
             assert(file.endsWith(".png"));
 
         }
+
+    }
+
+    /// Load the given skeleton.
+    /// Params:
+    ///     name = Name of the skeleton.
+    /// Returns:
+    ///     A `Result` tuple, first item is a list of the skeleton's nodes.
+    Result!SkeletonNode getSkeleton(string name) {
+
+        // Attempt to read from the cache
+        if (auto cached = name in getSkeletonCache) {
+            return *cached;
+        }
+
+        // Check each pack
+        foreach (ref pack; packList) {
+
+            Result!SkeletonNode result;
+
+            // Attempt to load the skeleton
+            try result = Result!SkeletonNode(pack.getSkeleton(name), &pack);
+
+            // If failed, continue to the next pack
+            catch (PackException) continue;
+
+            return result;
+
+        }
+
+        throw new PackException(name.format!"Skeleton %s wasn't found in any pack");
 
     }
 

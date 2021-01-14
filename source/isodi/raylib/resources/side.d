@@ -39,7 +39,7 @@ struct Side {
 
             // Get a random file
             rng.seed(seed + side);
-            const file = glob.files.choice(rng);
+            const file = glob.matches.choice(rng);
 
             // Load the texture
             textures[side] = LoadTexture(file.toStringz);

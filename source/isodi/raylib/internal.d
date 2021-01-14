@@ -2,7 +2,7 @@ module isodi.raylib.internal;
 
 import raylib;
 
-import std.typecons;
+public import std.typecons;
 
 import isodi.bind;
 import isodi.position;

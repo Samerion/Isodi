@@ -37,7 +37,7 @@ struct Camera {
         ///
         /// Automatically modulated by 360°.
         @property
-        float x() { return _x; }
+        float x() const { return _x; }
 
         /// Ditto
         @property
@@ -66,10 +66,10 @@ struct Camera {
     /// Distance between the camera and the followed object.
     ///
     /// Uses cells as the unit. `display.cellSize * distance` will be the cell distance in the renderer.
-    float distance = 10;
+    float distance = 15;
 
     /// Offset between camera and the followed object.
-    auto offset = Offset(0, 0, 0);
+    auto offset = Offset(0, 0, 1);
 
     /// Change the offset relative to the screen
     void offsetScreenX(float value) {

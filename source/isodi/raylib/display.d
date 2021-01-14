@@ -5,11 +5,13 @@ import std.conv;
 import std.math;
 import std.typecons;
 import std.container;
+import std.algorithm;
 
 import raylib;
 
 import isodi.bind;
 import isodi.display;
+import isodi.object3d;
 import isodi.position;
 import isodi.resource;
 import isodi.raylib.cell;
@@ -20,7 +22,7 @@ import isodi.raylib.internal;
 final class RaylibDisplay : Display {
 
     /// Underlying raylib camera.
-    private raylib.Camera raycam;
+    package raylib.Camera raycam;
 
     ///
     this() {
@@ -41,6 +43,7 @@ final class RaylibDisplay : Display {
     override void reloadResources() {
 
         foreach (cell; cells) cell.reload();
+        foreach (model; models) model.reload();
 
     }
 
@@ -48,6 +51,50 @@ final class RaylibDisplay : Display {
     ///
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
     void draw() {
+
+        updateCamera();
+
+        // Draw
+        BeginMode3D(raycam);
+
+            import std.array : array;
+            import std.range : chain;
+
+            rlOrtho(0, 1, 1, 0, 0.1, 10_000);
+            rlDisableDepthTest();
+
+            const rad = camera.angle.x * std.math.PI / 180;
+
+            // Get all 3D objects
+            chain(cells, models, anchors)
+
+                // Depth sort
+                .map!(a => cameraDistance(a, rad))
+                .array
+                .sort!((a, b) => a[1] != b[1]
+                    ? a[1] > b[1]
+                    : a[2] < b[2])
+
+                // Draw them
+                .each!(a => a[0].to!WithDrawableResources.draw());
+
+        EndMode3D();
+
+    }
+
+    /// Get the camera distance of given Object3D
+    private Tuple!(Object3D, float, float) cameraDistance(Object3D object, real rad) {
+
+        return Tuple!(Object3D, float, float)(
+            object,
+            object.position.x * sin(rad)
+              + object.position.y * cos(rad),
+            object.position.height.depth,
+        );
+
+    }
+
+    private void updateCamera() {
 
         const rad = std.math.PI / 180;
         const radX = camera.angle.x * rad;
@@ -79,15 +126,6 @@ final class RaylibDisplay : Display {
             radX.cos * cosY,
         ) * camera.distance;
 
-        // Draw
-        BeginMode3D(raycam);
-
-            rlOrtho(0, 1, 1, 0, 0.1, 10_000);
-            foreach (cell; cells) cell.draw();
-            foreach (anchor; anchors) anchor.to!RaylibAnchor.draw();
-
-        EndMode3D();
-
     }
 
     /// Add a Raylib anchor. See `isodi.Anchor` for reference.
@@ -97,7 +135,7 @@ final class RaylibDisplay : Display {
     Anchor addAnchor(void delegate() callback) {
 
         auto anchor = super.addAnchor();
-        anchor.to!RaylibAnchor.draw = callback;
+        anchor.to!RaylibAnchor.callback = callback;
         return anchor;
 
     }

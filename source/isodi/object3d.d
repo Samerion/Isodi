@@ -20,7 +20,7 @@ abstract class Object3D {
     Display display;
 
     /// Get the current position of the object.
-    abstract const(Position) position();
+    abstract const(Position) position() const;
 
     /// Params:
     ///     display = Display to connect to.
@@ -38,7 +38,7 @@ abstract class Object3D {
         /// Get the current position of the object.
         ///
         /// This returns a const value, use `positionRef` to get a reference.
-        override const(Position) position() { return _position; }
+        override const(Position) position() const { return _position; }
 
         /// Get a reference to the position value.
         ref Position positionRef() { return _position; }

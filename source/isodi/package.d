@@ -14,6 +14,7 @@ module isodi;
 public {
 
     import isodi.cell;
+    import isodi.model;
     import isodi.anchor;
     import isodi.display;
     import isodi.position;

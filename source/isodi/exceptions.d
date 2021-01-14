@@ -1,3 +1,4 @@
+///
 module isodi.exceptions;
 
 import std.exception;
