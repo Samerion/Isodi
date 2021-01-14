@@ -1,7 +1,8 @@
 module isodi.raylib.model;
 
-debug import std.stdio;
+import std.math;
 import std.array;
+import std.typecons;
 import std.algorithm;
 
 import isodi.model;
@@ -64,8 +65,25 @@ final class RaylibModel : Model, WithDrawableResources {
     ///
     void draw() {
 
-        // TODO Depth sort based on x.sin and z.sin
-        foreach (bone; bones) bone.draw();
+        const rad = display.camera.angle.x * std.math.PI / 180;
+
+        // Sort the bones
+        bones.map!((ref a) => cameraDistance(&a, rad))
+            .array
+            .sort!((a, b) => a[1] > b[1])
+
+            // Draw them
+            .each!(a => a[0].draw());
+
+    }
+
+    private Tuple!(Bone*, float) cameraDistance(Bone* bone, real rad) {
+
+        return Tuple!(Bone*, float)(
+            bone,
+            bone.boneStart.x * sin(rad)
+              + bone.boneStart.z * cos(rad),
+        );
 
     }
 

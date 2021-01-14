@@ -69,7 +69,7 @@ struct Camera {
     float distance = 15;
 
     /// Offset between camera and the followed object.
-    auto offset = Offset(0, 0, 0);
+    auto offset = Offset(0, 0, 1);
 
     /// Change the offset relative to the screen
     void offsetScreenX(float value) {

@@ -37,9 +37,6 @@ struct Bone {
         /// Bone end position.
         Vector3 boneEnd;
 
-        /// Position of the texture.
-        Vector3 texturePosition;
-
     }
 
     // Other data
@@ -83,16 +80,6 @@ struct Bone {
         // Get the scale
         this.scale = cast(float) display.cellSize / options.tileSize;
 
-        Vector3 toVector3(float[3] array) {
-
-            return Vector3(
-                array[0],
-                array[1],
-                array[2],
-            );
-
-        }
-
         // If there is a parent
         if (model.bones.length) {
 
@@ -103,24 +90,36 @@ struct Bone {
         // Calculate points
         boneStart = boneStart + toVector3(node.boneStart);
         boneEnd = boneStart + toVector3(node.boneEnd);
-        texturePosition = boneStart + toVector3(node.texturePosition);
 
     }
 
     ///
-    void draw() {
+    void draw() const {
 
         // Ignore if not displaying
         if (node.hidden) return;
 
+        import std.conv : to;
+
         rlPushMatrix();
 
-            const angle = 0;
-            const atlasWidth = texture.width / options.angles;
             const display = model.display;
+            const atlasWidth = texture.width / options.angles;
 
-            // Center within the tile
-            rlTranslatef(display.cellSize/2, 0, display.cellSize/2);
+            /// Scale for mirroring
+            const mirrorScale = node.mirror ? -1 : 1;
+
+            // Get the node's rotation
+            const rotation = node.rotation + 360-display.camera.angle.x;
+            const angleDelimiter = 360.0 / options.angles;
+
+            // Convert to angle
+            const rotationAngle = rotation / angleDelimiter;
+            const int angleTransform = (rotationAngle + options.angles + 0.5).abs.to!int % options.angles;
+            const int angle = (rotationAngle * mirrorScale + options.angles + 0.5).abs.to!int % options.angles;
+
+            // Move to the correct tile
+            rlTranslatef(model.position.toTuple3(display.cellSize, Yes.center).expand);
 
             // Scale to fit
             rlScalef(scale, scale, scale);
@@ -131,56 +130,62 @@ struct Bone {
             rlRotatef(-camAngle.y, 1, 0, 0);
             rlRotatef(-camAngle.x, 0, 1, 0);
 
-            // Correct translation
-            rlTranslatef(0, 0, 1);
-
             rlPushMatrix();
 
-                // Set the offset
-                translateVec(texturePosition);
+                // Offset the bone start
+                translateVec(boneStart);
 
-                // Get the mirror scale
-                const mirrorScale = node.mirror ? -1 : 1;
-
-                // Draw the texture
-                texture.DrawTextureRec(
-                    Rectangle(
-                        atlasWidth * angle, 0,
-                        mirrorScale * cast(int) atlasWidth, texture.height
-                    ),
-                    Vector2(),
-                    Colors.WHITE
-                );
-
-                // Debug
-                static if (BoneDebug)
-                DrawCircle3D(
-                    Vector3(0.1, 0.1, -1), 0.2,
-                    Vector3(), 1,
-                    Colors.BLUE
-                );
-
-            rlPopMatrix();
-
-            static if (BoneDebug) {
+                // Rotate to match angle
+                rlRotatef(-angleTransform * angleDelimiter, 0, 1, 0);
 
                 rlPushMatrix();
 
-                    // Draw the bone start position
-                    translateVec(boneStart);
+                    // Offset the texture
+                    translateVec(toVector3(node.texturePosition));
+
+                    // Correct translation
+                    rlTranslatef(0, 0, 1);
+
+                    // Draw the texture
+                    texture.DrawTextureRec(
+                        Rectangle(
+                            atlasWidth * angle, 0,
+                            mirrorScale * cast(int) atlasWidth, texture.height
+                        ),
+                        Vector2(),
+                        Colors.WHITE
+                    );
+
+                    // Debug: texturePosition
+                    static if (BoneDebug)
                     DrawCircle3D(
-                        Vector3(0.2, 0.2, -1), 0.4,
+                        Vector3(0, 0, -1), 0.2,
                         Vector3(), 1,
-                        Colors.GREEN
+                        Colors.BLUE
                     );
 
                 rlPopMatrix();
 
+                // Debug: boneStart
+                static if (BoneDebug)
+                DrawCircle3D(
+                    Vector3(0, 0, 0), 0.4,
+                    Vector3(), 1,
+                    Colors.GREEN
+                );
+
+            rlPopMatrix();
+
+            // Debug: boneEnd
+            static if (BoneDebug) {
+
                 rlPushMatrix();
 
                     translateVec(boneEnd);
+                    rlRotatef(-angleTransform * angleDelimiter, 0, 1, 0);
+
                     DrawCircle3D(
-                        Vector3(0.2, 0.2, -1), 0.4,
+                        Vector3(0, 0, 0), 0.4,
                         Vector3(), 1,
                         Colors.RED
                     );
@@ -193,7 +198,17 @@ struct Bone {
 
     }
 
-    private void translateVec(Vector3 vec) {
+    private Vector3 toVector3(float[3] array) const {
+
+        return Vector3(
+            array[0],
+            array[1],
+            array[2],
+        );
+
+    }
+
+    private void translateVec(Vector3 vec) const {
 
         rlTranslatef(vec.x, vec.y, vec.z);
 

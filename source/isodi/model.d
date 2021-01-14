@@ -55,11 +55,16 @@ abstract class Model : Object3D, WithDrawableResources {
 
 mixin DisplayTest!((display) {
 
+    // Model 1
     display.addCell(Position(), "grass");
     display.addModel(Position(), "wraith-white");
 
+    // Model 2
+    display.addCell(position(2, 0), "grass");
+    display.addModel(position(2, 0), "wraith-white");
+
     // Add a cell behind
-    display.addCell(position(0, 1, Height(4, 5)), "grass");
+    display.addCell(position(2, 1, Height(4, 5)), "grass");
 
 });
 
@@ -73,8 +78,12 @@ struct SkeletonNode {
     /// If true, this node shouldn't be displayed and its bone resource shouldn't be loaded.
     bool hidden;
 
-    /// Name of the node and its bone resource.
+    /// Name of the used bone resource.
     string name;
+
+    /// ID of the node, defauls to the bone name. Must be unique, so should be defined in case a bone occurs more than
+    /// one time.
+    string id;
 
     /// List of bone variants compatible with this node.
     ///
