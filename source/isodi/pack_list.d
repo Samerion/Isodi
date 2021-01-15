@@ -6,6 +6,7 @@ import std.file;
 import std.path;
 import std.array;
 import std.string;
+import std.random;
 import std.typecons;
 import std.exception;
 
@@ -28,15 +29,17 @@ abstract class PackList {
     ///     $(LI `matches` — Matched objects)
     ///     $(LI `pack` — Pack the files come from)
     /// )
-    alias Result(T) = Tuple!(
-        T[],      "matches",
-        Pack*,    "pack",
+    alias GlobResult(T) = Tuple!(
+        T[],   "matches",
+        Pack*, "pack",
     );
+
+    alias Resource = Pack.Resource;
 
     private {
 
-        Result!string[string] packGlobCache;
-        Result!SkeletonNode[string] getSkeletonCache;
+        GlobResult!string[string] packGlobCache;
+        Resource!(SkeletonNode[])[string] getSkeletonCache;
 
     }
 
@@ -72,9 +75,9 @@ abstract class PackList {
     /// List matching files in the first matching pack.
     /// Params:
     ///     path = File path to look for.
-    /// Returns: A [GlobResult] tuple with the result.
-    /// Throws: [IsodiException] if the path wasn't found in any of the packs.
-    Result!string packGlob(string path) {
+    /// Returns: A `GlobResult` tuple with the result.
+    /// Throws: `IsodiException` if the path wasn't found in any of the packs.
+    GlobResult!string packGlob(string path) {
 
         // Attempt to read from the cache
         if (auto cached = path in packGlobCache) {
@@ -84,18 +87,14 @@ abstract class PackList {
         // Not in the cache, load it
         foreach (ref pack; packList) {
 
-            // Get paths to the resource
-            const resPath = pack.path.buildPath(path);
-            const resDir = resPath.dirName;
+            auto glob = pack.glob(path);
 
-            // This directory must exist
-            if (!resDir.exists || !resDir.isDir) continue;
+            // Found a match
+            if (glob.length) {
 
-            // List all files inside
-            return packGlobCache[path] = Result!string(
-                resDir.dirEntries(resPath.baseName, SpanMode.shallow).array.to!(string[]),
-                &pack
-            );
+                return packGlobCache[path] = GlobResult!string(glob, &pack);
+
+            }
 
         }
 
@@ -103,7 +102,7 @@ abstract class PackList {
 
     }
 
-    // Barely an unittest, needs more packs to work
+    // Barely a unittest, needs more packs to work
     unittest {
 
         auto packs = PackList.make(
@@ -124,12 +123,31 @@ abstract class PackList {
 
     }
 
+    /// Get a random resource under a file matching the pattern.
+    /// Params:
+    ///     path = File path to look for.
+    ///     seed = Seed for the RNG.
+    /// Returns: A tuple with path to the file and options of the resource.
+    /// Throws: `IsodiException` if the path wasn't found in any of the packs.
+    Resource!string randomGlob(RNG)(string path, RNG rng)
+    if (isUniformRNG!RNG) {
+
+        auto result = packGlob(path);
+        auto resource = result.matches.choice(rng);
+
+        return Resource!string(
+            resource,
+            result.pack.getOptions(resource),
+        );
+
+    }
+
     /// Load the given skeleton.
     /// Params:
     ///     name = Name of the skeleton.
     /// Returns:
-    ///     A `Result` tuple, first item is a list of the skeleton's nodes.
-    Result!SkeletonNode getSkeleton(string name) {
+    ///     A `Resource` tuple, first item is a list of the skeleton's nodes.
+    Resource!(SkeletonNode[]) getSkeleton(string name) {
 
         // Attempt to read from the cache
         if (auto cached = name in getSkeletonCache) {
@@ -139,15 +157,11 @@ abstract class PackList {
         // Check each pack
         foreach (ref pack; packList) {
 
-            Result!SkeletonNode result;
-
             // Attempt to load the skeleton
-            try result = Result!SkeletonNode(pack.getSkeleton(name), &pack);
+            try return pack.getSkeleton(name);
 
             // If failed, continue to the next pack
             catch (PackException) continue;
-
-            return result;
 
         }
 

@@ -3,7 +3,6 @@ module isodi.raylib.resources.tile;
 import raylib;
 
 import std.string;
-import std.random;
 import std.exception;
 
 import isodi.bind;
@@ -23,27 +22,16 @@ struct Tile {
     /// Display scale of the tile.
     float scale;
 
-    /// Tile optoins loaded
+    /// Tile options loaded
     const(ResourceOptions)* options;
 
     /// Create the tile and load textures.
-    this(Cell cell) {
+    this(Cell cell, Pack.Resource!string resource) {
 
         this.cell = cell;
-
-        // Create RNG
-        const seed = cast(ulong) cell.position.toHash;
-        auto rng = Mt19937_64(seed);
-
-        // Get a random file
-        const path = cell.type.format!"cells/%s/tile/*.png";
-        auto glob = cell.display.packs.packGlob(path);
-        const file = glob.matches.choice(rng);
-        options = glob.pack.getOptions(file);
-
-        // Load the texture
-        texture = LoadTexture(file.toStringz);
-        scale = cast(float) cell.display.cellSize / texture.width;
+        this.texture = LoadTexture(resource.match.toStringz);
+        this.options = resource.options;
+        this.scale = cast(float) cell.display.cellSize / texture.width;
 
     }
 

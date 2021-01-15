@@ -30,9 +30,9 @@ final class RaylibCell : Cell, WithDrawableResources {
     ///
     void reload() {
 
-        tile = Tile(this);
-        side = Side(this);
-        decoration = Decoration(this);
+        tile = Tile(this, getTile);
+        side = Side(this, getSide);
+        decoration = Decoration(this, getDecoration(tile.options));
 
     }
 

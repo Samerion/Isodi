@@ -32,47 +32,26 @@ struct Decoration {
     DecoPart[] parts;
 
     /// Create the tile and load textures.
-    this(RaylibCell cell) {
+    this(RaylibCell cell, Pack.Resource!string[] resources) {
 
         this.cell = cell;
 
-        // Create RNG
-        const seed = cast(ulong) cell.position.toHash + 5;
-        auto rng = Mt19937_64(seed);
+        Mt19937_64 rng;
 
-        // Get available space
-        const spaceRange = cell.tile.options.decorationSpace;
-        uint space = uniform!"[]"(spaceRange[0], spaceRange[1], rng);
-
-        // While there is space for new decoration
-        while (space) {
-
-            rng.seed(seed + space);
-
-            // Get a random file
-            const path = cell.type.format!"cells/%s/decoration/*.png";
-            auto glob = cell.display.packs.packGlob(path);
-            const file = glob.matches.choice(rng);
-            const options = glob.pack.getOptions(file);
-
-            // Stop if there's no space
-            if (space < options.decorationWeight) return;
-
-            // Reduce space
-            space -= options.decorationWeight;
+        foreach (i, resource; resources) {
 
             // Load the texture
-            auto texture = LoadTexture(file.toStringz);
+            auto texture = LoadTexture(resource.match.toStringz);
 
             // Get direction of the decoration piece
-            rng.seed(seed + space + 1);
+            rng.seed(cell.seed + 100 + 10*i);
             const direction = uniform(0, 360, rng);
 
             // Create the decoration
             parts ~= DecoPart(
-                randomPosition(texture, options, seed + space).expand,  // TODO: Generate an actually random position
-                texture, options,
-                cast(float) cell.display.cellSize / options.tileSize,
+                randomPosition(texture, resource.options, cell.seed + 101 + 10*i).expand,
+                texture, resource.options,
+                cast(float) cell.display.cellSize / resource.options.tileSize,
                 direction,
             );
 

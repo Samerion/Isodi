@@ -55,7 +55,7 @@ struct Bone {
     }
 
     /// Create the bone and load resources.
-    this(RaylibModel model, SkeletonNode node) {
+    this(RaylibModel model, SkeletonNode node, Pack.Resource!string resource) {
 
         // Set parameters
         this.model = model;
@@ -64,22 +64,12 @@ struct Bone {
         // Ignore the rest if not displaying
         if (node.hidden) return;
 
-        auto display = model.display;
-
-        // Get the RNG
-        Mt19937_64 rng;
-        // Seed?
-
-        // Get the texture
-        auto glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
-        const file = glob.matches.choice(rng);
-
         // Load the texture
-        texture = LoadTexture(file.toStringz);
-        options = glob.pack.getOptions(file);
+        this.texture = LoadTexture(resource.match.toStringz);
+        this.options = resource.options;
 
         // Get the scale
-        this.scale = cast(float) display.cellSize / options.tileSize;
+        this.scale = cast(float) model.display.cellSize / options.tileSize;
 
         // If there is a parent
         if (model.bones.length) {

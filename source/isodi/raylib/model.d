@@ -43,10 +43,10 @@ final class RaylibModel : Model, WithDrawableResources {
 
         // Get the bones
         auto skeleton = display.packs.getSkeleton(type);
-        foreach (node; skeleton.matches) {
+        foreach (node; skeleton.match) {
 
             // Create a bone
-            bones ~= Bone(this, node);
+            bones ~= Bone(this, node, getBone(node));
             auto bone = &bones[$-1];
 
             // Save by ID

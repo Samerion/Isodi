@@ -12,9 +12,13 @@
 ///     TCOLON = $0:
 module isodi.pack;
 
+import std.conv;
 import std.path;
 import std.file;
+import std.random;
 import std.string;
+import std.typecons;
+import std.exception;
 
 import rcjson;
 
@@ -84,6 +88,17 @@ struct ResourceOptions {
 /// To read a pack from a JSON file, use `getPack`.
 struct Pack {
 
+    /// Represents a resource along with its options.
+    ///
+    /// $(UL
+    ///     $(LI `match` — Matched resource)
+    ///     $(LI `options` — Options of the resource)
+    /// )
+    alias Resource(T) = Tuple!(
+        T,                       "match",
+        const(ResourceOptions)*, "options",
+    );
+
     /// Path to the pack in the filesystem.
     @JSONExclude
     string path;
@@ -111,6 +126,23 @@ struct Pack {
     /// Fields missing in the JSON will be inherited from parent directories or will use the default value.
     @JSONExclude
     ResourceOptions[string] fileOptions;
+
+    /// Glob search within the pack.
+    string[] glob(string file) {
+
+        import std.array : array;
+
+        // Get paths to the resource
+        const resPath = path.buildPath(file);
+        const resDir = resPath.dirName;
+
+        // This directory must exist
+        if (!resDir.exists || !resDir.isDir) return null;
+
+        // List all files inside
+        return resDir.dirEntries(resPath.baseName, SpanMode.shallow).array.to!(string[]);
+
+    }
 
     /// Read options of the given resource.
     /// Params:
@@ -152,21 +184,27 @@ struct Pack {
     /// Get a skeleton from this pack
     /// Params:
     ///     name = Name of the skeleton to load.
-    /// Returns: List of nodes in the skeleton.
+    /// Returns: A `Resource` tuple, first item is a list of nodes in the skeleton.
     /// Throws:
     ///     $(UL
     ///         $(LI `PackException` if the skeleton doesn't exist.)
     ///         $(LI `rcjson.JSONException` if the skeleton isn't valid.)
     ///     )
-    SkeletonNode[] getSkeleton(const string name) {
+    Resource!(SkeletonNode[]) getSkeleton(const string name) {
 
         // Get the path
         const path = path.buildPath(name.format!"models/skeleton/%s.json");
 
+        // Check if the file exists
+        enforce!PackException(path.exists, name.format!"Skeleton %s wasn't found in pack %s"(name));
+
         // Read the file
         auto json = JSONParser(path.readText);
 
-        return getSkeletonImpl(json, name, 0, 0);
+        return Resource!(SkeletonNode[])(
+            getSkeletonImpl(json, name, 0, 0),
+            getOptions(path),
+        );
 
     }
 

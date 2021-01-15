@@ -2,7 +2,10 @@
 module isodi.model;
 
 import core.time;
+import std.string;
+import std.random;
 
+import isodi.pack;
 import isodi.tests;
 import isodi.object3d;
 import isodi.resource;
@@ -20,6 +23,11 @@ abstract class Model : Object3D, WithDrawableResources {
     /// Active animations.
     protected Animation[] animations;
 
+    /// Seed to use for RNG calls related to generation of this model's resources.
+    ///
+    /// It's preferred to sum this with a magic number to ensure unique combinations.
+    const ulong seed;
+
     /// Create a new model.
     /// Params:
     ///     display = Display to create the model for.
@@ -30,6 +38,7 @@ abstract class Model : Object3D, WithDrawableResources {
 
         super(display);
         this.type = type;
+        this.seed = unpredictableSeed;
 
     }
 
@@ -63,6 +72,24 @@ abstract class Model : Object3D, WithDrawableResources {
     void animate(string type, Duration duration, ulong times = 1) {
 
         assert(0);
+
+    }
+
+    ///
+    protected Pack.Resource!string getBone(const SkeletonNode node) {
+
+        // TODO: add support for node.variants
+
+        auto rng = Mt19937_64(seed + node.parent);
+
+        // Get the texture
+        auto glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
+        const file = glob.matches.choice(rng);
+
+        return Pack.Resource!string(
+            file,
+            glob.pack.getOptions(file)
+        );
 
     }
 
