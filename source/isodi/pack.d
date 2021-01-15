@@ -196,7 +196,7 @@ struct Pack {
         const path = path.buildPath(name.format!"models/skeleton/%s.json");
 
         // Check if the file exists
-        enforce!PackException(path.exists, name.format!"Skeleton %s wasn't found in pack %s"(name));
+        enforce!PackException(path.exists, format!"Skeleton %s wasn't found in pack %s"(name, this.name));
 
         // Read the file
         auto json = JSONParser(path.readText);
@@ -234,7 +234,9 @@ struct Pack {
                     break;
 
                 default:
-                    throw new JSONException(format!"Unknown skeleton field '%s' (skeleton '%s')"(key, name));
+                    throw new JSONException(
+                        format!"Unknown field '%s' (skeleton '%s/%s')"(key, this.name, name)
+                    );
 
             }
 
@@ -251,6 +253,120 @@ struct Pack {
         }
 
         return [root] ~ children;
+
+    }
+
+    /// Get an animation from this pack. Used variant will be chosen randomly.
+    /// Params:
+    ///     name       = Name of the animation to load.
+    ///     frameCount = `out` parameter filled with frame count of the animation.
+    /// Returns: A `Resource` tuple, first item is a list of animation parts.
+    /// Throws:
+    ///     $(UL
+    ///         $(LI `PackException` if the animation doesn't exist.)
+    ///         $(LI `rcjson.JSONException` if the animation isn't valid.)
+    ///     )
+    Resource!(AnimationPart[]) getAnimation(const string name, out uint frameCount) {
+
+        import std.array : array;
+        import std.algorithm : map;
+
+        // Search for the animation
+        auto matches = glob(name.format!"models/animation/%s/*.json");
+
+        enforce!PackException(matches.length, format!"Animation %s wasn't found in pack %s"(name, this.name));
+
+        // Pick a random match
+        const animation = matches.choice;
+
+        // Read the JSON
+        auto json = JSONParser(animation.readText);
+        auto partsMap = json.getArray.map!(index => getAnimationPart(json, name, frameCount));
+
+        // .array method wrongly issues a deprecation warning of Nullable property of the map. This is the workaround.
+        AnimationPart[] parts;
+        foreach (part; partsMap) parts ~= part;
+
+        return Resource!(AnimationPart[])(parts, getOptions(animation));
+
+    }
+
+    private AnimationPart getAnimationPart(ref JSONParser json, const string name, out uint frameCount) {
+
+        AnimationPart result;
+
+        foreach (key; json.getObject) {
+
+            switch (key) {
+
+                case "length":
+                    result.length = json.get!uint;
+                    break;
+
+                case "offset":
+                    result.offset = getAnimationProperty!(float[3])(json);
+                    break;
+
+                default:
+                    result.bone[key.to!string] = getAnimationBone(json, name);
+
+            }
+
+        }
+
+        frameCount += result.length;
+
+        return result;
+
+    }
+
+    private AnimationBone getAnimationBone(ref JSONParser json, const string name) {
+
+        AnimationBone result;
+
+        foreach (key; json.getObject) {
+
+            // Too small for automation
+            switch (key) {
+
+                case "rotate":
+                    result.rotate = getAnimationProperty!(float[3])(json);
+                    break;
+
+                case "scale":
+                    result.scale = getAnimationProperty!float(json);
+                    break;
+
+                default:
+                    throw new JSONException(
+                        format!"Unknown property %s (animation '%s/%s')"(key, this.name, name)
+                    );
+
+            }
+
+        }
+
+        return result;
+
+    }
+
+    private PropertyImpl!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
+
+        // Get the same value with one value more
+        auto value = json.get!(Value[N+1]);
+        return PropertyImpl!T(
+            value[0].to!ubyte,
+            value[1..$]
+        );
+
+    }
+
+    private PropertyImpl!T getAnimationProperty(alias T)(ref JSONParser json) {
+
+        auto value = json.get!(T[2]);
+        return PropertyImpl!T(
+            value[0].to!ubyte, value[1]
+        );
 
     }
 

@@ -67,13 +67,34 @@ abstract class Model : Object3D, WithDrawableResources {
     /// Run an animation.
     /// Params:
     ///     type     = Type of the animation.
-    ///     duration = Time it should take for the animation to complete.
+    ///     duration = Time it should take for one loop of the animation to complete.
     ///     times    = How many times the animation should be ran.
-    void animate(string type, Duration duration, ulong times = 1) {
+    void animate(string type, Duration duration, uint times = 1) {
 
-        assert(0);
+        // Get the resource
+        uint frameCount;  // @suppress(dscanner.suspicious.unmodified)
+        auto resource = display.packs.getAnimation(type, frameCount);
+
+        // Push the animation
+        animations ~= Animation(
+            frameCount / duration.total!"msecs" / 1000f,
+            times,
+            resource.match
+        );
 
     }
+
+    /// Run an animation indefinitely.
+    /// Params:
+    ///     type     = Type of the animation
+    ///     duration = Time it should take for one loop of the animation to complete.
+    void animateInf(string type, Duration duration) {
+
+        animate(type, duration, 0);
+
+    }
+
+    // TODO: stopAnimation
 
     ///
     protected Pack.Resource!string getBone(const SkeletonNode node) {
@@ -99,7 +120,12 @@ mixin DisplayTest!((display) {
 
     // Model 1
     display.addCell(Position(), "grass");
-    display.addModel(Position(), "wraith-white");
+    with (display.addModel(Position(), "wraith-white")) {
+
+        animateInf("breath", 6.seconds);
+        animateInf("crab", 1.seconds);
+
+    }
 
     // Model 2
     display.addCell(position(2, 0), "grass");

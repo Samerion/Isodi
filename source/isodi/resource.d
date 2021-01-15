@@ -76,30 +76,41 @@ struct SkeletonNode {
 /// Represents a running animation.
 struct Animation {
 
-    /// Frames per second.
-    const float fps = 0;
+    // Constructor properties
+    public {
 
-    /// Current frame.
-    float frame = 0;
+        /// Frames per second.
+        const float fps = 0;
 
-    /// Current part
-    uint current;
+        /// Amount of times this animation is supposed to play for. 0 for infinite.
+        uint times;
 
-    /// Amount of times this animation is supposed to play for. 0 for infinite.
-    uint times;
+        /// Animations
+        AnimationPart[] parts;
 
-    /// Animations
-    AnimationPart[] parts;
+    }
+
+    // Other fields
+    public {
+
+        /// Current frame.
+        float frame = 0;
+
+        /// Current part
+        uint current = 0;
+
+    }
 
 }
 
-alias Property(T) = Nullable!(Tuple!(ubyte, "priority", T, "value"));
+alias PropertyImpl(T) = Tuple!(ubyte, "priority", T, "value");
+alias Property(T) = Nullable!(PropertyImpl!T);
 
 /// Represents a single part of the animation, it may be a single or a few frames.
 struct AnimationPart {
 
     /// Length of the part in frames.
-    uint length;
+    uint length = 1;
 
     /// Change the model offset or position.
     Property!(float[3]) offset;

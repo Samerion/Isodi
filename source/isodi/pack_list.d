@@ -40,6 +40,7 @@ abstract class PackList {
 
         GlobResult!string[string] packGlobCache;
         Resource!(SkeletonNode[])[string] getSkeletonCache;
+        Resource!(AnimationPart[])[string] getAnimationCache;
 
     }
 
@@ -154,18 +155,45 @@ abstract class PackList {
             return *cached;
         }
 
-        // Check each pack
+        return packSearch!"getSkeleton"(
+            name,
+            name.format!"Skeleton %s wasn't found in any listed pack"
+        );
+
+    }
+
+    /// Load the given animation.
+    /// Params:
+    ///     name = Name of the animation.
+    ///     frameCount = Frame count of the animation.
+    /// Returns: A `Resource` tuple, first item is a list of animation parts.
+    Resource!(AnimationPart[]) getAnimation(string name, out uint frameCount) {
+
+        if (auto cached = name in getAnimationCache) {
+            return *cached;
+        }
+
+        return packSearch!"getAnimation"(
+            name, frameCount,
+            name.format!"Animation '%s' wasn't found in any listed pack"
+        );
+
+    }
+
+    private auto packSearch(string method, Args...)(Args args, lazy string fail) {
+
+        /// Check each pack
         foreach (ref pack; packList) {
 
-            // Attempt to load the skeleton
-            try return pack.getSkeleton(name);
+            // Attempt to load the method
+            try return mixin("pack." ~ method ~ "(args)");
 
             // If failed, continue to the next pack
             catch (PackException) continue;
 
         }
 
-        throw new PackException(name.format!"Skeleton %s wasn't found in any pack");
+        throw new PackException(fail);
 
     }
 
