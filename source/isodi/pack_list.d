@@ -12,6 +12,7 @@ import std.exception;
 import isodi.bind;
 import isodi.pack;
 import isodi.model;
+import isodi.resource;
 import isodi.exceptions;
 
 /// Represents a pack list.

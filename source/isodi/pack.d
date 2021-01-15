@@ -12,11 +12,15 @@
 ///     TCOLON = $0:
 module isodi.pack;
 
+import std.path;
+import std.file;
 import std.string;
+
 import rcjson;
 
 import isodi.model;
 import isodi.internal;
+import isodi.resource;
 import isodi.exceptions;
 
 public {
@@ -156,9 +160,6 @@ struct Pack {
     ///     )
     SkeletonNode[] getSkeleton(const string name) {
 
-        import std.path : buildPath;
-        import std.file : readText;
-
         // Get the path
         const path = path.buildPath(name.format!"models/skeleton/%s.json");
 
@@ -200,7 +201,16 @@ struct Pack {
             }
 
         });
+
+        // Assign a parent
         root.parent = parent;
+
+        // Set a default ID
+        if (root.id == "") {
+
+            root.id = root.name;
+
+        }
 
         return [root] ~ children;
 

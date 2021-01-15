@@ -16,6 +16,7 @@ final class RaylibModel : Model, WithDrawableResources {
     package {
 
         Bone[] bones;
+        Bone*[string] bonesID;
 
     }
 
@@ -27,22 +28,10 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
-    override void changeVariant(string type, string variant) {
+    override void changeVariant(string id, string variant) {
 
+        //auto bone = bonesID[id].changeVariant(variant);
         assert(0, "unimplemented");
-
-        // Check each bone
-        //foreach (bone; bones) {
-
-        //    // If the type matches
-        //    if (bone.node.name == type) {
-
-        //        // Reload with a changed variant
-        //        bone.reload(variant);
-
-        //    }
-
-        //}
 
     }
 
@@ -56,7 +45,13 @@ final class RaylibModel : Model, WithDrawableResources {
         auto skeleton = display.packs.getSkeleton(type);
         foreach (node; skeleton.matches) {
 
+            // Create a bone
             bones ~= Bone(this, node);
+            auto bone = &bones[$-1];
+
+            // Save by ID
+            assert(bone.node.id !in bonesID);
+            bonesID[bone.node.id] = bone;
 
         }
 

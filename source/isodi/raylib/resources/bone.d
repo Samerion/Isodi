@@ -8,6 +8,7 @@ import std.random;
 
 import isodi.pack;
 import isodi.model;
+import isodi.resource;
 import isodi.raylib.model;
 import isodi.raylib.internal;
 
