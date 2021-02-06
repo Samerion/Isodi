@@ -120,8 +120,6 @@ struct Side {
 
                 }
 
-                // TODO: change to DrawTextureRec
-
             rlPopMatrix();
 
         }

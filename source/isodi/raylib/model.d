@@ -1,13 +1,16 @@
 module isodi.raylib.model;
 
+import raylib;
+
 import std.math;
 import std.array;
 import std.typecons;
 import std.algorithm;
 
-import isodi.model;
+import isodi.model : Model;
 import isodi.display;
 import isodi.resource;
+import isodi.raylib.internal;
 import isodi.raylib.resources.bone;
 
 /// `Model` implementation for Raylib.
@@ -62,22 +65,31 @@ final class RaylibModel : Model, WithDrawableResources {
 
         const rad = display.camera.angle.x * std.math.PI / 180;
 
-        // Sort the bones
-        bones.map!((ref a) => cameraDistance(&a, rad))
-            .array
-            .sort!((a, b) => a[1] > b[1])
+        rlPushMatrix();
 
-            // Draw them
-            .each!(a => a[0].draw());
+            // Sort the bones
+            bones.map!((ref a) => cameraDistance(&a, rad))
+                .array
+                .sort!((a, b) => a[1] > b[1])
+
+                // Draw them
+                .each!(a => a[0].draw());
+
+        rlPopMatrix();
 
     }
 
     private Tuple!(Bone*, float) cameraDistance(Bone* bone, real rad) {
 
+        // Get new matrixes
+        bone.updateMatrixes();
+
+        const vec = Vector3Transform(Vector3Zero, bone.boneStart);
+
         return Tuple!(Bone*, float)(
             bone,
-            bone.boneStart.x * sin(rad)
-              + bone.boneStart.z * cos(rad),
+            vec.x * sin(rad)
+              + vec.z * cos(rad),
         );
 
     }

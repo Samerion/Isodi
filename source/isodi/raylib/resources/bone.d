@@ -2,7 +2,9 @@ module isodi.raylib.resources.bone;
 
 import raylib;
 
+import std.meta;
 import std.math;
+import std.math : PI;
 import std.string;
 import std.random;
 
@@ -29,22 +31,36 @@ struct Bone {
 
     }
 
-    // Recursively calculated points, relatively to model start point.
+    // Translation matrixes and related data for this bone.
     public {
 
-        /// Bone start position.
-        Vector3 boneStart;
+        /// Matrix corresponding to the bone start.
+        Matrix boneStart;
 
-        /// Bone end position.
-        Vector3 boneEnd;
+        /// Matrix corresponding to the bone end.
+        ///
+        /// Children will inherit their `boneStart` matrixes from this property.
+        Matrix boneEnd;
+
+        /// Local rotation of this bone, in radians.
+        Vector3 boneRotation;
+
+        /// Global rotation of the bone.
+        private Vector3 globalRotation;
 
     }
 
     // Other data
-    public {
+    private {
+
+        /// If true, this node has a parent
+        bool hasParent;
 
         /// Scale to be applied to textures.
         float scale;
+
+        /// Width of a single angle on the texture atlas.
+        uint atlasWidth;
 
         /// Texture of the bone.
         Texture2D texture;
@@ -70,17 +86,10 @@ struct Bone {
 
         // Get the scale
         this.scale = cast(float) model.display.cellSize / options.tileSize;
+        this.atlasWidth = texture.width / options.angles;
 
-        // If there is a parent
-        if (model.bones.length) {
-
-            // Inherit start from parent
-            boneStart = model.bones[node.parent].boneEnd;
-        }
-
-        // Calculate points
-        boneStart = boneStart + toVector3(node.boneStart);
-        boneEnd = boneStart + toVector3(node.boneEnd);
+        // Check if this node has a parent
+        this.hasParent = cast(bool) model.bones.length;
 
     }
 
@@ -90,98 +99,72 @@ struct Bone {
         // Ignore if not displaying
         if (node.hidden) return;
 
-        import std.conv : to;
-
         rlPushMatrix();
 
-            const display = model.display;
-            const atlasWidth = texture.width / options.angles;
+            import std.conv : to;
+
+            // Get the current atlas frame
+            const rotationY = (2*360 - globalRotation.y * 180/PI - model.display.camera.angle.x);
+            const frameDelimiter = 360.0 / options.angles;
+            const atlasFrame = (rotationY / frameDelimiter + 0.5).to!uint % options.angles;
 
             /// Scale for mirroring
             const mirrorScale = node.mirror ? -1 : 1;
 
-            // Get the node's rotation
-            const rotation = node.rotation + 360-display.camera.angle.x;
-            const angleDelimiter = 360.0 / options.angles;
+            /// Get the matrix
+            auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
 
-            // Convert to angle
-            const rotationAngle = rotation / angleDelimiter;
-            const int angleTransform = (rotationAngle + options.angles + 0.5).abs.to!int % options.angles;
-            const int angle = (rotationAngle * mirrorScale + options.angles + 0.5).abs.to!int % options.angles;
+            // Apply the matrix
+            rlMultMatrixf(&matrixf[0]);
 
-            // Move to the correct tile
-            rlTranslatef(model.position.toTuple3(display.cellSize, Yes.center).expand);
-
-            // Scale to fit
+            // Scale appropriately
             rlScalef(scale, scale, scale);
 
-            // Rotate to counter the camera
-            const camAngle = display.camera.angle;
-            rlRotatef(camAngle.x, 0, 1, 0);
-            rlRotatef(-camAngle.y, 1, 0, 0);
-            rlRotatef(-camAngle.x, 0, 1, 0);
+            // Snap to frame
+            rlRotatef(-cast(int)atlasFrame * frameDelimiter, 0, 1, 0);
 
-            rlPushMatrix();
+            // Push a matrix if debugging bones
+            static if (BoneDebug) rlPushMatrix();
 
-                // Offset the bone start
-                translateVec(boneStart);
+            // Translate the texture
+            rlTranslatef(
+                node.texturePosition[0],
+                node.texturePosition[1],
+                node.texturePosition[2] + 1,
+            );
 
-                // Rotate to match angle
-                rlRotatef(-angleTransform * angleDelimiter, 0, 1, 0);
+            // Check for mirroring
+            const textureFrame = node.mirror ? options.angles - atlasFrame : atlasFrame;
 
-                rlPushMatrix();
+            // Draw the texture
+            texture.DrawTextureRec(
+                Rectangle(
+                    atlasWidth * textureFrame, 0,
+                    mirrorScale * cast(int) atlasWidth, texture.height
+                ),
+                Vector2(),
+                Colors.WHITE
+            );
 
-                    // Offset the texture
-                    translateVec(toVector3(node.texturePosition));
+            // Draw debug points
+            static if (BoneDebug) {
 
-                    // Correct translation
-                    rlTranslatef(0, 0, 1);
+                // Draw texture debug
+                DrawCircle3D(
+                    Vector3(0, 0, -1), 0.2,
+                    Vector3(), 1,
+                    Colors.BLUE
+                );
 
-                    // Draw the texture
-                    texture.DrawTextureRec(
-                        Rectangle(
-                            atlasWidth * angle, 0,
-                            mirrorScale * cast(int) atlasWidth, texture.height
-                        ),
-                        Vector2(),
-                        Colors.WHITE
-                    );
-
-                    // Debug: texturePosition
-                    static if (BoneDebug)
-                    DrawCircle3D(
-                        Vector3(0, 0, -1), 0.2,
-                        Vector3(), 1,
-                        Colors.BLUE
-                    );
-
+                // Remove texture transform
                 rlPopMatrix();
 
-                // Debug: boneStart
-                static if (BoneDebug)
+                // Draw node debug
                 DrawCircle3D(
                     Vector3(0, 0, 0), 0.4,
                     Vector3(), 1,
                     Colors.GREEN
                 );
-
-            rlPopMatrix();
-
-            // Debug: boneEnd
-            static if (BoneDebug) {
-
-                rlPushMatrix();
-
-                    translateVec(boneEnd);
-                    rlRotatef(-angleTransform * angleDelimiter, 0, 1, 0);
-
-                    DrawCircle3D(
-                        Vector3(0, 0, 0), 0.4,
-                        Vector3(), 1,
-                        Colors.RED
-                    );
-
-                rlPopMatrix();
 
             }
 
@@ -189,20 +172,84 @@ struct Bone {
 
     }
 
-    private Vector3 toVector3(float[3] array) const {
+    /// Get local matrix for bone start.
+    ///
+    /// Params:
+    ///     atlasFrame = Current atlas frame of the texture.
+    private Matrix localMatrix(float atlasFrame) const {
 
-        return Vector3(
-            array[0],
-            array[1],
-            array[2],
+        immutable rad = std.math.PI / 180;
+
+        const camAngle = model.display.camera.angle;
+        return boneStart.mult(
+
+            // Negate camera vertical rotation
+            MatrixRotateY(camAngle.x * rad),
+            MatrixRotateX(camAngle.y * rad),
+            MatrixRotateY(-camAngle.x * rad),
+
+            // Move to the tile
+            MatrixTranslate(
+                model.position.toTuple3(model.display.cellSize, Yes.center).expand
+            )
+
         );
 
     }
 
-    private void translateVec(Vector3 vec) const {
+    /// Calculate matrixes for this node.
+    void updateMatrixes() {
 
-        rlTranslatef(vec.x, vec.y, vec.z);
+        // If there is a parent
+        if (hasParent) {
+
+            // Inherit start from parent
+            const parent = model.bones[node.parent];
+            boneStart = parent.boneEnd;
+            globalRotation = parent.globalRotation;
+
+        }
+
+        // For the root, create an identity matrix
+        else boneStart = MatrixIdentity;
+
+        /// Prepare a scale matrix based on bone position
+        Matrix boneTranslate(float[3] array) const {
+
+            return MatrixTranslate(
+                array[0] * scale,
+                array[1] * scale,
+                array[2] * scale,
+            );
+
+        }
+
+        // Calculate points
+        boneStart = mult(
+            MatrixRotateXYZ(boneRotation),
+            boneTranslate(node.boneStart),
+            boneStart,
+        );
+        boneEnd = mult(
+            boneTranslate(node.boneEnd),
+            boneStart,
+        );
+        globalRotation = Vector3Add(globalRotation, boneRotation);
 
     }
+
+}
+
+/// Multiply matrixes.
+private Matrix mult(Matrix[] matrixes...) {
+
+    auto result = MatrixIdentity;
+    foreach (matrix; matrixes) {
+
+        result = MatrixMultiply(result, matrix);
+
+    }
+
+    return result;
 
 }
