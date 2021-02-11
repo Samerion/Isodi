@@ -85,8 +85,9 @@ struct Animation {
         /// Amount of times this animation is supposed to play for. 0 for infinite.
         uint times;
 
-        /// Animations
+        /// Parts of the animation.
         AnimationPart[] parts;
+        // TODO: const?
 
     }
 
@@ -101,10 +102,33 @@ struct Animation {
 
     }
 
+    /// Continue to the next part of the animation.
+    /// Returns: `Yes.ended` if the animation ended.
+    Flag!"ended" advance() {
+
+        // Switch to the next part
+        current += 1;
+
+        // Check if there are more parts
+        if (current < parts.length) return No.ended;
+
+        // Check for infinite playback
+        if (!times) return No.ended;
+
+        // Check for repeat and advance to the next loop
+        if (--times) return No.ended;
+
+        // The animation ended
+        return Yes.ended;
+
+    }
+
 }
 
 alias PropertyImpl(T) = Tuple!(ubyte, "priority", T, "value");
 alias Property(T) = Nullable!(PropertyImpl!T);
+// TODO: Remove the priority field, it just makes the whole process unnecessarily more complex and most likely isn't
+// needed anyway. Currently it's being ignored anyway.
 
 /// Represents a single part of the animation, it may be a single or a few frames.
 struct AnimationPart {

@@ -65,6 +65,8 @@ final class RaylibModel : Model, WithDrawableResources {
 
         const rad = display.camera.angle.x * std.math.PI / 180;
 
+        runAnimations();
+
         rlPushMatrix();
 
             // Sort the bones
@@ -76,6 +78,47 @@ final class RaylibModel : Model, WithDrawableResources {
                 .each!(a => a[0].draw());
 
         rlPopMatrix();
+
+    }
+
+    private void runAnimations() {
+
+        foreach_reverse (i, ref animation; animations) {
+
+            // Increment frame time
+            animation.frame += animation.fps * GetFrameTime();
+
+            // Run the animation
+            while (true) {
+
+                // Get the next part
+                const part = animation.parts[animation.current];
+
+                // Run it; end if the part didn't finish
+                if (!runAnimationPart(part)) break;
+
+                // Advance to the next part
+                if (animation.advance == Yes.ended) {
+
+                    // The animation ended, remove it
+                    animations = animations.remove(i);
+
+                    // Continue to the next animation
+                    break;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /// Run the current animation part.
+    /// Returns: true if the animation part finished.
+    private bool runAnimationPart(const AnimationPart part) {
+
+        return false;
 
     }
 
