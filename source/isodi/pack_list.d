@@ -180,7 +180,7 @@ abstract class PackList {
 
     }
 
-    private auto packSearch(string method, Args...)(Args args, lazy string fail) {
+    private auto packSearch(string method, Args...)(ref Args args, lazy string fail) {
 
         /// Check each pack
         foreach (ref pack; packList) {

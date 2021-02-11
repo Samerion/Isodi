@@ -85,8 +85,11 @@ final class RaylibModel : Model, WithDrawableResources {
 
         foreach_reverse (i, ref animation; animations) {
 
+            const previousFrame = animation.frame;
+            const delta = animation.fps * GetFrameTime();
+
             // Increment frame time
-            animation.frame += animation.fps * GetFrameTime();
+            animation.frame += delta;
 
             // Run the animation
             while (true) {
@@ -94,8 +97,17 @@ final class RaylibModel : Model, WithDrawableResources {
                 // Get the next part
                 const part = animation.parts[animation.current];
 
-                // Run it; end if the part didn't finish
-                if (!runAnimationPart(part)) break;
+                // Frame delta / Frames until the end. Used to calculate changes in animated values
+                const progress = min(1, delta / (part.length - previousFrame));
+
+                // Run the animation
+                runAnimationPart(part, progress);
+
+                // Stop if the part didn't end
+                if (progress != 1) break;
+
+                // Decrease frame by part length
+                animation.frame -= part.length;
 
                 // Advance to the next part
                 if (animation.advance == Yes.ended) {
@@ -108,6 +120,9 @@ final class RaylibModel : Model, WithDrawableResources {
 
                 }
 
+                // Break if this is an infinite loop
+                else if (animation.times == 0) break;
+
             }
 
         }
@@ -115,10 +130,61 @@ final class RaylibModel : Model, WithDrawableResources {
     }
 
     /// Run the current animation part.
-    /// Returns: true if the animation part finished.
-    private bool runAnimationPart(const AnimationPart part) {
+    private void runAnimationPart(const AnimationPart part, float progress) {
 
-        return false;
+        // TODO: offset
+
+        // Check the bones
+        foreach (bone, target; part.bone) {
+
+            // Get the node for this bone
+            auto node = bonesID.get(bone, null);
+
+            // Ignore if the node doesn't exist
+            // This is because models and animations might be provided by different packs and different models may
+            // have different complexity level — less complex models should still work with animations designed for
+            // advanced ones, assuming that basic naming is kept the same
+            // Detecting mispellings and unknown bones is the job of a resource editor.
+            if (node is null) continue;
+
+            // Changing rotation
+            if (!target.rotate.isNull) {
+
+                import std.range : enumerate;
+
+                // Tween each value
+                auto newValues = [node.boneRotation.tupleof]
+                    .enumerate
+                    .map!((item) {
+
+                        const target = target.rotate.get[item.index] * std.math.PI / 180;
+
+                        return tweenAngle(progress, item.value, target);
+
+                    });
+
+                // Assign it
+                node.boneRotation = Vector3(newValues[0], newValues[1], newValues[2]);
+
+                //import std.stdio;
+                //writeln(node.boneRotation);
+                // 90, -45, 0
+                // 1.57, 0.785, 0
+
+            }
+
+            // TODO: changing scale
+            if (!target.scale.isNull) { }
+
+        }
+
+    }
+
+    /// Animate the given rotation property.
+    private T tweenAngle(T)(float progress, T currentValue, T target) {
+
+        // TODO: make this consider wrapping
+        return currentValue + progress * (target - currentValue);
 
     }
 

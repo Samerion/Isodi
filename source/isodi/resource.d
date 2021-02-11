@@ -113,7 +113,15 @@ struct Animation {
         if (current < parts.length) return No.ended;
 
         // Check for infinite playback
-        if (!times) return No.ended;
+        if (!times) {
+
+            // Reset the animation
+            frame = 0;
+            current = 0;
+
+            return No.ended;
+
+        }
 
         // Check for repeat and advance to the next loop
         if (--times) return No.ended;
@@ -125,10 +133,9 @@ struct Animation {
 
 }
 
-alias PropertyImpl(T) = Tuple!(ubyte, "priority", T, "value");
-alias Property(T) = Nullable!(PropertyImpl!T);
 // TODO: Remove the priority field, it just makes the whole process unnecessarily more complex and most likely isn't
 // needed anyway. Currently it's being ignored anyway.
+// E: removed from objects, should also be removed from the animation file.
 
 /// Represents a single part of the animation, it may be a single or a few frames.
 struct AnimationPart {
@@ -137,7 +144,7 @@ struct AnimationPart {
     uint length = 1;
 
     /// Change the model offset or position.
-    Property!(float[3]) offset;
+    Nullable!(float[3]) offset;
 
     /// Apply changes to a bone
     AnimationBone[string] bone;
@@ -148,9 +155,9 @@ struct AnimationPart {
 struct AnimationBone {
 
     /// Rotate the bone.
-    Property!(float[3]) rotate;
+    Nullable!(float[3]) rotate;
 
     /// Rotate the bone.
-    Property!float scale;
+    Nullable!float scale;
 
 }

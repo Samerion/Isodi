@@ -77,7 +77,7 @@ abstract class Model : Object3D, WithDrawableResources {
 
         // Push the animation
         animations ~= Animation(
-            frameCount / duration.total!"msecs" / 1000f,
+            cast(float) frameCount / duration.total!"msecs" * 1000f,
             times,
             resource.match
         );

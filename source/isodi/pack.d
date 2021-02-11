@@ -291,7 +291,7 @@ struct Pack {
 
     }
 
-    private AnimationPart getAnimationPart(ref JSONParser json, const string name, out uint frameCount) {
+    private AnimationPart getAnimationPart(ref JSONParser json, const string name, ref uint frameCount) {
 
         AnimationPart result;
 
@@ -350,24 +350,18 @@ struct Pack {
 
     }
 
-    private PropertyImpl!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
+    private Nullable!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
 
         // Get the same value with one value more
         auto value = json.get!(Value[N+1]);
-        return PropertyImpl!T(
-            value[0].to!ubyte,
-            value[1..$]
-        );
+        return value[1..$].to!T.nullable;
 
     }
 
-    private PropertyImpl!T getAnimationProperty(alias T)(ref JSONParser json) {
+    private Nullable!T getAnimationProperty(alias T)(ref JSONParser json) {
 
         auto value = json.get!(T[2]);
-        return PropertyImpl!T(
-            value[0].to!ubyte, value[1]
-        );
-
+        return value[1].nullable;
     }
 
 }
