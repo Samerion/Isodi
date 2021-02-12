@@ -18,7 +18,7 @@ final class RaylibModel : Model, WithDrawableResources {
 
     package {
 
-        Bone[] bones;
+        Bone*[] bones;
         Bone*[string] bonesID;
 
     }
@@ -49,8 +49,8 @@ final class RaylibModel : Model, WithDrawableResources {
         foreach (node; skeleton.match) {
 
             // Create a bone
-            bones ~= Bone(this, node, getBone(node));
-            auto bone = &bones[$-1];
+            auto bone = new Bone(this, node, getBone(node));
+            bones ~= bone;
 
             // Save by ID
             assert(bone.node.id !in bonesID);
@@ -70,7 +70,7 @@ final class RaylibModel : Model, WithDrawableResources {
         rlPushMatrix();
 
             // Sort the bones
-            bones.map!((ref a) => cameraDistance(&a, rad))
+            bones.map!((a) => cameraDistance(a, rad))
                 .array
                 .sort!((a, b) => a[1] > b[1])
 
@@ -143,7 +143,7 @@ final class RaylibModel : Model, WithDrawableResources {
             // Ignore if the node doesn't exist
             // This is because models and animations might be provided by different packs and different models may
             // have different complexity level — less complex models should still work with animations designed for
-            // advanced ones, assuming that basic naming is kept the same
+            // advanced ones, assuming that basic naming is kept the same.
             // Detecting mispellings and unknown bones is the job of a resource editor.
             if (node is null) continue;
 
@@ -165,11 +165,6 @@ final class RaylibModel : Model, WithDrawableResources {
 
                 // Assign it
                 node.boneRotation = Vector3(newValues[0], newValues[1], newValues[2]);
-
-                //import std.stdio;
-                //writeln(node.boneRotation);
-                // 90, -45, 0
-                // 1.57, 0.785, 0
 
             }
 
