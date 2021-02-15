@@ -1,10 +1,14 @@
 ///
 module isodi.model;
 
-import rcjson;
+import core.time;
+import std.string;
+import std.random;
 
+import isodi.pack;
 import isodi.tests;
 import isodi.object3d;
+import isodi.resource;
 
 /// Represents a 3D model.
 abstract class Model : Object3D, WithDrawableResources {
@@ -16,6 +20,14 @@ abstract class Model : Object3D, WithDrawableResources {
     /// Type of the model.
     const string type;
 
+    /// Active animations.
+    protected Animation[] animations;
+
+    /// Seed to use for RNG calls related to generation of this model's resources.
+    ///
+    /// It's preferred to sum this with a magic number to ensure unique combinations.
+    const ulong seed;
+
     /// Create a new model.
     /// Params:
     ///     display = Display to create the model for.
@@ -26,6 +38,7 @@ abstract class Model : Object3D, WithDrawableResources {
 
         super(display);
         this.type = type;
+        this.seed = unpredictableSeed;
 
     }
 
@@ -36,18 +49,68 @@ abstract class Model : Object3D, WithDrawableResources {
 
     }
 
-    /// Change the variant used for all bones of the given type.
+    /// Change the variant used for the node with given ID.
     /// Params:
-    ///     bone    = Type of the bones to be affected.
+    ///     id      = ID of the node to change.
     ///     variant = Variant of the bone to be set.
-    abstract void changeVariant(string bone, string variant);
+    abstract void changeVariant(string id, string variant);
 
-    /// Randomize the variant used for all bones of the given type.
+    /// Randomize the variant used for the node with given ID.
     /// Params:
-    ///     bone = Type of the bones to be affected.
-    void changeVariant(string bone) {
+    ///     id = ID of the node to change.
+    void changeVariant(string id) {
 
         assert(0, "unimplemented");
+
+    }
+
+    /// Run an animation.
+    /// Params:
+    ///     type     = Type of the animation.
+    ///     duration = Time it should take for one loop of the animation to complete.
+    ///     times    = How many times the animation should be ran.
+    void animate(string type, Duration duration, uint times = 1) {
+
+        // Get the resource
+        uint frameCount;  // @suppress(dscanner.suspicious.unmodified)
+        auto resource = display.packs.getAnimation(type, frameCount);
+
+        // Push the animation
+        animations ~= Animation(
+            cast(float) frameCount / duration.total!"msecs" * 1000f,
+            times,
+            resource.match
+        );
+
+    }
+
+    /// Run an animation indefinitely.
+    /// Params:
+    ///     type     = Type of the animation
+    ///     duration = Time it should take for one loop of the animation to complete.
+    void animateInf(string type, Duration duration) {
+
+        animate(type, duration, 0);
+
+    }
+
+    // TODO: stopAnimation
+
+    ///
+    protected Pack.Resource!string getBone(const SkeletonNode node) {
+
+        // TODO: add support for node.variants
+
+        auto rng = Mt19937_64(seed + node.parent);
+
+        // Get the texture
+        auto glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
+        const file = glob.matches.choice(rng);
+
+        return Pack.Resource!string(
+            file,
+            glob.pack.getOptions(file)
+        );
 
     }
 
@@ -57,7 +120,12 @@ mixin DisplayTest!((display) {
 
     // Model 1
     display.addCell(Position(), "grass");
-    display.addModel(Position(), "wraith-white");
+    with (display.addModel(Position(), "wraith-white")) {
+
+        animateInf("breath", 6.seconds);
+        animate("crab", 1.seconds);
+
+    }
 
     // Model 2
     display.addCell(position(2, 0), "grass");
@@ -67,46 +135,3 @@ mixin DisplayTest!((display) {
     display.addCell(position(2, 1, Height(4, 5)), "grass");
 
 });
-
-/// Represents a node in the skeleton.
-struct SkeletonNode {
-
-    /// Parent index
-    @JSONExclude
-    size_t parent;
-
-    /// If true, this node shouldn't be displayed and its bone resource shouldn't be loaded.
-    bool hidden;
-
-    /// Name of the used bone resource.
-    string name;
-
-    /// ID of the node, defauls to the bone name. Must be unique, so should be defined in case a bone occurs more than
-    /// one time.
-    string id;
-
-    /// List of bone variants compatible with this node.
-    ///
-    /// If this is empty, all variants are allowed.
-    string[] variants;
-
-    /// Offset for the bone's start relative to the parent's end.
-    ///
-    /// If the node is rotated, the whole bone will be rotated relative to this point.
-    float[3] boneStart = [0, 0, 0];
-
-    /// Position of the bone's end, relative to this node's start.
-    float[3] boneEnd = [0, 0, 0];
-
-    /// Position of the bone's texture relative to this node's start.
-    float[3] texturePosition = [0, 0, 0];
-
-    /// Rotation of the node.
-    ushort rotation;
-    invariant(rotation >= 0);
-    invariant(rotation < 360);
-
-    /// $(TCOLON Bone) If true, the bone textures will be mirrored.
-    bool mirror;
-
-}

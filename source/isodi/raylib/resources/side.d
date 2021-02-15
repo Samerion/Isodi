@@ -22,27 +22,14 @@ struct Side {
     float[4] scale;
 
     /// Create the side and load resources.
-    this(Cell cell) {
+    this(Cell cell, Pack.Resource!string[4] resources) {
 
         this.cell = cell;
 
-        // Create RNG
-        const seed = cast(ulong) cell.position.toHash + 1;
-        Mt19937_64 rng;
-
-        // Get possible sides
-        const path = cell.type.format!"cells/%s/side/*.png";
-        auto glob = cell.display.packs.packGlob(path);
-
-        // Generate each side
-        foreach (side; 0..4) {
-
-            // Get a random file
-            rng.seed(seed + side);
-            const file = glob.matches.choice(rng);
+        foreach (side, resource; resources) {
 
             // Load the texture
-            textures[side] = LoadTexture(file.toStringz);
+            textures[side] = LoadTexture(resource.match.toStringz);
             scale[side] = cast(float) cell.display.cellSize / textures[side].width;
 
         }
@@ -132,8 +119,6 @@ struct Side {
                     }
 
                 }
-
-                // TODO: change to DrawTextureRec
 
             rlPopMatrix();
 
