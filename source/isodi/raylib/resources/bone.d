@@ -104,12 +104,9 @@ struct Bone {
             import std.conv : to;
 
             // Get the current atlas frame
-            const rotationY = (2*360 - globalRotation.y * 180/PI - model.display.camera.angle.x);
+            const rotationY = 360 - model.display.camera.angle.x;
             const frameDelimiter = 360.0 / options.angles;
-            const atlasFrame = (rotationY / frameDelimiter + 0.5).to!uint % options.angles;
-
-            /// Scale for mirroring
-            const mirrorScale = node.mirror ? -1 : 1;
+            const atlasFrame = to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
 
             /// Get the matrix
             auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
@@ -121,7 +118,7 @@ struct Bone {
             rlScalef(scale, scale, scale);
 
             // Snap to frame
-            rlRotatef(-cast(int)atlasFrame * frameDelimiter, 0, 1, 0);
+            frameSnap(atlasFrame, frameDelimiter);
 
             // Push a matrix if debugging bones
             static if (BoneDebug) rlPushMatrix();
@@ -181,7 +178,10 @@ struct Bone {
         immutable rad = std.math.PI / 180;
 
         const camAngle = model.display.camera.angle;
-        return boneStart.mult(
+        return mult(
+
+            // Move the bone to its position in the model
+            boneStart,
 
             // Negate camera vertical rotation
             MatrixRotateY(camAngle.x * rad),
@@ -194,6 +194,46 @@ struct Bone {
             )
 
         );
+
+    }
+
+    /// Returns 1 if not mirroring, -1 if mirroring.
+    private int mirrorScale() const {
+
+        return node.mirror ? -1 : 1;
+
+    }
+
+    private void frameSnap(float atlasFrame, float frameDelimiter) const {
+
+        // Note: still requires more testing, especially for models with more than 4 angles
+
+        const snapAngle = cast(int)atlasFrame * frameDelimiter;
+
+        // Rounding for floating point precision
+        const piAbove = PI_2 + 1e-6;
+        const piBelow = PI_2 - 1e-6;
+
+        // Bone is above 90°
+        if (globalRotation.x >= piAbove || globalRotation.z > piAbove) {
+
+            rlRotatef(180 + snapAngle, 0, 1, 0);
+
+        }
+
+        // Bone is exactly on 90°
+        else if (globalRotation.x >= piBelow || globalRotation.z >= piBelow) {
+
+            // TODO, both cases would probably be different
+
+        }
+
+        // Bone is below
+        else {
+
+            rlRotatef(-snapAngle, 0, 1, 0);
+
+        }
 
     }
 
@@ -224,6 +264,8 @@ struct Bone {
 
         }
 
+        const PI2 = PI * 2;
+
         // Calculate points
         boneStart = mult(
             MatrixRotateXYZ(boneRotation),
@@ -234,7 +276,11 @@ struct Bone {
             boneTranslate(node.boneEnd),
             boneStart,
         );
-        globalRotation = Vector3Add(globalRotation, boneRotation);
+        globalRotation = Vector3(
+            (globalRotation.x + boneRotation.x) % PI2,
+            (globalRotation.y + boneRotation.y) % PI2,
+            (globalRotation.z + boneRotation.z) % PI2,
+        );
 
     }
 
