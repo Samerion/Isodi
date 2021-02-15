@@ -34,7 +34,7 @@
 	},
 	"description": "A small library for simple yet advanced isometric games",
 	"license": "BSL-1.0",
-	"name": "isodi-raylib",
+	"name": "isodi",
 	"targetPath": "build",
 	"targetType": "library"
 }
