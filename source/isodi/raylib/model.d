@@ -157,9 +157,9 @@ final class RaylibModel : Model, WithDrawableResources {
                     .enumerate
                     .map!((item) {
 
-                        const target = target.rotate.get[item.index] * std.math.PI / 180;
+                        const targetRad = target.rotate.get[item.index] * std.math.PI / 180;
 
-                        return tweenAngle(progress, item.value, target);
+                        return tweenAngle(progress, item.value, targetRad);
 
                     });
 
@@ -168,8 +168,12 @@ final class RaylibModel : Model, WithDrawableResources {
 
             }
 
-            // TODO: changing scale
-            if (!target.scale.isNull) { }
+            // Changing scale
+            if (!target.scale.isNull) {
+
+                node.boneScale = tween(progress, node.boneScale, target.scale);
+
+            }
 
         }
 
@@ -179,6 +183,13 @@ final class RaylibModel : Model, WithDrawableResources {
     private T tweenAngle(T)(float progress, T currentValue, T target) {
 
         // TODO: make this consider wrapping
+        return currentValue + progress * (target - currentValue);
+
+    }
+
+    /// Animate the given property.
+    private T tween(T)(float progress, T currentValue, T target) {
+
         return currentValue + progress * (target - currentValue);
 
     }

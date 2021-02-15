@@ -123,7 +123,7 @@ mixin DisplayTest!((display) {
     with (display.addModel(Position(), "wraith-white")) {
 
         animateInf("breath", 6.seconds);
-        animateInf("crab", 1.seconds);
+        animate("crab", 1.seconds);
 
     }
 

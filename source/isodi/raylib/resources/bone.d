@@ -56,6 +56,9 @@ struct Bone {
         /// If true, this node has a parent
         bool hasParent;
 
+        /// Original scale of the texture.
+        float originalScale;
+
         /// Scale to be applied to textures.
         float scale;
 
@@ -86,10 +89,29 @@ struct Bone {
 
         // Get the scale
         this.scale = cast(float) model.display.cellSize / options.tileSize;
+        this.originalScale = this.scale;
         this.atlasWidth = texture.width / options.angles;
 
         // Check if this node has a parent
         this.hasParent = cast(bool) model.bones.length;
+
+    }
+
+    @property {
+
+        /// Scale applied to this bone.
+        float boneScale() const {
+
+            return scale / originalScale;
+
+        }
+
+        /// Ditto
+        float boneScale(float value) {
+
+            return scale = originalScale * value;
+
+        }
 
     }
 
