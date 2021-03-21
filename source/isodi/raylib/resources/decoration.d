@@ -137,7 +137,7 @@ struct Decoration {
                         atlasWidth, deco.texture.height
                     ),
                     Vector2(),
-                    Colors.WHITE
+                    cell.color
                 );
 
                 rlPopMatrix();

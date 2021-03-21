@@ -5,15 +5,15 @@ import raylib;
 import std.string;
 import std.random;
 
-import isodi.cell;
 import isodi.pack;
+import isodi.raylib.cell;
 import isodi.raylib.internal;
 
 /// A side resource.
 struct Side {
 
     /// Owner object.
-    Cell cell;
+    RaylibCell cell;
 
     /// Textures of each side.
     Texture2D[4] textures;
@@ -22,7 +22,7 @@ struct Side {
     float[4] scale;
 
     /// Create the side and load resources.
-    this(Cell cell, Pack.Resource!string[4] resources) {
+    this(RaylibCell cell, Pack.Resource!string[4] resources) {
 
         this.cell = cell;
 
@@ -102,7 +102,7 @@ struct Side {
                                 texture.width, drawSpace,
                             ),
                             Vector2(0, 0),
-                            Colors.WHITE
+                            cell.color
                         );
 
                     rlPopMatrix();

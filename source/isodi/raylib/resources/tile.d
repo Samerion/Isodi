@@ -6,15 +6,15 @@ import std.string;
 import std.exception;
 
 import isodi.bind;
-import isodi.cell;
 import isodi.pack;
+import isodi.raylib.cell;
 import isodi.raylib.internal;
 
 /// A tile resource.
 struct Tile {
 
     /// Owner object.
-    Cell cell;
+    RaylibCell cell;
 
     /// Loaded texture.
     Texture2D texture;
@@ -26,7 +26,7 @@ struct Tile {
     const(ResourceOptions)* options;
 
     /// Create the tile and load textures.
-    this(Cell cell, Pack.Resource!string resource) {
+    this(RaylibCell cell, Pack.Resource!string resource) {
 
         this.cell = cell;
         this.texture = LoadTexture(resource.match.toStringz);
@@ -55,7 +55,7 @@ struct Tile {
             rlTranslatef(0, 0, 1);
 
             // Draw
-            texture.DrawTexture(0, 0, Colors.WHITE);
+            texture.DrawTexture(0, 0, cell.color);
 
         rlPopMatrix();
 
