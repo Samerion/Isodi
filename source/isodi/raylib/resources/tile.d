@@ -43,7 +43,7 @@ struct Tile {
         rlPushMatrix();
 
             // Move to the appropriate position
-            rlTranslatef(cell.position.toTuple3(cellSize).expand);
+            rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
             // Rotate to make it lay
             rlRotatef(-90, 1, 0, 0);

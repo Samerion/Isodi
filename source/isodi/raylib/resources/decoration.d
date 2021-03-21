@@ -106,7 +106,7 @@ struct Decoration {
                 // Also billboard are affected by camera Y angle which we do not want, so they can't be used.
 
                 // Translate to the correct position
-                rlTranslatef(cell.position.toTuple3(cellSize).expand);
+                rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
                 // Place within the tile
                 rlTranslatef(

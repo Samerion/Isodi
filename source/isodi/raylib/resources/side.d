@@ -50,7 +50,7 @@ struct Side {
                 {
 
                     // Move to an appropriate position
-                    rlTranslatef(cell.position.toTuple3(cellSize).expand);
+                    rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
                     // Correct positions
                     rlTranslatef(
@@ -71,7 +71,7 @@ struct Side {
                 }
 
                 const texture = textures[side];
-                const targetDepth = cell.position.height.depth * texture.width;
+                const targetDepth = cell.visualPosition.height.depth * texture.width;
 
                 float drawn = 0;
                 size_t start = 0;

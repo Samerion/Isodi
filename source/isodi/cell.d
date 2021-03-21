@@ -30,6 +30,7 @@ abstract class Cell : Object3D, WithDrawableResources {
 
         super(display);
         this._position = position;
+        this._visualPosition = position;
         this.seed = position.toHash;
         this.type = type;
 
@@ -145,6 +146,9 @@ mixin DisplayTest!((display) {
     display.addCell(position(2, 0, Height(0.4, 1.4)), "grass");
     display.addCell(position(3, 0, Height(0.6, 1.6)), "grass");
     display.addCell(position(4, 0, Height(0.8, 1.8)), "grass");
+
+    auto moved = display.addCell(position(5, 0), "grass");
+    moved.offset = position(-5, 1);
 
 });
 

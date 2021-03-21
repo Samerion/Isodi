@@ -22,6 +22,9 @@ abstract class Object3D {
     /// Get the current position of the object.
     abstract const(Position) position() const;
 
+    /// Get the current visual position of the object.
+    abstract const(Position) visualPosition() const;
+
     /// Params:
     ///     display = Display to connect to.
     this(Display display) {
@@ -39,6 +42,9 @@ abstract class Object3D {
         ///
         /// This returns a const value, use `positionRef` to get a reference.
         override const(Position) position() const { return _position; }
+
+        /// Ditto
+        override const(Position) visualPosition() const { return position; }
 
         /// Get a reference to the position value.
         ref Position positionRef() { return _position; }
@@ -72,11 +78,45 @@ abstract class Object3D {
 
     }
 
-    /// Implement the position as a const property. `_position` must be set in constructor.
+    /// Implement the position as a const property. `_position` and `_visualPosition` must be set in constructor.
     mixin template ImplementConst() {
 
         private const Position _position;
         override const(Position) position() const { return _position; }
+
+        private Position _visualPosition;
+
+        /// Get the position the cell is displayed on.
+        override const(Position) visualPosition() const {
+
+            return _visualPosition;
+
+        }
+
+        /// Set an offset for the visual position.
+        ///
+        /// $(B Note:) Mind that depth is initialized to 1 by default, which might cause unwanted effect. If you don't
+        /// want to offset it, use `positionOff`.
+        const(Position) offset(Position value) {
+
+            return _visualPosition = Position(
+                _position.x + value.x,
+                _position.y + value.y,
+                _position.layer + value.layer,
+                Height(
+                    _position.height.top + value.height.top,
+                    _position.height.depth + value.height.depth,
+                )
+            );
+
+        }
+
+        /// Reset the offset
+        void resetOffset() {
+
+            _visualPosition = _position;
+
+        }
 
     }
 

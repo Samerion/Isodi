@@ -37,10 +37,21 @@ Position position(int x, int y, int layer = 0, Height height = Height.init) {
 
 }
 
-/// Create a position tuple
+/// Create a position tuple.
 Position position(int x, int y, Height height, int layer = 0) {
 
     return Position(x, y, layer, height);
+
+}
+
+/// Create an offset tuple.
+///
+/// Unlike the other position constructors, this will subtract 1 from depth.
+Position positionOff(int x, int y, Height height = Height.init) {
+
+    height.depth -= 1;
+
+    return Position(x, y, 0, height);
 
 }
 

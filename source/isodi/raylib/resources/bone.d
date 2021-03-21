@@ -212,7 +212,7 @@ struct Bone {
 
             // Move to the tile
             MatrixTranslate(
-                model.position.toTuple3(model.display.cellSize, Yes.center).expand
+                model.visualPosition.toTuple3(model.display.cellSize, Yes.center).expand
             )
 
         );

@@ -87,9 +87,9 @@ final class RaylibDisplay : Display {
 
         return Tuple!(Object3D, float, float)(
             object,
-            object.position.x * sin(rad)
-              + object.position.y * cos(rad),
-            object.position.height.depth,
+            object.visualPosition.x * sin(rad)
+              + object.visualPosition.y * cos(rad),
+            object.visualPosition.height.depth,
         );
 
     }
