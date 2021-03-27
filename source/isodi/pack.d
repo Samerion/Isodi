@@ -19,6 +19,7 @@ import std.random;
 import std.string;
 import std.typecons;
 import std.exception;
+import std.algorithm;
 
 import rcjson;
 
@@ -126,6 +127,7 @@ struct Pack {
     /// Fields missing in the JSON will be inherited from parent directories or will use the default value.
     @JSONExclude
     ResourceOptions[string] fileOptions;
+
 
     /// Glob search within the pack.
     string[] glob(string file) {
@@ -362,6 +364,26 @@ struct Pack {
 
         auto value = json.get!(T[2]);
         return value[1].nullable;
+    }
+
+    /// List cells available in the pack.
+    /// Returns: A range with all cells that can be found in the pack.
+    auto listCells() const {
+
+        // Return all directories within "cells/"
+        return path.buildPath("cells")
+            .dirEntries(SpanMode.shallow)
+            .filter!((string name) => name.isDir)
+            .map!baseName;
+
+    }
+
+    unittest {
+
+        // Load the pack
+        auto pack = getPack("res/samerion-retro/pack.json");
+        assert(pack.listCells.canFind("grass"));
+
     }
 
 }

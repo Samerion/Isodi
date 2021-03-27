@@ -9,6 +9,7 @@ import std.string;
 import std.random;
 import std.typecons;
 import std.exception;
+import std.container;
 
 import isodi.bind;
 import isodi.pack;
@@ -194,6 +195,34 @@ abstract class PackList {
         }
 
         throw new PackException(fail);
+
+    }
+
+    /// List cells available in all the packs.
+    /// Returns: A `RedBlackTree!string`, guarantying unique elements.
+    auto listCells() const {
+
+        auto rbtree = redBlackTree!string;
+
+        foreach (ref pack; packList) {
+
+            // Add all cells from the pack
+            rbtree.insert(pack.listCells);
+
+        }
+
+        return rbtree;
+
+    }
+
+    unittest {
+
+        import std.algorithm;
+
+        auto packList = PackList.make(
+            getPack("res/samerion-retro/pack.json")
+        );
+        assert(packList.listCells[].canFind("grass"));
 
     }
 
