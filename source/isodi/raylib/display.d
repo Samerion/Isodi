@@ -47,6 +47,19 @@ final class RaylibDisplay : Display {
 
     }
 
+    /// Get Isodi position from world position.
+    /// Params:
+    ///     original = Raylib world position.
+    Position isodiPosition(Vector3 original) const {
+
+        return position(
+            cast(int) floor(original.x / cellSize),
+            cast(int) floor(original.z / cellSize - 1),
+            Height(-original.y / cellSize),
+        );
+
+    }
+
     /// Draw the contents of the display.
     ///
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
