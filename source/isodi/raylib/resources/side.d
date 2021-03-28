@@ -56,7 +56,7 @@ struct Side {
                     rlTranslatef(
                         cellSize * (side == 1 || side == 2),
                         0,
-                        cellSize * (side == 2 || side == 3) - cellSize
+                        cellSize * (side == 2 || side == 3)
                     );
 
                     // Rotate appropriately
@@ -93,16 +93,16 @@ struct Side {
                     rlPushMatrix();
 
                         // Push the texture down
-                        rlTranslatef(0, drawn, 0);
+                        rlTranslatef(0, -drawSpace - drawn, 0);
 
                         // Draw the texture
                         textures[side].DrawTextureRec(
                             Rectangle(
                                 0,             start,
-                                texture.width, drawSpace,
+                                texture.width, -drawSpace,
                             ),
                             Vector2(0, 0),
-                            cell.color
+                            cell.color,
                         );
 
                     rlPopMatrix();

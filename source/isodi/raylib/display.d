@@ -55,7 +55,7 @@ final class RaylibDisplay : Display {
         return position(
             cast(int) floor(original.x / cellSize),
             cast(int) floor(original.z / cellSize - 1),
-            Height(-original.y / cellSize),
+            Height(original.y / cellSize),
         );
 
     }
@@ -73,7 +73,7 @@ final class RaylibDisplay : Display {
             import std.array : array;
             import std.range : chain;
 
-            rlOrtho(0, 1, 1, 0, 0.1, 10_000);
+            rlOrtho(0, 1, -1, 0, 0.1, cellSize * cellSize);
             rlDisableDepthTest();
 
             const rad = camera.angle.x * std.math.PI / 180;
@@ -100,8 +100,8 @@ final class RaylibDisplay : Display {
 
         return Tuple!(Object3D, float, float)(
             object,
-            object.visualPosition.x * sin(rad)
-              + object.visualPosition.y * cos(rad),
+            -object.visualPosition.x * sin(rad)
+              - object.visualPosition.y * cos(rad),
             object.visualPosition.height.depth,
         );
 
@@ -128,7 +128,7 @@ final class RaylibDisplay : Display {
         // Get the target
         raycam.target = Vector3(
             targetVector.x + camera.offset.x * cellSize,
-            targetVector.y - camera.offset.height * cellSize,
+            targetVector.y + camera.offset.height * cellSize,
             targetVector.z + camera.offset.y * cellSize,
         );
 

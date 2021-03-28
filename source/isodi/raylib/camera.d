@@ -76,12 +76,12 @@ struct CameraKeybindings {
 
     @Affects!"offsetScreenY" {
 
-        /// Move the camera towards negative Y.
-        @Change!(-1)
-        KeyboardKey moveDown;
-
         /// Move the camera towards positive Y.
         @Change!(+1)
+        KeyboardKey moveDown;
+
+        /// Move the camera towards negative Y.
+        @Change!(-1)
         KeyboardKey moveUp;
 
     }
