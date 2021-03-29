@@ -177,6 +177,7 @@ struct TestRunner {
             display.packs = PackList.make(
                 getPack("res/samerion-retro/pack.json")
             );
+            display.camera.angle.x = display.camera.angle.x + 180;
 
             // Run the test
             try {
@@ -201,7 +202,7 @@ struct TestRunner {
                 // Display test, need to wait for user input
                 case display:
                     status = Status.paused;
-                    statusMessage = format!"Display test %s/%s. Press <Enter> to continue."(
+                    statusMessage = format!"y test %s/%s. Press <Enter> to continue."(
                         typeExecuted, tests[display].length
                     );
                     break;

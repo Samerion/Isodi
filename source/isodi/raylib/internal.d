@@ -67,7 +67,7 @@ auto toTuple3(inout(Position) position, int cellSize, Flag!"center" center = No.
         return Ret(
             position.x * cellSize,
             position.height.top * cellSize,
-            position.y * cellSize + cellSize,
+            position.y * cellSize,
         );
 
     }

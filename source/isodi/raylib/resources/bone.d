@@ -148,18 +148,18 @@ struct Bone {
             // Translate the texture
             rlTranslatef(
                 node.texturePosition[0],
-                node.texturePosition[1],
+                node.texturePosition[1] - texture.height,
                 node.texturePosition[2] + 1,
             );
 
             // Check for mirroring
-            const textureFrame = node.mirror ? options.angles - atlasFrame : atlasFrame;
+            const textureFrame = node.mirror ? atlasFrame : options.angles - atlasFrame;
 
             // Draw the texture
             texture.DrawTextureRec(
                 Rectangle(
                     atlasWidth * textureFrame, 0,
-                    mirrorScale * cast(int) atlasWidth, texture.height
+                    -mirrorScale * cast(int) atlasWidth, -texture.height
                 ),
                 Vector2(),
                 Colors.WHITE
@@ -219,7 +219,7 @@ struct Bone {
 
     }
 
-    /// Returns 1 if not mirroring, -1 if mirroring.
+    /// Returns -1 if mirroring, -1 if not.
     private int mirrorScale() const {
 
         return node.mirror ? -1 : 1;
@@ -239,7 +239,7 @@ struct Bone {
         // Bone is above 90°
         if (globalRotation.x >= piAbove || globalRotation.z > piAbove) {
 
-            rlRotatef(180 + snapAngle, 0, 1, 0);
+            rlRotatef(snapAngle, 0, 1, 0);
 
         }
 
@@ -253,7 +253,7 @@ struct Bone {
         // Bone is below
         else {
 
-            rlRotatef(-snapAngle, 0, 1, 0);
+            rlRotatef(180 - snapAngle, 0, 1, 0);
 
         }
 

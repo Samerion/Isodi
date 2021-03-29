@@ -54,7 +54,7 @@ final class RaylibDisplay : Display {
 
         return position(
             cast(int) floor(original.x / cellSize),
-            cast(int) floor(original.z / cellSize - 1),
+            cast(int) floor(original.z / cellSize),
             Height(original.y / cellSize),
         );
 
