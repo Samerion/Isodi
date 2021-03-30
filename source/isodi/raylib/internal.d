@@ -39,14 +39,14 @@ string colorText(string text, LogType type) {
 }
 
 /// Convert position to Vector3
-inout(Vector3) toVector3(inout(Position) position, uint cellSize, Flag!"center" center = No.center) {
+inout(Vector3) toVector3(inout(Position) position, int cellSize, Flag!"center" center = No.center) {
 
     return Vector3(position.toTuple3(cellSize, center).expand);
 
 }
 
 /// Get a Vector3 from given position.
-auto toTuple3(inout(Position) position, uint cellSize, Flag!"center" center = No.center) {
+auto toTuple3(inout(Position) position, int cellSize, Flag!"center" center = No.center) {
 
     alias Ret = Tuple!(float, float, float);
 
@@ -55,7 +55,7 @@ auto toTuple3(inout(Position) position, uint cellSize, Flag!"center" center = No
 
         return Ret(
             (position.x + 0.5) * cellSize,
-            -position.height.top * cellSize,
+            position.height.top * cellSize,
             (position.y + 0.5) * cellSize,
         );
 
@@ -66,8 +66,8 @@ auto toTuple3(inout(Position) position, uint cellSize, Flag!"center" center = No
 
         return Ret(
             position.x * cellSize,
-            -position.height.top * cellSize,
-            position.y * cellSize + cellSize,
+            position.height.top * cellSize,
+            position.y * cellSize,
         );
 
     }

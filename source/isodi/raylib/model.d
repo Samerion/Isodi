@@ -171,7 +171,7 @@ final class RaylibModel : Model, WithDrawableResources {
             // Changing scale
             if (!target.scale.isNull) {
 
-                node.boneScale = tween(progress, node.boneScale, target.scale);
+                node.boneScale = tween(progress, node.boneScale, target.scale.get);
 
             }
 
@@ -203,8 +203,8 @@ final class RaylibModel : Model, WithDrawableResources {
 
         return Tuple!(Bone*, float)(
             bone,
-            vec.x * sin(rad)
-              + vec.z * cos(rad),
+            -vec.x * sin(rad)
+              - vec.z * cos(rad),
         );
 
     }

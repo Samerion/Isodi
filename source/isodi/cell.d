@@ -147,8 +147,14 @@ mixin DisplayTest!((display) {
     display.addCell(position(3, 0, Height(0.6, 1.6)), "grass");
     display.addCell(position(4, 0, Height(0.8, 1.8)), "grass");
 
+    display.addCell(position(0, 1), "grass");
+    display.addCell(position(1, 1, Height(2, 2)), "grass");
+    display.addCell(position(2, 1, Height(4, 4)), "grass");
+    display.addCell(position(3, 1, Height(6, 6)), "grass");
+    display.addCell(position(4, 1, Height(8, 8)), "grass");
+
     auto moved = display.addCell(position(5, 0), "grass");
-    moved.offset = position(-5, 1);
+    moved.offset = position(-5, -1);
 
 });
 

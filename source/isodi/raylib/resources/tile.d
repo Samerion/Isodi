@@ -46,7 +46,7 @@ struct Tile {
             rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
             // Rotate to make it lay
-            rlRotatef(-90, 1, 0, 0);
+            rlRotatef(90, 1, 0, 0);
 
             // Scale the tile to fit cell size
             rlScalef(scale, scale, scale);
