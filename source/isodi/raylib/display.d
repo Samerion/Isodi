@@ -60,6 +60,35 @@ final class RaylibDisplay : Display {
 
     }
 
+    /// Get a ray from the mouse position relative to the camera.
+    /// Params:
+    ///     inverted = Shoots the ray behind the camera. It might be useful to check both the normal and inverted ray
+    ///         the ray doesn't recognize camera height properly.
+    Ray mouseRay(bool inverted) const {
+
+        auto ray = GetMouseRay(GetMousePosition, raycam);
+
+        if (inverted) {
+
+            ray.direction = Vector3Negate(ray.direction);
+
+        }
+
+        return ray;
+
+    }
+
+    /// Snap a Vector3 with a world position to Isodi.
+    Vector3 snapWorldPosition(Vector3 pos) const {
+
+        return Vector3(
+            cast(int) pos.x / cellSize * cellSize,
+            cast(int) pos.y / cellSize * cellSize,
+            cast(int) pos.z / cellSize * cellSize,
+        );
+
+    }
+
     /// Draw the contents of the display.
     ///
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
@@ -73,7 +102,7 @@ final class RaylibDisplay : Display {
             import std.array : array;
             import std.range : chain;
 
-            rlOrtho(0, 1, -1, 0, 0.1, cellSize * cellSize);
+            rlOrtho(-1, 1, -1, 1, 0.01, cellSize * cellSize);
             rlDisableDepthTest();
 
             const rad = camera.angle.x * std.math.PI / 180;
