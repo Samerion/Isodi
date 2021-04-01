@@ -91,7 +91,7 @@ abstract class Display {
 
     }
 
-    /// Add a new cell to the display.
+    /// Add a new cell to the display. Replaces the cell if one already exists.
     /// Params:
     ///     position = Position of the cell in the display.
     ///     type     = Type of the cell.
@@ -150,11 +150,22 @@ abstract class Display {
 
     }
 
+    /// Remove the cell at given position.
+    void removeCell(UniquePosition position) {
+
+        cellMap.remove(position);
+
+    }
+
+    /// Ditto
+    void removeCell(Position position) {
+
+        removeCell(position.toUnique);
+
+    }
+
     // TODO
     version (None) {
-
-        /// Remove the cell at given position.
-        void removeCell(UniquePosition);
 
         /// Remove the given model.
         ///
