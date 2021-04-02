@@ -146,7 +146,7 @@ final class RaylibDisplay : Display {
         // Calculate the target
         const target = camera.follow is null
             ? Position()
-            : camera.follow.position;
+            : camera.follow.visualPosition;
         const targetVector = target.toVector3(cellSize, Yes.center);
 
         // Update the camera

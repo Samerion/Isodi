@@ -2,9 +2,6 @@
 	"authors": [
 		"soaku"
 	],
-	"buildRequirements": [
-		"allowWarnings"
-	],
 	"configurations": [
 		{
 			"dependencies": {

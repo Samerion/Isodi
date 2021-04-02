@@ -202,7 +202,7 @@ struct TestRunner {
                 // Display test, need to wait for user input
                 case display:
                     status = Status.paused;
-                    statusMessage = format!"y test %s/%s. Press <Enter> to continue."(
+                    statusMessage = format!"Display test %s/%s. Press <Enter> to continue."(
                         typeExecuted, tests[display].length
                     );
                     break;

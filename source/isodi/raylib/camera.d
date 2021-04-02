@@ -143,7 +143,8 @@ void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) {
         // This is a key field
         static if (hasUDA!(BindField, Change)) {
 
-            enum direction = getUDAs!(BindField, Change)[0].value;
+            alias ChangeDeco = getUDAs!(BindField, Change)[0];
+            enum direction = ChangeDeco.value;
 
             // Pressed
             if (mixin("keybinds." ~ actionName).IsKeyDown) {
@@ -167,8 +168,27 @@ void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) {
                 // If so
                 static if (IsField!(mixin(cameraField))) {
 
+                    import std.algorithm : clamp;
+
+                    // Get the new value
+                    auto newValue = mixin(cameraField) + change;
+
+                    // Clamp angle Y
+                    static if (cameraField == "camera.angle.y") {
+
+                        newValue = newValue.clamp(0, 90);
+
+                    }
+
+                    // Clamp camera distance
+                    else static if (cameraField == "camera.distance") {
+
+                        newValue = newValue.clamp(keybinds.zoomInLimit, keybinds.zoomOutLimit);
+
+                    }
+
                     // Increment the field
-                    mixin(cameraField) = mixin(cameraField) + change;
+                    mixin(cameraField) = newValue;
 
                 }
 
@@ -180,11 +200,5 @@ void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) {
         }
 
     }}
-
-    import std.algorithm : clamp;
-
-    // Update boundaries
-    camera.angle.y  = camera.angle.y.clamp(0, 90);
-    camera.distance = camera.distance.clamp(keybinds.zoomInLimit, keybinds.zoomOutLimit);
 
 }
