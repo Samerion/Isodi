@@ -4,7 +4,7 @@ module isodi.resource;
 import core.time;
 import std.typecons;
 
-import rcjson;
+import rcdata.json;
 
 import isodi.pack_list;
 

@@ -27,7 +27,7 @@
 	],
 	"copyright": "Copyright © 2020, soaku",
 	"dependencies": {
-		"rcjson": ">=1.0.0-alpha.3 <1.1.0-0"
+		"rcdata": ">=1.0.0-alpha <1.1.0-0"
 	},
 	"description": "A small library for simple yet advanced isometric games",
 	"license": "BSL-1.0",

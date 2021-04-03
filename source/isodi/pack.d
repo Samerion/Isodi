@@ -21,7 +21,7 @@ import std.typecons;
 import std.exception;
 import std.algorithm;
 
-import rcjson;
+import rcdata.json;
 
 import isodi.model;
 import isodi.internal;
@@ -190,7 +190,7 @@ struct Pack {
     /// Throws:
     ///     $(UL
     ///         $(LI `PackException` if the skeleton doesn't exist.)
-    ///         $(LI `rcjson.JSONException` if the skeleton isn't valid.)
+    ///         $(LI `rcdata.json.JSONException` if the skeleton isn't valid.)
     ///     )
     Resource!(SkeletonNode[]) getSkeleton(const string name) {
 
@@ -266,7 +266,7 @@ struct Pack {
     /// Throws:
     ///     $(UL
     ///         $(LI `PackException` if the animation doesn't exist.)
-    ///         $(LI `rcjson.JSONException` if the animation isn't valid.)
+    ///         $(LI `rcdata.json.JSONException` if the animation isn't valid.)
     ///     )
     Resource!(AnimationPart[]) getAnimation(const string name, out uint frameCount) {
 

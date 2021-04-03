@@ -5,7 +5,7 @@
 		"fluent-asserts": "0.13.3",
 		"libdparse": "0.14.0",
 		"raylib-d": "3.0.3",
-		"rcjson": "1.0.0-alpha.3",
+		"rcdata": "1.0.0-alpha",
 		"stdx-allocator": "2.77.5"
 	}
 }
