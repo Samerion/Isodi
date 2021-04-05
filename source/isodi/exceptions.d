@@ -1,5 +1,6 @@
 ///
 module isodi.exceptions;
+// TODO rename to exception
 
 import std.exception;
 
@@ -12,6 +13,13 @@ abstract class IsodiException : Exception {
 
 /// Any exception that occurs while loading packs or textures.
 class PackException : Exception {
+
+    mixin basicExceptionCtors;
+
+}
+
+/// Any exception that occurs while loading or exporting tilemaps.
+class MapException : Exception {
 
     mixin basicExceptionCtors;
 

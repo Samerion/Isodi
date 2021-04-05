@@ -113,9 +113,7 @@ final class RaylibDisplay : Display {
                 // Depth sort
                 .map!(a => cameraDistance(a, rad))
                 .array
-                .sort!((a, b) => a[1] != b[1]
-                    ? a[1] > b[1]
-                    : a[2] < b[2])
+                .multiSort!(`a[1] > b[1]`, `a[2] < b[2]`)
 
                 // Draw them
                 .each!(a => a[0].to!WithDrawableResources.draw());

@@ -3,6 +3,7 @@ module isodi.position;
 
 import std.meta;
 import std.typecons;
+import std.algorithm;
 
 /// Represents the height of a cell
 struct Height {
@@ -29,6 +30,16 @@ alias Position = Tuple!(
     int, "layer",
     Height, "height",
 );
+
+/// Arguments to pass to `multiSort` to sort Object3Ds by `position`.
+private alias positionSortArgs = AliasSeq!(
+    `a.position.layer < b.position.layer`,
+    `a.position.y < b.position.y`,
+    `a.position.x < b.position.x`,
+);
+
+/// Sort Object3Ds by `position`.
+alias positionSort = multiSort!positionSortArgs;
 
 /// Create a position tuple.
 Position position(int x, int y, int layer = 0, Height height = Height.init) {
