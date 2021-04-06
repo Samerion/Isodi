@@ -13,14 +13,34 @@ import isodi.display;
 import isodi.position;
 import isodi.exceptions;
 
+/// A start leet code, just for fun (and identification)
+private immutable leet = 0x150D1;
+
+private struct EntryCell {
+
+    ulong cellID;
+    Height height;
+
+}
+
+private struct Entry {
+
+    // Each entry starts with its starting position
+    int x;
+    int y;
+    int layer;
+
+    // Then followed by a list of cells (expanding towards positive X)
+    // Cell under index 0 will be placed under the same position as the entry
+    EntryCell[] cells;
+
+}
+
 /// Save tilemap
 /// Params:
 ///     display = Isodi display to use.
 ///     range   = An output range the tilemap should be written to.
 void saveTilemap(T)(Display display, T range) {
-
-    /// A start leet code, just for fun (and identification)
-    immutable leet = 0x150D1;
 
     /// Serializer for the tilemap
     auto bin = rcbinSerializer(range);
@@ -40,26 +60,6 @@ void saveTilemap(T)(Display display, T range) {
 
 /// Implementation of
 private auto saveTilemapImpl(Display display, ref string[] declarations) {
-
-    struct EntryCell {
-
-        ulong cellID;
-        Height height;
-
-    }
-
-    struct Entry {
-
-        // Each entry starts with its starting position
-        int x;
-        int y;
-        int layer;
-
-        // Then followed by a list of cells (expanding towards positive X)
-        // Cell under index 0 will be placed under the same position as the entry
-        EntryCell[] cells;
-
-    }
 
     /// Tile names assigned to IDs.
     ulong[string] ids;
@@ -106,6 +106,46 @@ private auto saveTilemapImpl(Display display, ref string[] declarations) {
 
 }
 
+/// Load tilemaps
+/// Note: Offset ignores depth.
+void loadTilemap(T)(Display display, T range, Position offset = Position.init) {
+
+    /// Create the parser
+    auto bin = rcbinParser(range);
+
+    // Check for the magic number
+    enforce!MapException(bin.read!int.swapEndian == leet, "Given file is not a tilemap");
+
+    /// Values
+    string[] declarations = bin.read!(string[]);
+
+    /// Load entries
+    // rcdata.bin could get support for reading as ranges probably
+    auto size = bin.read!ulong;
+
+    foreach (index; 0..size) {
+
+        auto entry = bin.read!Entry;
+        auto position = position(entry.x, entry.y, entry.layer);
+        position.x += offset.x;
+        position.y += offset.y;
+
+        // Load each cell
+        foreach (cell; entry.cells) {
+
+            position.height = cell.height;
+            position.height.top += offset.height.top;
+            display.addCell(position, declarations[cell.cellID]);
+
+            // Increment position
+            position.x += 1;
+
+        }
+
+    }
+
+}
+
 mixin DisplayTest!((display) {
 
     // TODO: add tests for layers and objects spaced apart
@@ -122,6 +162,9 @@ mixin DisplayTest!((display) {
 
     auto result = data[];
     assert(result[0..4] == [0, 1, 0x50, 0xD1]);
+
+    loadTilemap(display, result, position(3, 0));
+    loadTilemap(display, result, position(0, 3, Height(0.5)));
 
 });
 
