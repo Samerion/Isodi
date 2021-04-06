@@ -4,8 +4,8 @@
 ///     `isodi.pack`
 module isodi.pack_json;
 
-import std;  // Too many imports, stopped making sense to list them. Sorry.
-import rcjson;
+import std;  // Too many imports, stopped making sense to list them. Sorry.  // Probably not true anymore? TODO
+import rcdata.json;
 
 import isodi.pack;
 import isodi.internal;
@@ -18,7 +18,7 @@ import isodi.exceptions;
 ///
 /// Params:
 ///     json = `JSONParser` instance to fetch data from.
-/// Throws: `rcjson.JSONException` on type mismatch or type error
+/// Throws: `rcdata.json.JSONException` on type mismatch or type error
 Pack getPack(ref JSONParser json) {
 
     JSONParser[wstring] options;
@@ -89,7 +89,7 @@ Pack getPack(ref JSONParser json) {
 /// Read the pack data from a JSON file.
 /// Params:
 ///     filename = Name of the file to read from.
-/// Throws: `rcjson.JSONException` on type mismatch or type error
+/// Throws: `rcdata.json.JSONException` on type mismatch or type error
 Pack getPack(string filename) {
 
     // Get the pack
