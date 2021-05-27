@@ -110,7 +110,29 @@ abstract class Display {
     /// Returns: The cell at this position. `null` if not found.
     Cell getCell(const UniquePosition position) {
 
-        return cellMap[position];
+        return cellMap.get(position, null);
+
+    }
+
+    unittest {
+
+        // This boilerplate shouldn't be necessary, TODO reduce
+        auto display = Display.make;
+        display.packs ~= getPack("res/samerion-retro/pack.json");
+
+        // Add two sample cells
+        display.addCell(position(1, 2), "wood");
+        display.addCell(position(2, 2), "wood");
+
+        // Replace the first cell
+        display.addCell(position(1, 2), "grass");
+
+        // Add a cell on a different layer
+        display.addCell(position(2, 2, 1), "grass");
+
+        assert(display.getCell(UniquePosition(1, 2, 0)).type == "grass");
+        assert(display.getCell(UniquePosition(2, 2, 0)).type == "wood");
+        assert(display.getCell(UniquePosition(3, 2, 0)) is null);
 
     }
 
