@@ -163,6 +163,7 @@ mixin DisplayTest!((display) {
     auto result = data[];
     assert(result[0..4] == [0, 1, 0x50, 0xD1]);
 
+    display.addModel(position(4, 1), "wraith-white");
     loadTilemap(display, result, position(3, 0));
     loadTilemap(display, result, position(0, 3, Height(0.5)));
 

@@ -104,6 +104,16 @@ abstract class Display {
 
     }
 
+    /// Get a cell at given position.
+    /// Params:
+    ///     position = Position of the cell.
+    /// Returns: The cell at this position. `null` if not found.
+    Cell getCell(const UniquePosition position) {
+
+        return cellMap[position];
+
+    }
+
     /// Add a new model to the display.
     /// Params:
     ///     position = Position to place the model on.
