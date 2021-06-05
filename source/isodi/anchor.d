@@ -12,12 +12,29 @@ abstract class Anchor : Object3D {
 
     mixin Object3D.Implement;
 
+    private {
+
+        static size_t nextID;
+        size_t _id;
+
+    }
+
     ///
     this(Display display) {
 
         super(display);
+        this._id = nextID++;
 
     }
+
+    ~this() {
+
+        if (display) display.removeAnchor(this);
+
+    }
+
+    @property
+    size_t id() const { return _id; }
 
     /// Make an anchor with the current renderer.
     static Anchor make(Display display) {

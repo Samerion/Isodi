@@ -58,7 +58,7 @@ abstract class PackList {
     static PackList make(Pack[] packs...) {
 
         auto list = make();
-        list.packList = packs;
+        list.packList = packs.dup;
         list.clearCache();
         return list;
 

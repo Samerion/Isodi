@@ -36,6 +36,12 @@ abstract class Cell : Object3D, WithDrawableResources {
 
     }
 
+    ~this() {
+
+        if (display) display.removeCell(position);
+
+    }
+
     /// Create a cell with the current renderer.
     static Cell make(Display display, const Position position, const string type) {
 

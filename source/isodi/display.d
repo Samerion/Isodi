@@ -114,11 +114,28 @@ abstract class Display {
 
     }
 
+    /// Remove the cell at given position.
+    ///
+    /// Note: The cell will remain in the memory until collected by the GC. If you want to remove it instantly, use
+    /// `cell.destroy`.
+    ///
+    /// Returns: True if the cell was actually removed.
+    bool removeCell(UniquePosition position) {
+
+        return cellMap.remove(position);
+
+    }
+
+    /// Ditto.
+    bool removeCell(Position position) {
+
+        return removeCell(position.toUnique);
+
+    }
+
     unittest {
 
-        // This boilerplate shouldn't be necessary, TODO reduce
-        auto display = Display.make;
-        display.packs ~= getPack("res/samerion-retro/pack.json");
+        auto display = TestRunner.makeDisplay;
 
         // Add two sample cells
         display.addCell(position(1, 2), "wood");
@@ -134,6 +151,11 @@ abstract class Display {
         assert(display.getCell(UniquePosition(2, 2, 0)).type == "wood");
         assert(display.getCell(UniquePosition(3, 2, 0)) is null);
 
+        // Remove the first cell
+        display.removeCell(position(1, 2));
+
+        assert(display.getCell(UniquePosition(1, 2, 0)) is null);
+
     }
 
     /// Add a new model to the display.
@@ -144,10 +166,7 @@ abstract class Display {
 
         // Create the model
         auto model = Model.make(this, type);
-
-        // See `addAnchor` for why is this wrong
-        const id = lastModel++;
-        modelMap[id] = model;
+        modelMap[model.id] = model;
 
         return model;
 
@@ -162,18 +181,21 @@ abstract class Display {
 
     }
 
+    /// Remove the given model from the map.
+    /// Returns: True if the model was actually removed.
+    bool removeModel(Model model) {
+
+        return modelMap.remove(model.id);
+
+    }
+
     /// Add a new anchor to the display.
     /// Returns: The created anchor.
     Anchor addAnchor(Position position = Position.init) {
 
         // Create the anchor
         auto anchor = Anchor.make(this);
-
-        // IDs should be implemented as internal anchor fields to keep track of them.
-        // Alternatively, the map could be changed to Anchor[Anchor] or something like that.
-        // RedBlackTree isn't too easy to implement
-        const id = lastAnchor++;
-        anchorMap[id] = anchor;
+        anchorMap[anchor.id] = anchor;
 
         // Set the position
         anchor.position = position;
@@ -182,33 +204,39 @@ abstract class Display {
 
     }
 
-    /// Remove the cell at given position.
-    void removeCell(UniquePosition position) {
+    /// Remove the given anchor from the map.
+    /// Returns: True if the anchor was actually removed.
+    bool removeAnchor(Anchor anchor) {
 
-        cellMap.remove(position);
-
-    }
-
-    /// Ditto
-    void removeCell(Position position) {
-
-        removeCell(position.toUnique);
-
-    }
-
-    // TODO
-    version (None) {
-
-        /// Remove the given model.
-        ///
-        /// Returns: `true` if the model was actually removed, `false` otherwise.
-        bool removeModel(Model);
-
-        /// Remove the given anchor.
-        ///
-        /// Returns: `true` if the anchor was actually removed, `false` otherwise.
-        bool removeAnchor(Anchor);
+        return anchorMap.remove(anchor.id);
 
     }
 
 }
+
+mixin DisplayTest!((display) {
+
+    // Add a few cells
+    display.addCell(position(1, 1), "grass");
+    display.addCell(position(1, 2), "grass");
+    display.addCell(position(1, 3), "grass");
+    auto a = display.addCell(position(1, 4), "grass");
+
+    // Place models on them
+    display.addModel(position(1, 1), "wraith-white");
+    display.addModel(position(1, 2), "wraith-white");
+    auto b = display.addModel(position(1, 3), "wraith-white");
+    auto c = display.addModel(position(1, 4), "wraith-white");
+
+    // Remove the third and fourth cell (different methods)
+    display.removeCell(position(1, 3));
+    a.destroy();
+
+    // Remove the third and fourth models
+    display.removeModel(b);
+    c.destroy();
+
+    // Also: need to test anchors, but there isn't really a visible way... should probably be handled by the renderer
+    // still TODO
+
+});

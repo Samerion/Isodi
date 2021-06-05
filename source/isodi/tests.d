@@ -14,8 +14,8 @@ import isodi.display;
 // This thing  is madness and should  be disabled by default.  It causes more problems  than it fixes due  to how many
 // false-positives it  catches. It makes  it impossible to  create custom inline tests,  because "oh module  1 imports
 // module 2  and they  both have  tests! oh no!".  It's annoying.  And I feel  stupid making  a separate  directory or
-// something just for testing.  Tests are better inline. Wait, did  I mention this is a RUNTIME  feature? It should be
-// done by the compiler. I don't mean just speed, but... why runtime?
+// something just  for testing.  Tests are  better inline.  Also, it's  a runtime  feature. It  should be  done by the
+// compiler. I don't mean just speed, but... why runtime?
 //
 // Well, I probably should use `unittest` blocks with  decorators `@DisplayTest` and `@Benchmark`, but that comes with
 // a problem:  there's no  way to  list all  modules compile-time  (wtf?) which  would be  necessary to  load unittest
@@ -121,6 +121,17 @@ struct TestRunner {
 
     }
 
+    static Display makeDisplay() {
+
+        auto result = Display.make;
+        result.packs = PackList.make(
+            getPack("res/samerion-retro/pack.json")
+        );
+        result.camera.angle.x = result.camera.angle.x + 180;
+        return result;
+
+    }
+
     /// Start the tests
     void runTests() {
 
@@ -173,11 +184,7 @@ struct TestRunner {
             alias QuietThrowable = Throwable;
 
             // Create a display
-            display = Display.make;
-            display.packs = PackList.make(
-                getPack("res/samerion-retro/pack.json")
-            );
-            display.camera.angle.x = display.camera.angle.x + 180;
+            display = makeDisplay;
 
             // Run the test
             try {

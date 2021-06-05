@@ -17,6 +17,13 @@ abstract class Model : Object3D, WithDrawableResources {
     /// as the model, the model will be standing on the cell.
     mixin Object3D.Implement;
 
+    private {
+
+        static size_t nextID;
+        size_t _id;
+
+    }
+
     /// Type of the model.
     const string type;
 
@@ -37,10 +44,20 @@ abstract class Model : Object3D, WithDrawableResources {
         // TODO: ModelBuilder for Isodi editors.
 
         super(display);
+        this._id = nextID++;
         this.type = type;
         this.seed = unpredictableSeed;
 
     }
+
+    ~this() {
+
+        if (display) display.removeModel(this);
+
+    }
+
+    @property
+    size_t id() const { return _id; }
 
     /// Ditto
     static Model make(Display display, const string type) {
