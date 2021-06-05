@@ -27,12 +27,6 @@ abstract class Anchor : Object3D {
 
     }
 
-    ~this() {
-
-        if (display) display.removeAnchor(this);
-
-    }
-
     @property
     size_t id() const { return _id; }
 

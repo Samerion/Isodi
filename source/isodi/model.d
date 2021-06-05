@@ -50,12 +50,6 @@ abstract class Model : Object3D, WithDrawableResources {
 
     }
 
-    ~this() {
-
-        if (display) display.removeModel(this);
-
-    }
-
     @property
     size_t id() const { return _id; }
 

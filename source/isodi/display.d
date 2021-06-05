@@ -13,6 +13,9 @@ import isodi.position;
 ///
 /// This class is abstract, as it should be overriden by the renderer. Use the `make` method to create a display with
 /// the current renderer.
+///
+/// Note: If the display is destroyed, all of its members will automatically be destroyed too, so references to display
+/// objects will be dead. Make sure you clean them out before switching displays.
 abstract class Display {
 
     public {
@@ -60,6 +63,12 @@ abstract class Display {
 
     }
 
+    ~this() {
+
+        clearDestroy();
+
+    }
+
     /// Create a display with the current renderer.
     static Display make() {
 
@@ -91,6 +100,27 @@ abstract class Display {
 
     }
 
+    /// Clear all objects within the display. Leaves packs and cache in place.
+    void clear() {
+
+        cellMap.clear();
+        modelMap.clear();
+        anchorMap.clear();
+
+    }
+
+    /// Destroy the contents of the display.
+    void clearDestroy() {
+
+        // Destroy all resources
+        foreach (cell; cells) cell.destroy();
+        foreach (model; models) model.destroy();
+        foreach (anchor; anchors) anchor.destroy();
+
+        clear();
+
+    }
+
     /// Add a new cell to the display. Replaces the cell if one already exists.
     /// Params:
     ///     position = Position of the cell in the display.
@@ -115,9 +145,6 @@ abstract class Display {
     }
 
     /// Remove the cell at given position.
-    ///
-    /// Note: The cell will remain in the memory until collected by the GC. If you want to remove it instantly, use
-    /// `cell.destroy`.
     ///
     /// Returns: True if the cell was actually removed.
     bool removeCell(UniquePosition position) {
@@ -220,21 +247,20 @@ mixin DisplayTest!((display) {
     display.addCell(position(1, 1), "grass");
     display.addCell(position(1, 2), "grass");
     display.addCell(position(1, 3), "grass");
-    auto a = display.addCell(position(1, 4), "grass");
 
     // Place models on them
     display.addModel(position(1, 1), "wraith-white");
     display.addModel(position(1, 2), "wraith-white");
-    auto b = display.addModel(position(1, 3), "wraith-white");
-    auto c = display.addModel(position(1, 4), "wraith-white");
+    auto a = display.addModel(position(1, 3), "wraith-white");
 
     // Remove the third and fourth cell (different methods)
     display.removeCell(position(1, 3));
-    a.destroy();
 
     // Remove the third and fourth models
-    display.removeModel(b);
-    c.destroy();
+    display.removeModel(a);
+
+    // Note: now the model can be safely deleted
+    a.destroy();
 
     // Also: need to test anchors, but there isn't really a visible way... should probably be handled by the renderer
     // still TODO
