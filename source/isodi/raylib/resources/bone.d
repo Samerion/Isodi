@@ -84,7 +84,7 @@ struct Bone {
         if (node.hidden) return;
 
         // Load the texture
-        this.texture = LoadTexture(resource.match.toStringz);
+        this.texture = model.display.loadTexture(resource.match);
         this.options = resource.options;
 
         // Get the scale
