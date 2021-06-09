@@ -42,6 +42,7 @@ final class RaylibDisplay : Display {
 
     override void reloadResources() {
 
+        packs.clearCache();
         foreach (cell; cells) cell.reload();
         foreach (model; models) model.reload();
 
@@ -129,7 +130,7 @@ final class RaylibDisplay : Display {
             object,
             -object.visualPosition.x * sin(rad)
               - object.visualPosition.y * cos(rad),
-            object.visualPosition.height.depth,
+            object.visualPosition.height.top,
         );
 
     }

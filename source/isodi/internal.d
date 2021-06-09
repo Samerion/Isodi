@@ -1,16 +1,17 @@
 module isodi.internal;
 
 import std.string;
-import std.concurrency;
 
 package:
 
 /// Iterate on file ancestors, starting from and including the requested file and ending on the root.
-auto deepAncestors(string path) {
+struct DeepAncestors {
 
-    auto dir = path;
+    const string path;
 
-    return new Generator!string({
+    int opApply(int delegate(string) dg) {
+
+        auto dir = path[];
 
         while (dir.length) {
 
@@ -18,7 +19,8 @@ auto deepAncestors(string path) {
             dir = dir.stripRight("/");
 
             // Yield the content
-            yield(dir);
+            auto result = dg(dir);
+            if (result) return result;
 
             // Get the position on which the segment ends
             auto segmentEnd = dir.lastIndexOf("/");
@@ -32,29 +34,33 @@ auto deepAncestors(string path) {
         }
 
         // Push empty path
-        yield("");
+        return dg("");
 
-    });
+    }
 
 }
 
 /// Iterate on file ancestors starting from root, ending on and including the file itself.
-auto ancestors(wstring dir) {
+struct Ancestors {
 
-    wstring current;
+    const wstring path;
 
-    return new Generator!wstring({
+    int opApply(int delegate(wstring) dg) {
 
-        yield(""w);
+        wstring current;
+
+        auto result = dg(""w);
+        if (result) return result;
 
         // Check each value
-        foreach (ch; dir) {
+        foreach (ch; path) {
 
             // Encountered a path separator
             if (ch == '/' || ch == '\\') {
 
                 // Yield the current values
-                yield(current);
+                result = dg(current);
+                if (result) return result;
                 current ~= "/";
 
             }
@@ -65,8 +71,15 @@ auto ancestors(wstring dir) {
         }
 
         // Yield the full path
-        if (current.length && current[$-1] != '/') yield(current);
+        if (current.length && current[$-1] != '/') {
 
-    });
+            result = dg(current);
+            return result;
+
+        }
+
+        return 0;
+
+    }
 
 }

@@ -41,7 +41,7 @@ struct Decoration {
         foreach (i, resource; resources) {
 
             // Load the texture
-            auto texture = LoadTexture(resource.match.toStringz);
+            auto texture = cell.display.loadTexture(resource.match);
 
             // Get direction of the decoration piece
             rng.seed(cell.seed + 100 + 10*i);

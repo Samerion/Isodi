@@ -45,6 +45,12 @@ abstract class PackList {
 
     }
 
+    ~this() {
+
+        clearCache();
+
+    }
+
     /// Create a pack list for the current renderer.
     static PackList make() {
 

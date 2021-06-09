@@ -29,7 +29,7 @@ struct Tile {
     this(RaylibCell cell, Pack.Resource!string resource) {
 
         this.cell = cell;
-        this.texture = LoadTexture(resource.match.toStringz);
+        this.texture = cell.display.loadTexture(resource.match);
         this.options = resource.options;
         this.scale = cast(float) cell.display.cellSize / texture.width;
 

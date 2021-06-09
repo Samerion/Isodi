@@ -59,7 +59,7 @@ Pack getPack(ref JSONParser json) {
         ResourceOptions builder;
 
         // Get all ancestors of this item
-        foreach (ancestorPath; path.ancestors) {
+        foreach (ancestorPath; path.Ancestors) {
 
             // If the ancestor exists
             if (auto p = ancestorPath in options) {
@@ -128,7 +128,7 @@ unittest {
 ResourceOptions* getOptions(Pack pack, string path) {
 
     /// Search for the closest matching resource
-    foreach (file; path.stripRight("/").deepAncestors) {
+    foreach (file; path.stripRight("/").DeepAncestors) {
 
         // Return the first one found
         if (auto p = file in pack.fileOptions) return p;

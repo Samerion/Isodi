@@ -2,5 +2,3 @@
 ///
 /// All window initialization has to be done manually.
 module isodi.raylib;
-
-// version (Have_raylib_d) to identify if Raylib is used

@@ -29,7 +29,7 @@ struct Side {
         foreach (side, resource; resources) {
 
             // Load the texture
-            textures[side] = LoadTexture(resource.match.toStringz);
+            textures[side] = cell.display.loadTexture(resource.match);
             scale[side] = cast(float) cell.display.cellSize / textures[side].width;
 
         }

@@ -73,3 +73,16 @@ auto toTuple3(inout(Position) position, int cellSize, Flag!"center" center = No.
     }
 
 }
+
+/// Load a texture from the display.
+Texture loadTexture(Display display, string path) {
+
+    import isodi.raylib.pack_list : RaylibPackList;
+
+    // Get the pack list
+    auto packs = cast(RaylibPackList) display.packs;
+
+    // Return the texture
+    return packs.loadTexture(path);
+
+}
