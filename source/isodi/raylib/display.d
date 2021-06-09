@@ -109,12 +109,15 @@ final class RaylibDisplay : Display {
             const rad = camera.angle.x * std.math.PI / 180;
 
             // Get all 3D objects
-            chain(cells, models, anchors)
+            chain(
+                cells.map!(a => cameraDistance(a, rad, 0)),
+                models.map!(a => cameraDistance(a, rad, 1)),
+                anchors.map!(a => cameraDistance(a, rad, 2))
+            )
 
                 // Depth sort
-                .map!(a => cameraDistance(a, rad))
                 .array
-                .multiSort!(`a[1] > b[1]`, `a[2] < b[2]`)
+                .multiSort!(`a[1] > b[1]`, `a[2] < b[2]`, `a[3] < b[3]`)
 
                 // Draw them
                 .each!(a => a[0].to!WithDrawableResources.draw());
@@ -124,13 +127,14 @@ final class RaylibDisplay : Display {
     }
 
     /// Get the camera distance of given Object3D
-    private Tuple!(Object3D, float, float) cameraDistance(Object3D object, real rad) {
+    private auto cameraDistance(Object3D object, real rad, uint priority) {
 
-        return Tuple!(Object3D, float, float)(
+        return Tuple!(Object3D, float, float, uint)(
             object,
             -object.visualPosition.x * sin(rad)
               - object.visualPosition.y * cos(rad),
             object.visualPosition.height.top,
+            priority,
         );
 
     }
