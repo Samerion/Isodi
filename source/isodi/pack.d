@@ -156,7 +156,7 @@ struct Pack {
         res = res.chompPrefix(path).stripLeft("/");
 
         /// Search for the closest matching resource
-        foreach (file; res.stripRight("/").deepAncestors) {
+        foreach (file; res.stripRight("/").DeepAncestors) {
 
             // Return the first one found
             if (auto p = file in fileOptions) return p;
