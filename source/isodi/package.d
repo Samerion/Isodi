@@ -11,12 +11,15 @@
 ///
 /// See `isodi.display.Display` to get started!
 module isodi;
+
 public {
 
     import isodi.cell;
+    import isodi.pack;
     import isodi.model;
     import isodi.anchor;
     import isodi.display;
+    import isodi.tilemap;
     import isodi.position;
 
 }

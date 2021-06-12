@@ -8,6 +8,7 @@ import std.exception;
 
 import rcdata.bin;
 
+import isodi.cell;
 import isodi.tests;
 import isodi.display;
 import isodi.position;
@@ -107,8 +108,14 @@ private auto saveTilemapImpl(Display display, ref string[] declarations) {
 }
 
 /// Load tilemaps
-/// Note: Offset ignores depth.
-void loadTilemap(T)(Display display, T range, Position offset = Position.init) {
+/// Params:
+///     display     = Display to place the tilemap in.
+///     range       = Range of bytes containing map data.
+///     offset      = Optional position offset to apply to each cell. Ignores depth.
+///     postprocess = A callback ran after adding each cell to the tilemap.
+void loadTilemap(T)(Display display, T range, Position offset = Position.init,
+    void delegate(Cell) postprocess = null)
+do {
 
     /// Create the parser
     auto bin = rcbinParser(range);
@@ -135,7 +142,12 @@ void loadTilemap(T)(Display display, T range, Position offset = Position.init) {
 
             position.height = cell.height;
             position.height.top += offset.height.top;
-            display.addCell(position, declarations[cell.cellID]);
+
+            // Add it to the display
+            auto isodiCell = display.addCell(position, declarations[cast(size_t) cell.cellID]);
+
+            // Preprocess the cell
+            if (postprocess) postprocess(isodiCell);
 
             // Increment position
             position.x += 1;
@@ -145,6 +157,7 @@ void loadTilemap(T)(Display display, T range, Position offset = Position.init) {
     }
 
 }
+
 
 mixin DisplayTest!((display) {
 
