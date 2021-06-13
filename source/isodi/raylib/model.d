@@ -148,7 +148,7 @@ final class RaylibModel : Model, WithDrawableResources {
             if (node is null) continue;
 
             // Changing rotation
-            if (!target.rotate.isNull) {
+            {
 
                 import std.range : enumerate;
 
@@ -157,7 +157,7 @@ final class RaylibModel : Model, WithDrawableResources {
                     .enumerate
                     .map!((item) {
 
-                        const targetRad = target.rotate.get[item.index] * std.math.PI / 180;
+                        const targetRad = target.rotate[item.index] * std.math.PI / 180;
 
                         return tweenAngle(progress, item.value, targetRad);
 
@@ -169,9 +169,9 @@ final class RaylibModel : Model, WithDrawableResources {
             }
 
             // Changing scale
-            if (!target.scale.isNull) {
+            if (target.scale != 0) {
 
-                node.boneScale = tween(progress, node.boneScale, target.scale.get);
+                node.boneScale = tween(progress, node.boneScale, target.scale);
 
             }
 

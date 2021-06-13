@@ -7,9 +7,6 @@
 			"dependencies": {
 				"raylib-d": "~>3.0.3"
 			},
-			"libs": [
-				"raylib"
-			],
 			"name": "raylib",
 			"targetType": "library"
 		},

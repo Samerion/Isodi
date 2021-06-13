@@ -352,18 +352,17 @@ struct Pack {
 
     }
 
-    private Nullable!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
+    private T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
 
         // Get the same value with one value more
         auto value = json.get!(Value[N+1]);
-        return value[1..$].to!T.nullable;
+        return value[1..$];
 
     }
 
-    private Nullable!T getAnimationProperty(alias T)(ref JSONParser json) {
+    private T getAnimationProperty(alias T)(ref JSONParser json) {
 
-        auto value = json.get!(T[2]);
-        return value[1].nullable;
+        return json.get!(T[2])[1];
     }
 
     /// List cells available in the pack.
