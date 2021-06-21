@@ -13,3 +13,8 @@ The library uses Raylib to render by default, but it's designed so it shouldn't 
 
 Isodi is still in early development, so the documentation may be incomplete. It aims to be compatible with DDox,
 meaning you can build the documentation using `dub build -b=ddox`
+
+## Testing
+
+* `dub test` to run general raylib tests.
+* `dub run -c=headless-unittest -b=unittest` to run headless tests.

@@ -11,7 +11,8 @@
 				"raylib"
 			],
 			"name": "raylib",
-			"targetType": "library"
+			"targetType": "library",
+			"excludedSourceFiles": ["source/isodi/headless/*"]
 		},
 		{
 			"dependencies": {
@@ -22,7 +23,21 @@
 			],
 			"mainSourceFile": "source/isodi/raylib/tests.d",
 			"name": "unittest",
-			"targetType": "executable"
+			"targetType": "executable",
+			"excludedSourceFiles": ["source/isodi/headless/*"]
+		},
+		{
+			"name": "headless",
+			"targetType": "library",
+			"versions": ["Isodi_Headless"],
+			"excludedSourceFiles": ["source/isodi/raylib/*"]
+		},
+		{
+			"name": "headless-unittest",
+			"targetType": "executable",
+			"versions": ["Isodi_Headless"],
+			"mainSourceFile": "source/isodi/headless/tests.d",
+			"excludedSourceFiles": ["source/isodi/raylib/*"]
 		}
 	],
 	"copyright": "Copyright © 2020, soaku",
