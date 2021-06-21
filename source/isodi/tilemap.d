@@ -15,7 +15,7 @@ import isodi.position;
 import isodi.exceptions;
 
 /// A start leet code, just for fun (and identification)
-private immutable leet = 0x150D1;
+private immutable int leet = 0x150D1;
 
 private struct EntryCell {
 
@@ -117,47 +117,97 @@ void loadTilemap(T)(Display display, T range, Position offset = Position.init,
     void delegate(Cell) postprocess = null)
 do {
 
-    /// Create the parser
-    auto bin = rcbinParser(range);
+    LoadTilemap loader;
 
-    // Check for the magic number
-    enforce!MapException(bin.read!int.swapEndian == leet, "Given file is not a tilemap");
+    string[] declarations;
+    Position cellPosition;
 
-    /// Values
-    string[] declarations = bin.read!(string[]);
+    loader.onDeclarations = (decl) {
 
-    /// Load entries
-    // rcdata.bin could get support for reading as ranges probably
-    auto size = bin.read!ulong;
+        declarations = decl.dup;
 
-    foreach (index; 0..size) {
+    };
 
-        auto entry = bin.read!Entry;
-        auto position = position(entry.x, entry.y, entry.layer);
-        position.x += offset.x;
-        position.y += offset.y;
+    loader.onEntry = (x, y, layer) {
 
-        // Load each cell
-        foreach (cell; entry.cells) {
+        cellPosition = position(
+            x + offset.x,
+            y + offset.y,
+            layer
+        );
 
-            position.height = cell.height;
-            position.height.top += offset.height.top;
+    };
 
-            // Add it to the display
-            auto isodiCell = display.addCell(position, declarations[cast(size_t) cell.cellID]);
+    loader.onCell = (id, height) {
 
-            // Preprocess the cell
-            if (postprocess) postprocess(isodiCell);
+        cellPosition.height = height;
+        cellPosition.height.top += offset.height.top;
 
-            // Increment position
-            position.x += 1;
+        // Add it to the display
+        auto isodiCell = display.addCell(cellPosition, declarations[cast(size_t) id]);
+
+        // Postprocess the cell
+        if (postprocess) postprocess(isodiCell);
+
+        // Increment position
+        cellPosition.x += 1;
+
+    };
+
+    loader.parse(range);
+
+}
+
+/// Struct for advanced tilemap loading.
+struct LoadTilemap {
+
+    /// This delegate is called with tile declarations at the start of the file. Indexes within the array are later to
+    /// be used to find the tile name for a cell ID.
+    void delegate(scope string[]) onDeclarations;
+
+    /// This delegate is called when matched an entry, that is, a row of cells in an arbitrary position.
+    ///
+    /// The parameters are the position of the entry. Following cell calls will start from this position, each new
+    /// cell should increment x.
+    void delegate(int x, int y, int layer) onEntry;
+
+    /// This delegate is called when found a cell. It is called with an ID corresponding to the tile type declaration
+    /// (from [onDeclarations]) and a definition of the cell's height.
+    void delegate(ulong cellID, Height height) onCell;
+
+    /// Begin parsing. A callback member will be ran for each matched element of the input.
+    void parse(T)(T range) {
+
+        /// Create the parser
+        auto bin = rcbinParser(range);
+
+        // Check for the magic number
+        enforce!MapException(bin.read!(ubyte[4]).bigEndianToNative!int == leet, "Given file is not a tilemap");
+
+        /// Load declarations
+        onDeclarations(bin.read!(string[]));
+
+        /// Load entries
+        // rcdata.bin could get support for reading as ranges probably
+        auto size = bin.read!ulong;
+
+        foreach (index; 0..size) {
+
+            auto entry = bin.read!Entry;
+            onEntry(entry.x, entry.y, entry.layer);
+
+            // Load each cell
+            foreach (cell; entry.cells) {
+
+                onCell(cell.cellID, cell.height);
+
+            }
 
         }
 
     }
 
 }
-
 
 mixin DisplayTest!((display) {
 
@@ -169,12 +219,12 @@ mixin DisplayTest!((display) {
         display.addCell(position(x, y), "grass");
 
     }
+    display.addCell(position(10, 10), "wood");
 
     auto data = appender!(ubyte[]);
     saveTilemap(display, data);
 
     auto result = data[];
-    assert(result[0..4] == [0, 1, 0x50, 0xD1]);
 
     display.addModel(position(4, 1), "wraith-white");
     loadTilemap(display, result, position(3, 0));
