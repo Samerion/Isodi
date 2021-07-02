@@ -42,11 +42,11 @@ struct CameraKeybindings {
 
         /// Rotate the camera clockwise.
         @Change!(-1)
-        KeyboardKey rotateLeft;
+        KeyboardKey rotateRight;
 
         /// Rotate the camera counter-clockwise.
         @Change!(+1)
-        KeyboardKey rotateRight;
+        KeyboardKey rotateLeft;
 
     }
 
