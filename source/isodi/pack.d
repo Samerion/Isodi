@@ -100,7 +100,7 @@ struct Pack {
         const(ResourceOptions)*, "options",
     );
 
-    /// Path to the pack in the filesystem.
+    /// Path to the pack directory in the filesystem.
     @JSONExclude
     string path;
 

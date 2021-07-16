@@ -92,6 +92,14 @@ Pack getPack(ref JSONParser json) {
 /// Throws: `rcdata.json.JSONException` on type mismatch or type error
 Pack getPack(string filename) {
 
+    // It might be a directory
+    if (filename.isDir) {
+
+        // Read pack.json by default
+        filename = filename.buildPath("pack.json");
+
+    }
+
     // Get the pack
     auto json = filename.readText.JSONParser();
     auto pack = json.getPack;
