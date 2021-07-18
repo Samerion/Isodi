@@ -112,12 +112,12 @@ final class RaylibDisplay : Display {
             chain(
                 cells.map!(a => cameraDistance(a, rad, 0)),
                 models.map!(a => cameraDistance(a, rad, 1)),
-                anchors.map!(a => cameraDistance(a, rad, 2))
+                anchors.map!(a => cameraDistance(a, rad, 2, (cast(RaylibAnchor) a).drawOrder))
             )
 
                 // Depth sort
                 .array
-                .multiSort!(`a[1] > b[1]`, `a[2] < b[2]`, `a[3] < b[3]`)
+                .multiSort!(`a[1] < b[1]`, `a[2] > b[2]`, `a[3] < b[3]`, `a[4] < b[4]`)
 
                 // Draw them
                 .each!(a => a[0].to!WithDrawableResources.draw());
@@ -127,10 +127,12 @@ final class RaylibDisplay : Display {
     }
 
     /// Get the camera distance of given Object3D
-    private auto cameraDistance(Object3D object, real rad, uint priority) {
+    private auto cameraDistance(Object3D object, real rad, uint priority,
+    RaylibAnchor.DrawOrder order = RaylibAnchor.DrawOrder.position) {
 
-        return Tuple!(Object3D, float, float, uint)(
+        return Tuple!(Object3D, RaylibAnchor.DrawOrder, float, float, uint)(
             object,
+            order,
             -object.visualPosition.x * sin(rad)
               - object.visualPosition.y * cos(rad),
             object.visualPosition.height.top,
@@ -177,10 +179,10 @@ final class RaylibDisplay : Display {
     /// Params:
     ///     callback = Function that will be called every frame in order to draw the anchor content.
     /// Returns: The created anchor
-    Anchor addAnchor(void delegate() callback) {
+    RaylibAnchor addAnchor(void delegate() callback) {
 
-        auto anchor = super.addAnchor();
-        anchor.to!RaylibAnchor.callback = callback;
+        auto anchor = cast(RaylibAnchor) super.addAnchor();
+        anchor.callback = callback;
         return anchor;
 
     }

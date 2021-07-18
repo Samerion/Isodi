@@ -37,11 +37,21 @@ private struct Entry {
 
 }
 
-/// Save tilemap
+/// Save the display contents into a tilemap.
 /// Params:
 ///     display = Isodi display to use.
 ///     range   = An output range the tilemap should be written to.
 void saveTilemap(T)(Display display, T range) {
+
+    saveTilemap(display.cells.array, range);
+
+}
+
+/// Save a tilemap containing the given cells.
+/// Params:
+///     cells = Cells to store in the tilemap.
+///     range = An output range the tilemap should be written to.
+void saveTilemap(T)(Cell[] cells, T range) {
 
     /// Serializer for the tilemap
     auto bin = rcbinSerializer(range);
@@ -50,7 +60,7 @@ void saveTilemap(T)(Display display, T range) {
     string[] declarations;
 
     /// Get the entries
-    auto entries = saveTilemapImpl(display, declarations);
+    auto entries = saveTilemapImpl(cells, declarations);
 
     // Place the contents
     bin.get(leet.nativeToBigEndian)
@@ -60,13 +70,13 @@ void saveTilemap(T)(Display display, T range) {
 }
 
 /// Implementation of
-private auto saveTilemapImpl(Display display, ref string[] declarations) {
+private auto saveTilemapImpl(Cell[] allCells, ref string[] declarations) {
 
     /// Tile names assigned to IDs.
     ulong[string] ids;
 
     // Sort the cells by position
-    auto cells = display.cells.array.positionSort;
+    auto cells = allCells.positionSort;
 
     // Resulting entries
     auto entries = [Entry()];
