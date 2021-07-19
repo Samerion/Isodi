@@ -34,7 +34,7 @@ final class RaylibDisplay : Display {
     }
 
     /// Get the underlying Raylib camera.
-    const(raylib.Camera) raylibCamera() {
+    const(raylib.Camera) raylibCamera() const {
 
         return raycam;
 
@@ -106,14 +106,28 @@ final class RaylibDisplay : Display {
             rlOrtho(-1, 1, -1, 1, 0.01, cellSize * cellSize);
             rlDisableDepthTest();
 
-            const rad = camera.angle.x * std.math.PI / 180;
+            alias PI = std.math.PI;
+
+            const rad = PI / 180;
+            const radX = camera.angle.x * rad;
+            const radY = camera.angle.y * rad;
+
+            // Get perceived screen size based on camera angle
+            // 90° = ×1, 0° = ×∞
+            // No idea what would be the best formula here, at first I used tan, but it turned out to be excessive.
+            // This seems to work well...
+            const screenWidth  = GetScreenWidth;
+            const screenHeight = cast(int) (GetScreenHeight * sqrt(1 + radY));
 
             // Get all 3D objects
             chain(
-                cells.map!(a => cameraDistance(a, rad, 0)),
-                models.map!(a => cameraDistance(a, rad, 1)),
-                anchors.map!(a => cameraDistance(a, rad, 2, (cast(RaylibAnchor) a).drawOrder))
+                cells.map!(a => cameraDistance(a, radX, 0)),
+                models.map!(a => cameraDistance(a, radX, 1)),
+                anchors.map!(a => cameraDistance(a, radX, 2, (cast(RaylibAnchor) a).drawOrder))
             )
+
+                // Ignore invisible objects
+                .filter!(a => inBounds(a, screenWidth, screenHeight))
 
                 // Depth sort
                 .array
@@ -126,11 +140,52 @@ final class RaylibDisplay : Display {
 
     }
 
+    private alias SortTuple = Tuple!(Object3D, RaylibAnchor.DrawOrder, float, float, uint);
+
+    /// Check if the object is in bounds of the display.
+    private bool inBounds(SortTuple object, int screenWidth, int screenHeight) {
+
+        Vector2 worldPoint(CellPoint point) {
+
+            return GetWorldToScreen(object[0].position.toVector3(cellSize, point), raycam);
+
+        }
+
+        const center = worldPoint(CellPoint.center);
+        const edge   = worldPoint(CellPoint.edge);
+
+        const diagX = abs(edge.x - center.x);
+        const diagY = abs(edge.y - center.y);
+
+        // Top is visible
+        if (0 <= center.x + diagX && center.x - diagX < screenWidth
+         && 0 <= center.y + diagY && center.y - diagY < screenHeight) {
+
+            return true;
+
+        }
+
+        // Get bottom position
+        const bottom = worldPoint(CellPoint.bottomCenter);
+
+        // Bottom is visible
+        if (0 <= bottom.x + diagX && bottom.x - diagX < screenWidth
+         && 0 <= bottom.y + diagY && bottom.y - diagY < screenHeight) {
+
+            return true;
+
+        }
+
+        // Nope, nothing is visible
+        return false;
+
+    }
+
     /// Get the camera distance of given Object3D
-    private auto cameraDistance(Object3D object, real rad, uint priority,
+    private SortTuple cameraDistance(Object3D object, real rad, uint priority,
     RaylibAnchor.DrawOrder order = RaylibAnchor.DrawOrder.position) {
 
-        return Tuple!(Object3D, RaylibAnchor.DrawOrder, float, float, uint)(
+        return SortTuple(
             object,
             order,
             -object.visualPosition.x * sin(rad)
@@ -152,7 +207,7 @@ final class RaylibDisplay : Display {
         const target = camera.follow is null
             ? Position()
             : camera.follow.visualPosition;
-        const targetVector = target.toVector3(cellSize, Yes.center);
+        const targetVector = target.toVector3(cellSize, CellPoint.center);
 
         // Update the camera
         // not sure how to get the correct fovy from distance, this is just close to the expected result.

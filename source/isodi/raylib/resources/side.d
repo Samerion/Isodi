@@ -41,8 +41,23 @@ struct Side {
 
         const cellSize = cell.display.cellSize;
 
+        const leftSide  = cast(short) (360+180 - cell.display.camera.angle.x) / 90 % 4;
+        const rightSide = (leftSide + 1) % 4;
+
         // Draw each side
-        foreach (side; 0..4) {
+        foreach (side; [leftSide, rightSide]) {
+
+            // If there's a neighbor on this side
+            if (auto neighbor = cell.getNeighbor(cast(ubyte) side)) {
+
+                auto thisHeight = cell.position.height;
+                auto neighborHeight = neighbor.position.height;
+
+                // And it covers the the side of this cell, don't render
+                if (neighborHeight.top >= thisHeight.top
+                    && neighborHeight.depth + neighborHeight.top >= thisHeight.depth) continue;
+
+            }
 
             rlPushMatrix();
 

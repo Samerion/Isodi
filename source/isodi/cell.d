@@ -121,6 +121,38 @@ abstract class Cell : Object3D, WithDrawableResources {
 
     }
 
+    /// Get a neighbor in given direction.
+    /// Params:
+    ///     direction = 0 for negative Y, 1 for positive X, 2 for positive Y, 3 for negative X. Calling with other
+    ///         values is invalid.
+    /// Returns:
+    ///     The queried cell within the same layer. `null` if not found
+    Cell getNeighbor(ubyte direction) {
+
+        auto newPosition = cast() position;
+
+        final switch (direction) {
+
+            case 0:
+                newPosition.y -= 1;
+                break;
+            case 1:
+                newPosition.x += 1;
+                break;
+            case 2:
+                newPosition.y += 1;
+                break;
+            case 3:
+                newPosition.x -= 1;
+                break;
+
+        }
+
+        // Find the cell
+        return display.getCell(newPosition.toUnique);
+
+    }
+
 }
 
 mixin DisplayTest!((display) {

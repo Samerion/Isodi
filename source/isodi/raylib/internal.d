@@ -2,29 +2,45 @@ module isodi.raylib.internal;
 
 import raylib;
 
-public import std.typecons;
+import std.typecons;
 
 import isodi.bind;
 import isodi.position;
 
-/// Convert position to Vector3
-inout(Vector3) toVector3(inout(Position) position, int cellSize, Flag!"center" center = No.center) {
+enum CellPoint {
 
-    return Vector3(position.toTuple3(cellSize, center).expand);
+    edge,
+    center,
+    bottomEdge,
+    bottomCenter,
+
+}
+
+/// Convert position to Vector3
+inout(Vector3) toVector3(inout(Position) position, int cellSize, CellPoint point = CellPoint.edge) {
+
+    return Vector3(position.toTuple3(cellSize, point).expand);
 
 }
 
 /// Get a Vector3 from given position.
-auto toTuple3(inout(Position) position, int cellSize, Flag!"center" center = No.center) {
+auto toTuple3(inout(Position) position, int cellSize, CellPoint point = CellPoint.edge) {
 
     alias Ret = Tuple!(float, float, float);
+
+    const center = point == CellPoint.center     || point == CellPoint.bottomCenter;
+    const bottom = point == CellPoint.bottomEdge || point == CellPoint.bottomCenter;
+
+    const height = bottom
+        ? position.height.top - position.height.depth
+        : position.height.top;
 
     // Center the position
     if (center) {
 
         return Ret(
             (position.x + 0.5) * cellSize,
-            position.height.top * cellSize,
+            height * cellSize,
             (position.y + 0.5) * cellSize,
         );
 
@@ -35,7 +51,7 @@ auto toTuple3(inout(Position) position, int cellSize, Flag!"center" center = No.
 
         return Ret(
             position.x * cellSize,
-            position.height.top * cellSize,
+            height * cellSize,
             position.y * cellSize,
         );
 
