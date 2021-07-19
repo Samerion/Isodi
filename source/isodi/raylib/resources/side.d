@@ -47,6 +47,18 @@ struct Side {
         // Draw each side
         foreach (side; [leftSide, rightSide]) {
 
+            // If there's a neighbor on this side
+            if (auto neighbor = cell.getNeighbor(cast(ubyte) side)) {
+
+                auto thisHeight = cell.position.height;
+                auto neighborHeight = neighbor.position.height;
+
+                // And it covers the the side of this cell, don't render
+                if (neighborHeight.top >= thisHeight.top
+                    && neighborHeight.depth + neighborHeight.top >= thisHeight.depth) continue;
+
+            }
+
             rlPushMatrix();
 
                 // Transform
