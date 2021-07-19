@@ -8,6 +8,7 @@ import isodi.display;
 import isodi.resource;
 import isodi.position;
 import isodi.raylib.display;
+import isodi.raylib.internal;
 import isodi.raylib.resources;
 
 /// Cell implementation with Raylib.

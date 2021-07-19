@@ -41,8 +41,11 @@ struct Side {
 
         const cellSize = cell.display.cellSize;
 
+        const leftSide  = cast(short) (360+180 - cell.display.camera.angle.x) / 90 % 4;
+        const rightSide = (leftSide + 1) % 4;
+
         // Draw each side
-        foreach (side; 0..4) {
+        foreach (side; [leftSide, rightSide]) {
 
             rlPushMatrix();
 
