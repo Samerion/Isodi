@@ -114,8 +114,10 @@ final class RaylibDisplay : Display {
 
             // Get perceived screen size based on camera angle
             // 90° = ×1, 0° = ×∞
-            const screenWidth  = cast(int) (GetScreenWidth  * (1 + tan(PI/2 - radY/2)));
-            const screenHeight = cast(int) (GetScreenHeight * (1 + tan(PI/2 - radY/2)));
+            // No idea what would be the best formula here, at first I used tan, but it turned out to be excessive.
+            // This seems to work well...
+            const screenWidth  = GetScreenWidth;
+            const screenHeight = cast(int) (GetScreenHeight * sqrt(1 + radY));
 
             // Get all 3D objects
             chain(
@@ -152,22 +154,27 @@ final class RaylibDisplay : Display {
         const center = worldPoint(CellPoint.center);
         const edge   = worldPoint(CellPoint.edge);
 
-        // Get distance from center to edge
-        const diagX = abs(edge.x - center.x) * 2;
-        const diagY = abs(edge.y - center.y) * 2;
+        const diagX = abs(edge.x - center.x);
+        const diagY = abs(edge.y - center.y);
 
         // Top is visible
         if (0 <= center.x + diagX && center.x - diagX < screenWidth
-            && 0 <= center.y + diagY && center.y - diagY < screenHeight)
+         && 0 <= center.y + diagY && center.y - diagY < screenHeight) {
+
             return true;
+
+        }
 
         // Get bottom position
         const bottom = worldPoint(CellPoint.bottomCenter);
 
         // Bottom is visible
         if (0 <= bottom.x + diagX && bottom.x - diagX < screenWidth
-            && 0 <= bottom.y + diagY && bottom.y - diagY < screenHeight)
+         && 0 <= bottom.y + diagY && bottom.y - diagY < screenHeight) {
+
             return true;
+
+        }
 
         // Nope, nothing is visible
         return false;
