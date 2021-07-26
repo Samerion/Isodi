@@ -129,7 +129,26 @@ abstract class Cell : Object3D, WithDrawableResources {
     ///     The queried cell within the same layer. `null` if not found
     Cell getNeighbor(ubyte direction) {
 
-        auto newPosition = cast() position;
+        return getNeighbor(direction, position);
+
+    }
+
+    /// Get a visual neighbour in given direction — this will take cell offset into account.
+    /// Params:
+    ///     direction = 0 for negative Y, 1 for positive X, 2 for positive Y, 3 for negative X. Calling with other
+    ///         values is invalid.
+    /// Returns:
+    ///     The queried cell within the same layer. `null` if not found
+    Cell getVisualNeighbor(ubyte direction) {
+
+        return getNeighbor(direction, visualPosition);
+
+    }
+
+    /// Get the neighbor from a set position
+    private Cell getNeighbor(ubyte direction, Position pos) {
+
+        auto newPosition = cast() pos;
 
         final switch (direction) {
 

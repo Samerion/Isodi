@@ -95,7 +95,7 @@ abstract class Object3D {
 
         /// Set an offset for the visual position.
         ///
-        /// $(B Note:) Mind that depth is initialized to 1 by default, which might cause unwanted effect. If you don't
+        /// $(B Note:) Mind that depth is initialized to 1 by default, which might cause unwanted effects. If you don't
         /// want to offset it, use `positionOff`.
         const(Position) offset(Position value) {
 

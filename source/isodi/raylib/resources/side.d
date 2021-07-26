@@ -48,10 +48,10 @@ struct Side {
         foreach (side; [leftSide, rightSide]) {
 
             // If there's a neighbor on this side
-            if (auto neighbor = cell.getNeighbor(cast(ubyte) side)) {
+            if (auto neighbor = cell.getVisualNeighbor(cast(ubyte) side)) {
 
-                auto thisHeight = cell.position.height;
-                auto neighborHeight = neighbor.position.height;
+                auto thisHeight = cell.visualPosition.height;
+                auto neighborHeight = neighbor.visualPosition.height;
 
                 // And it covers the the side of this cell, don't render
                 if (neighborHeight.top >= thisHeight.top

@@ -145,14 +145,14 @@ final class RaylibDisplay : Display {
     /// Check if the object is in bounds of the display.
     private bool inBounds(SortTuple object, int screenWidth, int screenHeight) {
 
-        Vector2 worldPoint(CellPoint point) {
+        Vector2 screenPoint(CellPoint point) {
 
             return GetWorldToScreen(object[0].position.toVector3(cellSize, point), raycam);
 
         }
 
-        const center = worldPoint(CellPoint.center);
-        const edge   = worldPoint(CellPoint.edge);
+        const center = screenPoint(CellPoint.center);
+        const edge   = screenPoint(CellPoint.edge);
 
         const diagX = abs(edge.x - center.x);
         const diagY = abs(edge.y - center.y);
@@ -166,7 +166,7 @@ final class RaylibDisplay : Display {
         }
 
         // Get bottom position
-        const bottom = worldPoint(CellPoint.bottomCenter);
+        const bottom = screenPoint(CellPoint.bottomCenter);
 
         // Bottom is visible
         if (0 <= bottom.x + diagX && bottom.x - diagX < screenWidth
