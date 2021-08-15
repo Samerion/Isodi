@@ -8,6 +8,10 @@ import isodi.object3d;
 
 private immutable rad = PI / 180;
 
+
+@safe:
+
+
 /// Represents a camera, giving a view into the Isodi world.
 struct Camera {
 

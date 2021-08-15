@@ -9,6 +9,10 @@ import isodi.pack;
 import isodi.tests;
 import isodi.object3d;
 
+
+@safe:
+
+
 /// Represents a single cell in the Isodi 3D space.
 abstract class Cell : Object3D, WithDrawableResources {
 
@@ -55,7 +59,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     }
 
     ///
-    protected Pack.Resource!string[4] getSide() {
+    protected Pack.Resource!string[4] getSide() @trusted {
 
         Mt19937_64 rng;
         Pack.Resource!string[4] result;
@@ -84,7 +88,7 @@ abstract class Cell : Object3D, WithDrawableResources {
 
     /// Params:
     ///     tileOptions = Pack options set for the tile resource.
-    protected Pack.Resource!string[] getDecoration(const ResourceOptions* tileOptions) {
+    protected Pack.Resource!string[] getDecoration(const ResourceOptions* tileOptions) @trusted {
 
         Pack.Resource!string[] result;
 

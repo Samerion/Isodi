@@ -17,6 +17,10 @@ import isodi.model;
 import isodi.resource;
 import isodi.exceptions;
 
+
+@safe:
+
+
 /// Represents a pack list.
 abstract class PackList {
 
@@ -73,7 +77,10 @@ abstract class PackList {
     /// Clear resource cache. Call when the list contents were changed or reordered.
     ///
     /// When overriding, make sure to call `super.clearCache()`.
-    abstract void clearCache() {
+    abstract void clearCache() @trusted {
+
+        // Note on @trusted: cached values are pointers, and nothing should directly refer to the cache.
+        // We want to ensure children are also @safe.
 
         packGlobCache.clear();
         getSkeletonCache.clear();
@@ -81,11 +88,15 @@ abstract class PackList {
     }
 
     /// List matching files in the first matching pack.
+    ///
+    /// This function is `@system` because it returns a pointer to a `Pack` struct from this list, which might become
+    /// invalidated when manipulating the pack list.
+    ///
     /// Params:
     ///     path = File path to look for.
     /// Returns: A `GlobResult` tuple with the result.
     /// Throws: `IsodiException` if the path wasn't found in any of the packs.
-    GlobResult!string packGlob(string path) {
+    GlobResult!string packGlob(string path) @system {
 
         // Attempt to read from the cache
         if (auto cached = path in packGlobCache) {
@@ -111,7 +122,7 @@ abstract class PackList {
     }
 
     // Barely a unittest, needs more packs to work
-    unittest {
+    @system unittest {
 
         auto packs = PackList.make(
             getPack("res/samerion-retro/pack.json")
@@ -137,7 +148,7 @@ abstract class PackList {
     ///     seed = Seed for the RNG.
     /// Returns: A tuple with path to the file and options of the resource.
     /// Throws: `IsodiException` if the path wasn't found in any of the packs.
-    Resource!string randomGlob(RNG)(string path, RNG rng)
+    Resource!string randomGlob(RNG)(string path, RNG rng) @trusted
     if (isUniformRNG!RNG) {
 
         auto result = packGlob(path);
@@ -206,7 +217,7 @@ abstract class PackList {
 
     /// List cells available in all the packs.
     /// Returns: A `RedBlackTree!string`, guarantying unique elements.
-    auto listCells() const {
+    auto listCells() const @trusted {
 
         auto rbtree = redBlackTree!string;
 

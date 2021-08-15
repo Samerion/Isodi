@@ -9,6 +9,10 @@ import isodi.raylib.display;
 import isodi.raylib.internal;
 import isodi.raylib.pack_list;
 
+
+@safe:
+
+
 /// Raylib bindings for Isodi.
 class RaylibBinds : Bindings {
 

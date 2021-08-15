@@ -35,6 +35,10 @@ public {
 
 }
 
+
+@safe:
+
+
 /// Resource options
 struct ResourceOptions {
 
@@ -130,7 +134,7 @@ struct Pack {
 
 
     /// Glob search within the pack.
-    string[] glob(string file) {
+    string[] glob(string file) @trusted {
 
         import std.array : array;
 
@@ -211,7 +215,7 @@ struct Pack {
     }
 
     private SkeletonNode[] getSkeletonImpl(ref JSONParser json, const string name, const size_t parent,
-        const size_t id) {
+        const size_t id) @trusted {
 
         // Get the nodes
         SkeletonNode[] children;
@@ -268,7 +272,7 @@ struct Pack {
     ///         $(LI `PackException` if the animation doesn't exist.)
     ///         $(LI `rcdata.json.JSONException` if the animation isn't valid.)
     ///     )
-    Resource!(AnimationPart[]) getAnimation(const string name, out uint frameCount) {
+    Resource!(AnimationPart[]) getAnimation(const string name, out uint frameCount) @trusted {
 
         import std.array : array;
         import std.algorithm : map;
@@ -293,7 +297,7 @@ struct Pack {
 
     }
 
-    private AnimationPart getAnimationPart(ref JSONParser json, const string name, ref uint frameCount) {
+    private AnimationPart getAnimationPart(ref JSONParser json, const string name, ref uint frameCount) @trusted {
 
         AnimationPart result;
 
@@ -322,7 +326,7 @@ struct Pack {
 
     }
 
-    private AnimationBone getAnimationBone(ref JSONParser json, const string name) {
+    private AnimationBone getAnimationBone(ref JSONParser json, const string name) @trusted {
 
         AnimationBone result;
 
@@ -352,7 +356,7 @@ struct Pack {
 
     }
 
-    private Nullable!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) {
+    private Nullable!T getAnimationProperty(T : Value[N], Value, size_t N)(ref JSONParser json) @trusted {
 
         // Get the same value with one value more
         auto value = json.get!(Value[N+1]);
@@ -360,7 +364,7 @@ struct Pack {
 
     }
 
-    private Nullable!T getAnimationProperty(alias T)(ref JSONParser json) {
+    private Nullable!T getAnimationProperty(alias T)(ref JSONParser json) @trusted {
 
         auto value = json.get!(T[2]);
         return value[1].nullable;
@@ -368,7 +372,7 @@ struct Pack {
 
     /// List cells available in the pack.
     /// Returns: A range with all cells that can be found in the pack.
-    auto listCells() const {
+    auto listCells() const @trusted {
 
         // Return all directories within "cells/"
         return path.buildPath("cells")
@@ -378,7 +382,7 @@ struct Pack {
 
     }
 
-    unittest {
+    @trusted unittest {
 
         // Load the pack
         auto pack = getPack("res/samerion-retro/pack.json");

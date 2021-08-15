@@ -5,6 +5,10 @@ import std.variant;
 
 import isodi.object3d;
 
+
+@safe:
+
+
 /// Anchors allow placing user-defined objects within the Isodi 3D space.
 ///
 /// By their nature, they are majorily renderer-dependent. See binding documentation for usage.

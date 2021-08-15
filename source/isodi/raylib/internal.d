@@ -7,6 +7,10 @@ import std.typecons;
 import isodi.bind;
 import isodi.position;
 
+
+@safe:
+
+
 enum CellPoint {
 
     edge,

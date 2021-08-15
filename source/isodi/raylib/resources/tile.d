@@ -10,6 +10,10 @@ import isodi.pack;
 import isodi.raylib.cell;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 /// A tile resource.
 struct Tile {
 
@@ -36,28 +40,27 @@ struct Tile {
     }
 
     /// Draw the tile
-    void draw() {
+    void draw() @trusted {
 
         const cellSize = cell.display.cellSize;
 
         rlPushMatrix();
+        scope (exit) rlPopMatrix();
 
-            // Move to the appropriate position
-            rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
+        // Move to the appropriate position
+        rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
-            // Rotate to make it lay
-            rlRotatef(90, 1, 0, 0);
+        // Rotate to make it lay
+        rlRotatef(90, 1, 0, 0);
 
-            // Scale the tile to fit cell size
-            rlScalef(scale, scale, scale);
+        // Scale the tile to fit cell size
+        rlScalef(scale, scale, scale);
 
-            // Correct position
-            rlTranslatef(0, 0, 1);
+        // Correct position
+        rlTranslatef(0, 0, 1);
 
-            // Draw
-            texture.DrawTexture(0, 0, cell.color);
-
-        rlPopMatrix();
+        // Draw
+        texture.DrawTexture(0, 0, cell.color);
 
     }
 

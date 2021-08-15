@@ -8,6 +8,10 @@ import rcdata.json;
 
 import isodi.pack_list;
 
+
+@safe:
+
+
 /// Defines an object that makes use of some resources, or is a resource itself. It will be signaled every time the
 /// pack list is updated.
 interface WithResources {

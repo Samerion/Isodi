@@ -14,6 +14,10 @@ import isodi.resource;
 import isodi.raylib.model;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 /// A bone resource.
 struct Bone {
 
@@ -116,78 +120,77 @@ struct Bone {
     }
 
     ///
-    void draw() const {
+    void draw() const @trusted {
 
         // Ignore if not displaying
         if (node.hidden) return;
 
         rlPushMatrix();
+        scope (exit) rlPopMatrix();
 
-            import std.conv : to;
+        import std.conv : to;
 
-            // Get the current atlas frame
-            const rotationY = 360 - model.display.camera.angle.x;
-            const frameDelimiter = 360.0 / options.angles;
-            const atlasFrame = to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
+        // Get the current atlas frame
+        const rotationY = 360 - model.display.camera.angle.x;
+        const frameDelimiter = 360.0 / options.angles;
+        const atlasFrame = to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
 
-            /// Get the matrix
-            auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
+        /// Get the matrix
+        auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
 
-            // Apply the matrix
-            rlMultMatrixf(&matrixf[0]);
+        // Apply the matrix
+        rlMultMatrixf(&matrixf[0]);
 
-            // Scale appropriately
-            rlScalef(scale, scale, scale);
+        // Scale appropriately
+        rlScalef(scale, scale, scale);
 
-            // Snap to frame
-            frameSnap(atlasFrame, frameDelimiter);
+        // Snap to frame
+        frameSnap(atlasFrame, frameDelimiter);
 
-            // Push a matrix if debugging bones
-            static if (BoneDebug) rlPushMatrix();
+        // Push a matrix if debugging bones
+        static if (BoneDebug) rlPushMatrix();
 
-            // Translate the texture
-            rlTranslatef(
-                node.texturePosition[0],
-                node.texturePosition[1] - texture.height,
-                node.texturePosition[2] + 1,
+        // Translate the texture
+        rlTranslatef(
+            node.texturePosition[0],
+            node.texturePosition[1] - texture.height,
+            node.texturePosition[2] + 1,
+        );
+
+        // Check for mirroring
+        const textureFrame = node.mirror ? atlasFrame : options.angles - atlasFrame;
+
+        // Draw the texture
+        texture.DrawTextureRec(
+            Rectangle(
+                atlasWidth * textureFrame, 0,
+                -mirrorScale * cast(int) atlasWidth, -texture.height
+            ),
+            Vector2(),
+            Colors.WHITE
+        );
+
+        // Draw debug points
+        static if (BoneDebug) {
+
+            // Draw texture debug
+            DrawCircle3D(
+                Vector3(0, 0, -1), 0.2,
+                Vector3(), 1,
+                Colors.BLUE
             );
 
-            // Check for mirroring
-            const textureFrame = node.mirror ? atlasFrame : options.angles - atlasFrame;
+            // Remove texture transform
+            rlPopMatrix();
 
-            // Draw the texture
-            texture.DrawTextureRec(
-                Rectangle(
-                    atlasWidth * textureFrame, 0,
-                    -mirrorScale * cast(int) atlasWidth, -texture.height
-                ),
-                Vector2(),
-                Colors.WHITE
+            // Draw node debug
+            DrawCircle3D(
+                Vector3(0, 0, 0), 0.4,
+                Vector3(), 1,
+                Colors.GREEN
             );
 
-            // Draw debug points
-            static if (BoneDebug) {
-
-                // Draw texture debug
-                DrawCircle3D(
-                    Vector3(0, 0, -1), 0.2,
-                    Vector3(), 1,
-                    Colors.BLUE
-                );
-
-                // Remove texture transform
-                rlPopMatrix();
-
-                // Draw node debug
-                DrawCircle3D(
-                    Vector3(0, 0, 0), 0.4,
-                    Vector3(), 1,
-                    Colors.GREEN
-                );
-
-            }
-
-        rlPopMatrix();
+        }
 
     }
 
@@ -195,7 +198,7 @@ struct Bone {
     ///
     /// Params:
     ///     atlasFrame = Current atlas frame of the texture.
-    private Matrix localMatrix(float atlasFrame) const {
+    private Matrix localMatrix(float atlasFrame) const @trusted {
 
         immutable rad = std.math.PI / 180;
 
@@ -226,11 +229,11 @@ struct Bone {
 
     }
 
-    private void frameSnap(float atlasFrame, float frameDelimiter) const {
+    private void frameSnap(float atlasFrame, float frameDelimiter) const @trusted {
 
         // Note: still requires more testing, especially for models with more than 4 angles
 
-        const snapAngle = cast(int)atlasFrame * frameDelimiter;
+        const snapAngle = cast(int) atlasFrame * frameDelimiter;
 
         // Rounding for floating point precision
         const piAbove = PI_2 + 1e-6;
@@ -260,7 +263,7 @@ struct Bone {
     }
 
     /// Calculate matrixes for this node.
-    void updateMatrixes() {
+    void updateMatrixes() @trusted {
 
         // If there is a parent
         if (hasParent) {
@@ -309,7 +312,7 @@ struct Bone {
 }
 
 /// Multiply matrixes.
-private Matrix mult(Matrix[] matrixes...) {
+private Matrix mult(Matrix[] matrixes...) @trusted {
 
     auto result = MatrixIdentity;
     foreach (matrix; matrixes) {

@@ -10,6 +10,10 @@ import isodi.tests;
 import isodi.object3d;
 import isodi.resource;
 
+
+@safe:
+
+
 /// Represents a 3D model.
 abstract class Model : Object3D, WithDrawableResources {
 
@@ -108,7 +112,7 @@ abstract class Model : Object3D, WithDrawableResources {
     // TODO: stopAnimation
 
     ///
-    protected Pack.Resource!string getBone(const SkeletonNode node) {
+    protected Pack.Resource!string getBone(const SkeletonNode node) @trusted {
 
         // TODO: add support for node.variants
 

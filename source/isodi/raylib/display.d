@@ -18,6 +18,10 @@ import isodi.raylib.cell;
 import isodi.raylib.anchor;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 ///
 final class RaylibDisplay : Display {
 
@@ -65,7 +69,7 @@ final class RaylibDisplay : Display {
     /// Params:
     ///     inverted = Shoots the ray behind the camera. It might be useful to check both the normal and inverted ray
     ///         the ray doesn't recognize camera height properly.
-    Ray mouseRay(bool inverted) const {
+    Ray mouseRay(bool inverted) const @trusted {
 
         auto ray = GetMouseRay(GetMousePosition, raycam);
 
@@ -93,50 +97,49 @@ final class RaylibDisplay : Display {
     /// Draw the contents of the display.
     ///
     /// Must be called inside `DrawingMode`, but not `BeginMode3D`.
-    void draw() {
+    void draw() @trusted {
 
         updateCamera();
 
         // Draw
         BeginMode3D(raycam);
+        scope (exit) EndMode3D();
 
-            import std.array : array;
-            import std.range : chain;
+        import std.array : array;
+        import std.range : chain;
 
-            rlOrtho(-1, 1, -1, 1, 0.01, cellSize * cellSize);
-            rlDisableDepthTest();
+        rlOrtho(-1, 1, -1, 1, 0.01, cellSize * cellSize);
+        rlDisableDepthTest();
 
-            alias PI = std.math.PI;
+        alias PI = std.math.PI;
 
-            const rad = PI / 180;
-            const radX = camera.angle.x * rad;
-            const radY = camera.angle.y * rad;
+        const rad = PI / 180;
+        const radX = camera.angle.x * rad;
+        const radY = camera.angle.y * rad;
 
-            // Get perceived screen size based on camera angle
-            // 90° = ×1, 0° = ×∞
-            // No idea what would be the best formula here, at first I used tan, but it turned out to be excessive.
-            // This seems to work well...
-            const screenWidth  = GetScreenWidth;
-            const screenHeight = cast(int) (GetScreenHeight * sqrt(1 + radY));
+        // Get perceived screen size based on camera angle
+        // 90° = ×1, 0° = ×∞
+        // No idea what would be the best formula here, at first I used tan, but it turned out to be excessive.
+        // This seems to work well...
+        const screenWidth  = GetScreenWidth;
+        const screenHeight = cast(int) (GetScreenHeight * sqrt(1 + radY));
 
-            // Get all 3D objects
-            chain(
-                cells.map!(a => cameraDistance(a, radX, 0)),
-                models.map!(a => cameraDistance(a, radX, 1)),
-                anchors.map!(a => cameraDistance(a, radX, 2, (cast(RaylibAnchor) a).drawOrder))
-            )
+        // Get all 3D objects
+        chain(
+            cells.map!(a => cameraDistance(a, radX, 0)),
+            models.map!(a => cameraDistance(a, radX, 1)),
+            anchors.map!(a => cameraDistance(a, radX, 2, (cast(RaylibAnchor) a).drawOrder))
+        )
 
-                // Ignore invisible objects
-                .filter!(a => inBounds(a, screenWidth, screenHeight))
+            // Ignore invisible objects
+            .filter!(a => inBounds(a, screenWidth, screenHeight))
 
-                // Depth sort
-                .array
-                .multiSort!(`a[1] < b[1]`, `a[2] > b[2]`, `a[3] < b[3]`, `a[4] < b[4]`)
+            // Depth sort
+            .array
+            .multiSort!(`a[1] < b[1]`, `a[2] > b[2]`, `a[3] < b[3]`, `a[4] < b[4]`)
 
-                // Draw them
-                .each!(a => a[0].to!WithDrawableResources.draw());
-
-        EndMode3D();
+            // Draw them
+            .each!(a => a[0].to!WithDrawableResources.draw());
 
     }
 
@@ -145,7 +148,7 @@ final class RaylibDisplay : Display {
     /// Check if the object is in bounds of the display.
     private bool inBounds(SortTuple object, int screenWidth, int screenHeight) {
 
-        Vector2 screenPoint(CellPoint point) {
+        Vector2 screenPoint(CellPoint point) @trusted {
 
             return GetWorldToScreen(object[0].position.toVector3(cellSize, point), raycam);
 
@@ -234,7 +237,7 @@ final class RaylibDisplay : Display {
     /// Params:
     ///     callback = Function that will be called every frame in order to draw the anchor content.
     /// Returns: The created anchor
-    RaylibAnchor addAnchor(void delegate() callback) {
+    RaylibAnchor addAnchor(void delegate() @trusted callback) {
 
         auto anchor = cast(RaylibAnchor) super.addAnchor();
         anchor.callback = callback;

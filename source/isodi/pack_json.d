@@ -11,6 +11,10 @@ import isodi.pack;
 import isodi.internal;
 import isodi.exceptions;
 
+
+@safe:
+
+
 /// Read the pack directly from the JSON parser.
 ///
 /// Note, this will not fill out the `path` property of the `Pack` struct, which is required to read resources.
@@ -19,7 +23,7 @@ import isodi.exceptions;
 /// Params:
 ///     json = `JSONParser` instance to fetch data from.
 /// Throws: `rcdata.json.JSONException` on type mismatch or type error
-Pack getPack(ref JSONParser json) {
+Pack getPack(ref JSONParser json) @trusted {
 
     JSONParser[wstring] options;
 

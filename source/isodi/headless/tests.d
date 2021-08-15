@@ -6,6 +6,10 @@ import core.runtime;
 import isodi.tests;
 import isodi.headless.display;
 
+
+@safe:
+
+
 version (unittest):
 
 shared static this() {

@@ -9,6 +9,10 @@ import isodi.anchor;
 import isodi.camera;
 import isodi.position;
 
+
+@safe:
+
+
 /// Display is the main class of Isodi which manages all Isodi resources.
 ///
 /// This class is abstract, as it should be overriden by the renderer. Use the `make` method to create a display with
@@ -63,7 +67,7 @@ abstract class Display {
 
     }
 
-    ~this() {
+    ~this() @system {
 
         clearDestroy();
 
@@ -80,28 +84,25 @@ abstract class Display {
     abstract void reloadResources();
 
     /// Iterate on all cells
-    auto cells() {
-
-        return cellMap.byValue;
-
-    }
+    auto cells() { return cellMap.byValue; }
 
     /// Iterate on all models
-    auto models() {
-
-        return modelMap.byValue;
-
-    }
+    auto models() { return modelMap.byValue; }
 
     /// Iterate on all anchors
-    auto anchors() {
+    auto anchors() { return anchorMap.byValue; }
 
-        return anchorMap.byValue;
+    /// Get the number of cells in the display.
+    size_t cellCount() { return cellMap.length; }
 
-    }
+    /// Get the number of models in the display.
+    size_t modelCount() { return modelMap.length; }
+
+    /// Get the number of anchors in the display.
+    size_t anchorCount() { return anchorMap.length; }
 
     /// Clear all objects within the display. Leaves packs and cache in place.
-    void clear() {
+    void clear() @system {
 
         cellMap.clear();
         modelMap.clear();
@@ -110,7 +111,7 @@ abstract class Display {
     }
 
     /// Destroy the contents of the display.
-    void clearDestroy() {
+    void clearDestroy() @system {
 
         // Destroy all resources
         foreach (cell; cells) cell.destroy();
@@ -260,7 +261,7 @@ mixin DisplayTest!((display) {
     display.removeModel(a);
 
     // Note: now the model can be safely deleted
-    a.destroy();
+    (() @trusted => a.destroy)();
 
     // Also: need to test anchors, but there isn't really a visible way... should probably be handled by the renderer
     // still TODO

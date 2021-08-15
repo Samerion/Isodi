@@ -9,6 +9,10 @@ import isodi.headless.anchor;
 import isodi.headless.display;
 import isodi.headless.pack_list;
 
+
+@safe:
+
+
 /// Headless bindings for Isodi.
 class HeadlessBinds : Bindings {
 

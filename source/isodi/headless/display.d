@@ -2,6 +2,10 @@ module isodi.headless.display;
 
 import isodi.display;
 
+
+@safe:
+
+
 ///
 final class HeadlessDisplay : Display {
 
