@@ -130,7 +130,7 @@ struct CameraKeybindings {
 }
 
 /// Helper for quickly binding keys to freely move the camera.
-void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) {
+void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) @trusted {
 
     assert(camera.follow !is null,
         "camera.follow must be set for updateCamera to work, and it must use the Object3D.Implement mixin");

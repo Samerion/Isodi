@@ -65,23 +65,22 @@ final class RaylibModel : Model, WithDrawableResources {
     }
 
     ///
-    void draw() {
+    void draw() @trusted {
 
         const rad = display.camera.angle.x * std.math.PI / 180;
 
         runAnimations();
 
         rlPushMatrix();
+        scope(exit) rlPopMatrix();
 
-            // Sort the bones
-            bones.map!((a) => cameraDistance(a, rad))
-                .array
-                .sort!((a, b) => a[1] > b[1])
+        // Sort the bones
+        bones.map!((a) => cameraDistance(a, rad))
+            .array
+            .sort!((a, b) => a[1] > b[1])
 
-                // Draw them
-                .each!(a => a[0].draw());
-
-        rlPopMatrix();
+            // Draw them
+            .each!(a => a[0].draw());
 
     }
 
@@ -90,7 +89,7 @@ final class RaylibModel : Model, WithDrawableResources {
         foreach_reverse (i, ref animation; animations) {
 
             const previousFrame = animation.frame;
-            const delta = animation.fps * GetFrameTime();
+            const delta = (() @trusted => animation.fps * GetFrameTime)();
 
             // Increment frame time
             animation.frame += delta;
@@ -203,7 +202,7 @@ final class RaylibModel : Model, WithDrawableResources {
         // Get new matrixes
         bone.updateMatrixes();
 
-        const vec = Vector3Transform(Vector3Zero, bone.boneStart);
+        const vec = (() @trusted => Vector3Transform(Vector3Zero, bone.boneStart))();
 
         return Tuple!(Bone*, float)(
             bone,

@@ -41,7 +41,7 @@ struct Side {
     }
 
     /// Draw the side
-    void draw() {
+    void draw() @trusted {
 
         const cellSize = cell.display.cellSize;
 
@@ -64,82 +64,81 @@ struct Side {
             }
 
             rlPushMatrix();
+            scope (exit) rlPopMatrix();
 
-                // Transform
-                {
+            // Transform
+            {
 
-                    // Move to an appropriate position
-                    rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
+                // Move to an appropriate position
+                rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
-                    // Correct positions
-                    rlTranslatef(
-                        cellSize * (side == 1 || side == 2),
-                        0,
-                        cellSize * (side == 2 || side == 3)
+                // Correct positions
+                rlTranslatef(
+                    cellSize * (side == 1 || side == 2),
+                    0,
+                    cellSize * (side == 2 || side == 3)
+                );
+
+                // Rotate appropriately
+                rlRotatef(side * -90, 0, 1, 0);
+
+                // Scale to fit
+                rlScalef(scale[side], scale[side], scale[side]);
+
+                // Final corrections
+                rlTranslatef(0, 0, 1);
+
+            }
+
+            const texture = textures[side];
+            const targetDepth = cell.visualPosition.height.depth * texture.width;
+
+            float drawn = 0;
+            size_t start = 0;
+
+            // Draw the texture
+            while (drawn < targetDepth) {
+
+                /// Space on the image that can be drawn
+                const drawAvailable = texture.height - start;
+
+                /// Space left to draw
+                const drawLeft = targetDepth - drawn;
+
+                /// Get space to draw
+                const drawSpace = drawLeft < drawAvailable
+                    ? drawLeft
+                    : drawAvailable;
+
+                rlPushMatrix();
+
+                    // Push the texture down
+                    rlTranslatef(0, -drawSpace - drawn, 0);
+
+                    // Draw the texture
+                    textures[side].DrawTextureRec(
+                        Rectangle(
+                            0,             start,
+                            texture.width, -drawSpace,
+                        ),
+                        Vector2(0, 0),
+                        cell.color,
                     );
 
-                    // Rotate appropriately
-                    rlRotatef(side * -90, 0, 1, 0);
+                rlPopMatrix();
 
-                    // Scale to fit
-                    rlScalef(scale[side], scale[side], scale[side]);
+                // Mark as drawn
+                drawn += drawSpace;
 
-                    // Final corrections
-                    rlTranslatef(0, 0, 1);
+                // Texture is higher than wide
+                if (!start && texture.height > texture.width) {
 
-                }
-
-                const texture = textures[side];
-                const targetDepth = cell.visualPosition.height.depth * texture.width;
-
-                float drawn = 0;
-                size_t start = 0;
-
-                // Draw the texture
-                while (drawn < targetDepth) {
-
-                    /// Space on the image that can be drawn
-                    const drawAvailable = texture.height - start;
-
-                    /// Space left to draw
-                    const drawLeft = targetDepth - drawn;
-
-                    /// Get space to draw
-                    const drawSpace = drawLeft < drawAvailable
-                        ? drawLeft
-                        : drawAvailable;
-
-                    rlPushMatrix();
-
-                        // Push the texture down
-                        rlTranslatef(0, -drawSpace - drawn, 0);
-
-                        // Draw the texture
-                        textures[side].DrawTextureRec(
-                            Rectangle(
-                                0,             start,
-                                texture.width, -drawSpace,
-                            ),
-                            Vector2(0, 0),
-                            cell.color,
-                        );
-
-                    rlPopMatrix();
-
-                    // Mark as drawn
-                    drawn += drawSpace;
-
-                    // Texture is higher than wide
-                    if (!start && texture.height > texture.width) {
-
-                        // Move start
-                        start = texture.height - texture.width;
-
-                    }
+                    // Move start
+                    start = texture.height - texture.width;
 
                 }
 
-            rlPopMatrix();
+            }
 
         }
 

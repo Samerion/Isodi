@@ -181,11 +181,7 @@ struct TestRunner {
         // Count the test
         typeExecuted++;
 
-        {
-
-            // I'm too lazy to search for the full dscanner name to @suppress it, ok?
-            // @suppress(dscanner...catch_em_all) I never know what's in the middle lol
-            alias QuietThrowable = Throwable;
+        () @trusted {
 
             // Create a display
             display = makeDisplay;
@@ -199,7 +195,7 @@ struct TestRunner {
             }
 
             // Show all errors
-            catch (QuietThrowable e) Renderer.log(e.toString, LogType.error);
+            catch (Throwable e) Renderer.log(e.toString, LogType.error);
 
 
             // React based on test type
@@ -224,7 +220,7 @@ struct TestRunner {
 
             }
 
-        }
+        }();
 
         // Pop the queue
         testQueue.popFront();
@@ -247,7 +243,7 @@ struct TestRunner {
             statusMessage = "Running unit tests...";
 
             // Run the tests
-            const result = runModuleUnitTests();
+            const result = (() @trusted => runModuleUnitTests())();
 
             typePassed   += result.passed;
             typeExecuted += result.executed;

@@ -8,7 +8,7 @@ import isodi.raylib.camera;
 import isodi.raylib.display;
 
 
-@safe:
+@system:  // This module is all system, no memory safety for us damned
 
 
 version (unittest):
@@ -39,6 +39,7 @@ void main() {
     InitWindow(1600, 900, "unittest");
     SetWindowMinSize(800, 600);
     SetTargetFPS(60);
+    scope(exit) CloseWindow();
 
     // Set camera keybinds
     // Too bad with() changes scope
@@ -87,62 +88,58 @@ void main() {
         }
 
         BeginDrawing();
+        scope (exit) EndDrawing();
 
-            import std.string : toStringz;
+        import std.string : toStringz;
 
-            ClearBackground(Colors.WHITE);
+        ClearBackground(Colors.WHITE);
 
-            with (TestRunner.Status)
-            final switch (runner.status) {
+        with (TestRunner.Status)
+        final switch (runner.status) {
 
-                // Idle
-                case idle:
+            // Idle
+            case idle:
 
-                    // Order next task
+                // Order next task
+                runner.nextTest();
+                prepare();
+                break;
+
+            // Paused
+            case paused:
+
+                // If pressing enter or space
+                if (IsKeyPressed(KeyboardKey.KEY_SPACE) || IsKeyPressed(KeyboardKey.KEY_ENTER)) {
+
+                    // Continue to next task
                     runner.nextTest();
                     prepare();
-                    break;
 
-                // Paused
-                case paused:
+                }
 
-                    // If pressing enter or space
-                    if (IsKeyPressed(KeyboardKey.KEY_SPACE) || IsKeyPressed(KeyboardKey.KEY_ENTER)) {
+                break;
 
-                        // Continue to next task
-                        runner.nextTest();
-                        prepare();
+            // Finished
+            case finished:
 
-                    }
+                // Stop the program
+                break loop;
 
-                    break;
+            // Working, let it do its job
+            case working: break;
 
-                // Finished
-                case finished:
+        }
 
-                    // Stop the program
-                    break loop;
+        auto display = cast(RaylibDisplay) runner.display;
 
-                // Working, let it do its job
-                case working: break;
+        // Draw the frame
+        display.camera.updateCamera(keybinds);
+        display.draw();
 
-            }
-
-            auto display = cast(RaylibDisplay) runner.display;
-
-            // Draw the frame
-            display.camera.updateCamera(keybinds);
-            display.draw();
-
-            // Output status message
-            DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
-            DrawFPS(10, GetScreenHeight - 20);
-
-        EndDrawing();
+        // Output status message
+        DrawText(runner.statusMessage.toStringz, 10, 10, 20, Colors.BLACK);
+        DrawFPS(10, GetScreenHeight - 20);
 
     }
-
-    // End the program
-    CloseWindow();
 
 }
