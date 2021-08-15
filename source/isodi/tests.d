@@ -42,6 +42,10 @@ enum TestType {
 
 }
 
+
+@safe:
+
+
 /// Register a display test
 mixin template DisplayTest(TestCallback callback) {
     version (unittest)

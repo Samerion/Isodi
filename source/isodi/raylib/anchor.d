@@ -7,6 +7,10 @@ import isodi.resource;
 import isodi.position;
 import isodi.raylib.resources;
 
+
+@safe:
+
+
 /// Anchor implementation for Raylib.
 final class RaylibAnchor : Anchor, WithDrawableResources {
 

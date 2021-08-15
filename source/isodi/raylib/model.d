@@ -13,6 +13,10 @@ import isodi.resource;
 import isodi.raylib.internal;
 import isodi.raylib.resources.bone;
 
+
+@safe:
+
+
 /// `Model` implementation for Raylib.
 final class RaylibModel : Model, WithDrawableResources {
 

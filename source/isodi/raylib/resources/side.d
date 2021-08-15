@@ -9,6 +9,10 @@ import isodi.pack;
 import isodi.raylib.cell;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 /// A side resource.
 struct Side {
 

@@ -18,6 +18,10 @@ import isodi.raylib.cell;
 import isodi.raylib.anchor;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 ///
 final class RaylibDisplay : Display {
 

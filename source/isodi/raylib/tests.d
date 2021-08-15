@@ -7,6 +7,10 @@ import isodi.tests;
 import isodi.raylib.camera;
 import isodi.raylib.display;
 
+
+@safe:
+
+
 version (unittest):
 
 shared static this() {

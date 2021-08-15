@@ -4,6 +4,10 @@ module isodi.exceptions;
 
 import std.exception;
 
+
+@safe:
+
+
 /// Any exception thrown in Isodi extends from this one.
 abstract class IsodiException : Exception {
 

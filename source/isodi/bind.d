@@ -23,6 +23,10 @@ enum LogType {
 
 }
 
+
+@safe:
+
+
 /// Put text in color using ANSI codes on POSIX platforms.
 ///
 /// On other platforms, this just returns the original string.

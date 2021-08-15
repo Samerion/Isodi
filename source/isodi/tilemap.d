@@ -37,6 +37,10 @@ private struct Entry {
 
 }
 
+
+@safe:
+
+
 /// Save the display contents into a tilemap.
 /// Params:
 ///     display = Isodi display to use.
@@ -51,7 +55,7 @@ void saveTilemap(T)(Display display, T range) {
 /// Params:
 ///     cells = Cells to store in the tilemap.
 ///     range = An output range the tilemap should be written to.
-void saveTilemap(T)(Cell[] cells, T range) {
+void saveTilemap(T)(Cell[] cells, T range) @trusted {
 
     /// Serializer for the tilemap
     auto bin = rcbinSerializer(range);
@@ -124,7 +128,7 @@ private auto saveTilemapImpl(Cell[] allCells, ref string[] declarations) {
 ///     offset      = Optional position offset to apply to each cell. Ignores depth.
 ///     postprocess = A callback ran after adding each cell to the tilemap.
 void loadTilemap(T)(Display display, T range, Position offset = Position.init,
-    void delegate(Cell) postprocess = null)
+    void delegate(Cell) @trusted postprocess = null)
 do {
 
     LoadTilemap loader;
@@ -132,13 +136,13 @@ do {
     string[] declarations;
     Position cellPosition;
 
-    loader.onDeclarations = (decl) {
+    loader.onDeclarations = (decl) @safe {
 
         declarations = decl.dup;
 
     };
 
-    loader.onEntry = (x, y, layer) {
+    loader.onEntry = (x, y, layer) @safe {
 
         cellPosition = position(
             x + offset.x,
@@ -148,7 +152,7 @@ do {
 
     };
 
-    loader.onCell = (id, height) {
+    loader.onCell = (id, height) @safe {
 
         cellPosition.height = height;
         cellPosition.height.top += offset.height.top;
@@ -186,7 +190,7 @@ struct LoadTilemap {
     void delegate(ulong cellID, Height height) onCell;
 
     /// Begin parsing. A callback member will be ran for each matched element of the input.
-    void parse(T)(T range) {
+    void parse(T)(T range) @trusted {
 
         /// Create the parser
         auto bin = rcbinParser(range);

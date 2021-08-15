@@ -4,6 +4,10 @@ import isodi.cell;
 import isodi.display;
 import isodi.position;
 
+
+@safe:
+
+
 ///
 final class HeadlessCell : Cell {
 

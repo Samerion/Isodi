@@ -10,6 +10,10 @@ import isodi.pack;
 import isodi.raylib.cell;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 /// A tile resource.
 struct Tile {
 

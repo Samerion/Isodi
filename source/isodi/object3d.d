@@ -13,6 +13,10 @@ public {
 
 }
 
+
+@safe:
+
+
 /// Represents an object that can be drawn on a 3D space.
 abstract class Object3D {
 
@@ -35,6 +39,8 @@ abstract class Object3D {
 
     /// Add a basic implementation for the position as a property, includes a setter.
     mixin template Implement() {
+
+        @safe:
 
         private Position _position;
 
@@ -80,6 +86,8 @@ abstract class Object3D {
 
     /// Implement the position as a const property. `_position` and `_visualPosition` must be set in constructor.
     mixin template ImplementConst() {
+
+        @safe:
 
         private const Position _position;
         override const(Position) position() const { return _position; }

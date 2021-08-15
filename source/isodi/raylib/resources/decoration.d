@@ -14,6 +14,10 @@ import isodi.raylib.cell;
 import isodi.raylib.display;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 private struct DecoPart {
     uint x, y;
     Texture2D texture;

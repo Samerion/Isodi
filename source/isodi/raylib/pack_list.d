@@ -5,6 +5,10 @@ import std.string;
 
 import isodi.pack_list;
 
+
+@safe:
+
+
 ///
 class RaylibPackList : PackList {
 

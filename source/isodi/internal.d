@@ -2,14 +2,16 @@ module isodi.internal;
 
 import std.string;
 
-package:
+
+package @safe:
+
 
 /// Iterate on file ancestors, starting from and including the requested file and ending on the root.
 struct DeepAncestors {
 
     const string path;
 
-    int opApply(int delegate(string) dg) {
+    int opApply(int delegate(string) @trusted dg) {
 
         auto dir = path[];
 
@@ -45,7 +47,7 @@ struct Ancestors {
 
     const wstring path;
 
-    int opApply(int delegate(wstring) dg) {
+    int opApply(int delegate(wstring) @trusted dg) {
 
         wstring current;
 

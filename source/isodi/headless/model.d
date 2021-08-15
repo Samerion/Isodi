@@ -3,6 +3,10 @@ module isodi.headless.model;
 import isodi.model;
 import isodi.display;
 
+
+@safe:
+
+
 ///
 final class HeadlessModel : Model {
 

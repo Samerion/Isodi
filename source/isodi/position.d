@@ -41,6 +41,10 @@ private alias positionSortArgs = AliasSeq!(
 /// Sort Object3Ds by `position`.
 alias positionSort = multiSort!positionSortArgs;
 
+
+@safe:
+
+
 /// Create a position tuple.
 Position position(int x, int y, int layer = 0, Height height = Height.init) {
 

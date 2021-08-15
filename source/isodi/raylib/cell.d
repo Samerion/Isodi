@@ -11,6 +11,10 @@ import isodi.raylib.display;
 import isodi.raylib.internal;
 import isodi.raylib.resources;
 
+
+@safe:
+
+
 /// Cell implementation with Raylib.
 ///
 /// DrawableResource is implemented as a wrapper for the cell's resource calls.

@@ -10,6 +10,10 @@ import raylib;
 import isodi.camera;
 import isodi.object3d;
 
+
+@safe:
+
+
 private {
 
     struct Affects(string what) {

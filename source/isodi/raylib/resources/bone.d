@@ -14,6 +14,10 @@ import isodi.resource;
 import isodi.raylib.model;
 import isodi.raylib.internal;
 
+
+@safe:
+
+
 /// A bone resource.
 struct Bone {
 
