@@ -5,7 +5,7 @@
 	"configurations": [
 		{
 			"dependencies": {
-				"raylib-d": "~>3.0.3"
+				"raylib-d": "~>3.7.0"
 			},
 			"libs": [
 				"raylib"
@@ -16,7 +16,7 @@
 		},
 		{
 			"dependencies": {
-				"raylib-d": "~>3.0.3"
+				"raylib-d": "~>3.7.0"
 			},
 			"libs": [
 				"raylib"

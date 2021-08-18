@@ -34,8 +34,8 @@ void main() {
     Runtime.extendedModuleUnitTester = null;
 
     // Create the window
-    SetTraceLogLevel(TraceLogType.LOG_WARNING);
-    SetConfigFlags(ConfigFlag.FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
+    SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
     InitWindow(1600, 900, "unittest");
     SetWindowMinSize(800, 600);
     SetTargetFPS(60);
@@ -137,7 +137,7 @@ void main() {
         display.draw();
 
         // Output status message
-        DrawText(runner.statusMessage.toStringz, 10, 10, 20, Colors.BLACK);
+        DrawText(runner.statusMessage.toStringz, 10, 10, 24, Colors.BLACK);
         DrawFPS(10, GetScreenHeight - 20);
 
     }

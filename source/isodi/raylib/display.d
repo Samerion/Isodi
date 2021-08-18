@@ -33,7 +33,7 @@ final class RaylibDisplay : Display {
 
         // Set camera constants
         raycam.up = Vector3(0.0, 1.0, 0.0);
-        raycam.type = CameraType.CAMERA_ORTHOGRAPHIC;
+        raycam.projection = CameraProjection.CAMERA_ORTHOGRAPHIC;
 
     }
 
