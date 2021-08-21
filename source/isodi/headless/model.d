@@ -10,7 +10,7 @@ import isodi.display;
 ///
 final class HeadlessModel : Model {
 
-    this(Display display, const string type) {
+    this(Display display, const string type = "") {
 
         super(display, type);
 

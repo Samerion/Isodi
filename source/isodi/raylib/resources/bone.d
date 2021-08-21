@@ -21,9 +21,6 @@ import isodi.raylib.internal;
 /// A bone resource.
 struct Bone {
 
-    /// Enable debugging bone ends
-    private enum BoneDebug = false;
-
     // Data
     public {
 
@@ -78,7 +75,7 @@ struct Bone {
     }
 
     /// Create the bone and load resources.
-    this(RaylibModel model, SkeletonNode node, Pack.Resource!string resource) {
+    this(RaylibModel model, bool hasParent, SkeletonNode node, Pack.Resource!string resource) {
 
         // Set parameters
         this.model = model;
@@ -97,7 +94,7 @@ struct Bone {
         this.atlasWidth = texture.width / options.angles;
 
         // Check if this node has a parent
-        this.hasParent = cast(bool) model.bones.length;
+        this.hasParent = hasParent;
 
     }
 
@@ -139,7 +136,7 @@ struct Bone {
         auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
 
         // Apply the matrix
-        rlMultMatrixf(&matrixf[0]);
+        rlMultMatrixf(matrixf.ptr);
 
         // Scale appropriately
         rlScalef(scale, scale, scale);
@@ -148,7 +145,7 @@ struct Bone {
         frameSnap(atlasFrame, frameDelimiter);
 
         // Push a matrix if debugging bones
-        static if (BoneDebug) rlPushMatrix();
+        debug (Isodi_BoneDebug) rlPushMatrix();
 
         // Translate the texture
         rlTranslatef(
@@ -171,7 +168,7 @@ struct Bone {
         );
 
         // Draw debug points
-        static if (BoneDebug) {
+        debug (Isodi_BoneDebug) {
 
             // Draw texture debug
             DrawCircle3D(

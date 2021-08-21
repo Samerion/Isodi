@@ -201,13 +201,16 @@ struct Pack {
         // Get the path
         const path = path.buildPath(name.format!"models/skeleton/%s.json");
 
+        // Empty name, return an empty skeleton
+        if (name == "") return typeof(return)([], getOptions(path));
+
         // Check if the file exists
         enforce!PackException(path.exists, format!"Skeleton %s wasn't found in pack %s"(name, this.name));
 
         // Read the file
         auto json = JSONParser(path.readText);
 
-        return Resource!(SkeletonNode[])(
+        return typeof(return)(
             getSkeletonImpl(json, name, 0, 0),
             getOptions(path),
         );

@@ -21,15 +21,15 @@ abstract class Model : Object3D, WithDrawableResources {
     /// as the model, the model will be standing on the cell.
     mixin Object3D.Implement;
 
-    private {
+    static private size_t nextID;
 
-        static size_t nextID;
-        size_t _id;
-
-    }
+    /// ID of the model.
+    const size_t id;
 
     /// Type of the model.
-    const string type;
+    deprecated("Model type information is no longer to be provided at runtime as model's skeleton may differ from the "
+        ~ "skeleton saved in the pack.")
+    @property const string type() { return null; }
 
     /// Active animations.
     protected Animation[] animations;
@@ -41,28 +41,29 @@ abstract class Model : Object3D, WithDrawableResources {
 
     /// Create a new model.
     /// Params:
-    ///     display = Display to create the model for.
-    ///     type    = Skeleton to use for the model.
-    this(Display display, const string type) {
+    ///     display  = Display to create the model for.
+    ///     skeleton = Skeleton to use for the model; leave empty to not load any.
+    this(Display display, const string skeleton = null) {
 
         // TODO: ModelBuilder for Isodi editors.
 
         super(display);
-        this._id = nextID++;
-        this.type = type;
+        this.id = nextID++;
         this.seed = unpredictableSeed;
 
     }
 
-    @property
-    size_t id() const { return _id; }
-
     /// Ditto
-    static Model make(Display display, const string type) {
+    static Model make(Display display, const string type = null) {
 
         return Renderer.createModel(display, type);
 
     }
+
+    /// Replace the current skeleton with one saved in the pack.
+    /// Params:
+    ///     type = Type of the skeleton to load.
+    abstract void changeSkeleton(string type);
 
     /// Change the variant used for the node with given ID.
     /// Params:

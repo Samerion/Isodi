@@ -31,7 +31,20 @@ final class RaylibModel : Model, WithDrawableResources {
     this(Display display, const string type) {
 
         super(display, type);
-        reload();
+        changeSkeleton(type);
+
+    }
+
+    override void changeSkeleton(string type) {
+
+        // Get the bones
+        auto skeleton = display.packs.getSkeleton(type);
+
+        // Prepare the array
+        bones.length = skeleton.match.length;
+
+        // Add them
+        foreach (i, node; skeleton.match) replaceBone(node, i);
 
     }
 
@@ -42,25 +55,34 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
-    ///
-    void reload() {
+    /// Reload the bones.
+    override void reload() {
 
-        // Clear the array first
-        bones = [];
+        // Clear the bone ID list
+        bonesID = null;
 
-        // Get the bones
-        auto skeleton = display.packs.getSkeleton(type);
-        foreach (node; skeleton.match) {
+        // Regenerate each bone
+        foreach (i, bone; bones) replaceBone(bone.node, i);
 
-            // Create a bone
-            auto bone = new Bone(this, node, getBone(node));
-            bones ~= bone;
+    }
 
-            // Save by ID
-            assert(bone.node.id !in bonesID);
-            bonesID[bone.node.id] = bone;
+    /// Add a new bone.
+    void addBone(SkeletonNode node) {
 
-        }
+        bones ~= null;
+        replaceBone(node, bones.length - 1);
+
+    }
+
+    /// Replace a bone at given index.
+    void replaceBone(SkeletonNode node, size_t index) {
+
+        auto bone = new Bone(this, index != 0, node, getBone(node));
+        bones[index] = bone;
+
+        // Save by ID
+        assert(node.id !in bonesID);
+        bonesID[node.id] = bone;
 
     }
 
