@@ -65,6 +65,9 @@ abstract class Model : Object3D, WithDrawableResources {
     ///     type = Type of the skeleton to load.
     abstract void changeSkeleton(string type);
 
+    /// Copy the skeleton from a different model. Animations and related state will not be copied over.
+    abstract void copySkeleton(Model model);
+
     /// Change the variant used for the node with given ID.
     /// Params:
     ///     id      = ID of the node to change.

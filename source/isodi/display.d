@@ -190,7 +190,7 @@ abstract class Display {
     /// Params:
     ///     position = Position to place the model on.
     ///     type     = Skeleton for the model
-    Model addModel(const string type) {
+    Model addModel(const string type = "") {
 
         // Create the model
         auto model = Model.make(this, type);
@@ -201,7 +201,7 @@ abstract class Display {
     }
 
     /// Ditto
-    Model addModel(Position position, const string type) {
+    Model addModel(Position position, const string type = "") {
 
         auto model = addModel(type);
         model.position = position;

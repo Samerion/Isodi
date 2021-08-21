@@ -56,6 +56,17 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
+    override void copySkeleton(Model model) {
+
+        auto rlmodel = cast(RaylibModel) model;
+
+        // Reset local bones
+        bones = [];
+
+        foreach (bone; rlmodel.bones) addBone(bone.node);
+
+    }
+
     override void changeVariant(string id, string variant) {
 
         //auto bone = bonesID[id].changeVariant(variant);
@@ -73,6 +84,8 @@ final class RaylibModel : Model, WithDrawableResources {
         foreach (i, bone; bones) replaceBone(bone.node, i);
 
     }
+
+    // Note: below two methods might become available in isodi.Display;
 
     /// Add a new bone.
     void addBone(SkeletonNode node) {
