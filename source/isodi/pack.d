@@ -393,4 +393,16 @@ struct Pack {
 
     }
 
+    /// List skeletons available in the pack.
+    /// Returns: A range with all skeletons that can be found in the pack.
+    auto listSkeletons() const @trusted {
+
+        // Return all directories within "cells/"
+        return path.buildPath("models/skeleton")
+            .dirEntries("*.json", SpanMode.shallow)
+            .filter!((string name) => name.isFile)
+            .map!(path => path.baseName(".json"));
+
+    }
+
 }

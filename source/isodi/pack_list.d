@@ -216,15 +216,29 @@ abstract class PackList {
     }
 
     /// List cells available in all the packs.
-    /// Returns: A `RedBlackTree!string`, guarantying unique elements.
-    auto listCells() const @trusted {
+    /// Returns: A `RedBlackTree!string`, guaranteeing unique elements.
+    auto listCells() const{
+
+        return packListAll!"listCells";
+
+    }
+
+    /// List skeletons available in all the packs.
+    /// Returns: A `RedBlackTree!string`, guaranteeing unique elements.
+    auto listSkeletons() const {
+
+        return packListAll!"listSkeletons";
+
+    }
+
+    private auto packListAll(string func)() const @trusted {
 
         auto rbtree = redBlackTree!string;
 
         foreach (ref pack; packList) {
 
             // Add all cells from the pack
-            rbtree.insert(pack.listCells);
+            rbtree.insert(mixin("pack." ~ func ~ "()"));
 
         }
 
