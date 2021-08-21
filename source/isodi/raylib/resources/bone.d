@@ -145,7 +145,7 @@ struct Bone {
         frameSnap(atlasFrame, frameDelimiter);
 
         // Push a matrix if debugging bones
-        debug (Isodi_BoneDebug) rlPushMatrix();
+        if (model.boneDebug) rlPushMatrix();
 
         // Translate the texture
         rlTranslatef(
@@ -168,7 +168,7 @@ struct Bone {
         );
 
         // Draw debug points
-        debug (Isodi_BoneDebug) {
+        if (model.boneDebug) {
 
             // Draw texture debug
             DrawCircle3D(

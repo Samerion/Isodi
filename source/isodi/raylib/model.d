@@ -27,6 +27,14 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
+    public {
+
+        /// If true, enable debugging important bone points.
+        debug (Isodi_BoneDebug) bool boneDebug = true;
+        else bool boneDebug = false;
+
+    }
+
     ///
     this(Display display, const string type) {
 
@@ -93,8 +101,21 @@ final class RaylibModel : Model, WithDrawableResources {
 
         runAnimations();
 
-        rlPushMatrix();
-        scope(exit) rlPopMatrix();
+        // Debug mode
+        if (boneDebug) {
+
+            rlPushMatrix();
+            scope(exit) rlPopMatrix();
+
+            // Move to the appropriate position
+            rlTranslatef(visualPosition.toTuple3(display.cellSize, CellPoint.center).expand);
+            rlRotatef(90, 1, 0, 0);
+            rlTranslatef(0, 0, 1);
+
+            // Draw a circle below the model
+            DrawCircle(0, 0, display.cellSize / 3, Colors.BLUE);
+
+        }
 
         // Sort the bones
         bones.map!((a) => cameraDistance(a, rad))

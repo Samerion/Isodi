@@ -147,6 +147,9 @@ mixin DisplayTest!((display) {
     display.addCell(position(2, 0), "grass");
     display.addModel(position(2, 0), "wraith-white");
 
+    // An invisible, empty model 3
+    display.addModel(position(-2, 0), "");
+
     // Add a cell behind
     display.addCell(position(2, 1, Height(4, 5)), "grass");
 
