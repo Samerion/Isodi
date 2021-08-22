@@ -48,11 +48,17 @@ final class RaylibModel : Model, WithDrawableResources {
         // Get the bones
         auto skeleton = display.packs.getSkeleton(type);
 
+        changeSkeleton(skeleton.match);
+
+    }
+
+    override void changeSkeleton(SkeletonNode[] nodes) {
+
         // Prepare the array
-        bones.length = skeleton.match.length;
+        bones.length = nodes.length;
 
         // Add them
-        foreach (i, node; skeleton.match) replaceBone(node, i);
+        foreach (i, node; nodes) replaceBone(node, i);
 
     }
 
@@ -60,10 +66,35 @@ final class RaylibModel : Model, WithDrawableResources {
 
         auto rlmodel = cast(RaylibModel) model;
 
-        // Reset local bones
-        bones = [];
+        // Prepare the array
+        bones.length = rlmodel.bones.length;
 
-        foreach (bone; rlmodel.bones) addBone(bone.node);
+        // Add the bones
+        foreach (i, bone; rlmodel.bones) replaceBone(bone.node, i);
+
+    }
+
+    override SkeletonNode[] skeletonBones() {
+
+        return bones.map!"a.node".array;
+
+    }
+
+    override void addBone(SkeletonNode node) {
+
+        bones ~= null;
+        replaceBone(node, bones.length - 1);
+
+    }
+
+    override void replaceBone(SkeletonNode node, size_t index) {
+
+        auto bone = new Bone(this, index != 0, node, getBone(node));
+        bones[index] = bone;
+
+        // Save by ID
+        assert(node.id !in bonesID);
+        bonesID[node.id] = bone;
 
     }
 
@@ -82,28 +113,6 @@ final class RaylibModel : Model, WithDrawableResources {
 
         // Regenerate each bone
         foreach (i, bone; bones) replaceBone(bone.node, i);
-
-    }
-
-    // Note: below two methods might become available in isodi.Display;
-
-    /// Add a new bone.
-    void addBone(SkeletonNode node) {
-
-        bones ~= null;
-        replaceBone(node, bones.length - 1);
-
-    }
-
-    /// Replace a bone at given index.
-    void replaceBone(SkeletonNode node, size_t index) {
-
-        auto bone = new Bone(this, index != 0, node, getBone(node));
-        bones[index] = bone;
-
-        // Save by ID
-        assert(node.id !in bonesID);
-        bonesID[node.id] = bone;
 
     }
 

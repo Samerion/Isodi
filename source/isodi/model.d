@@ -65,8 +65,22 @@ abstract class Model : Object3D, WithDrawableResources {
     ///     type = Type of the skeleton to load.
     abstract void changeSkeleton(string type);
 
+    /// Replace the current skeleton with one made from given bones.
+    /// Params:
+    ///     bones = Bones to put in the skeleton.
+    abstract void changeSkeleton(SkeletonNode[] nodes);
+
     /// Copy the skeleton from a different model. Animations and related state will not be copied over.
     abstract void copySkeleton(Model model);
+
+    /// List all bones in the model's skeleton.
+    abstract SkeletonNode[] skeletonBones();
+
+    /// Add a new bone.
+    abstract void addBone(SkeletonNode node);
+
+    /// Replace a bone at given index.
+    abstract void replaceBone(SkeletonNode node, size_t index);
 
     /// Change the variant used for the node with given ID.
     /// Params:
