@@ -134,13 +134,20 @@ abstract class Model : Object3D, WithDrawableResources {
 
         // TODO: add support for node.variants
 
+        // Hidden, don't load
+        if (node.hidden) {
+
+            return typeof(return)("", null);
+
+        }
+
         auto rng = Mt19937_64(seed + node.parent);
 
         // Get the texture
         auto glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
         const file = glob.matches.choice(rng);
 
-        return Pack.Resource!string(
+        return typeof(return)(
             file,
             glob.pack.getOptions(file)
         );

@@ -43,6 +43,7 @@ struct SkeletonNode {
 
     /// If true, this node shouldn't be displayed and its bone resource shouldn't be loaded.
     bool hidden;
+    // TODO unittest for this
 
     /// Name of the used bone resource.
     string name;
@@ -59,6 +60,9 @@ struct SkeletonNode {
     /// Offset for the bone's start relative to the parent's end.
     ///
     /// If the node is rotated, the whole bone will be rotated relative to this point.
+    ///
+    /// The array represents positions on the image, not within Isodi's positioning. The array is `[x, y, z]`, where
+    /// `y` is the height. This is much unlike Isodi's positioning system.
     float[3] boneStart = [0, 0, 0];
 
     /// Position of the bone's end, relative to this node's start.

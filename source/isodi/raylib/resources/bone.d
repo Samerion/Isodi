@@ -61,7 +61,7 @@ struct Bone {
         float originalScale;
 
         /// Scale to be applied to textures.
-        float scale;
+        float scale = 1;
 
         /// Width of a single angle on the texture atlas.
         uint atlasWidth;
