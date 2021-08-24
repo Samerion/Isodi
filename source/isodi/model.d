@@ -132,7 +132,7 @@ abstract class Model : Object3D, WithDrawableResources {
     ///
     protected Pack.Resource!string getBone(const SkeletonNode node) @trusted {
 
-        // TODO: add support for node.variants
+        import std.path, std.array, std.algorithm;
 
         // Hidden, don't load
         if (node.hidden) {
@@ -144,8 +144,12 @@ abstract class Model : Object3D, WithDrawableResources {
         auto rng = Mt19937_64(seed + node.parent);
 
         // Get the texture
-        auto glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
-        const file = glob.matches.choice(rng);
+        const glob = display.packs.packGlob(node.name.format!"models/bone/%s/*.png");
+        const matches = node.variants.length
+            ? glob.matches.filter!(a => node.variants.canFind(a.baseName(".png"))).array
+            : glob.matches;
+
+        const file = matches[].choice(rng);
 
         return typeof(return)(
             file,
