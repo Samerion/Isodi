@@ -48,7 +48,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     }
 
     ///
-    protected Pack.Resource!string getTile() {
+    Pack.Resource!string getTile() {
 
         // Get a random file
         return display.packs.randomGlob(
@@ -59,7 +59,7 @@ abstract class Cell : Object3D, WithDrawableResources {
     }
 
     ///
-    protected Pack.Resource!string[4] getSide() @trusted {
+    Pack.Resource!string[4] getSide() @trusted {
 
         Mt19937_64 rng;
         Pack.Resource!string[4] result;
@@ -88,7 +88,7 @@ abstract class Cell : Object3D, WithDrawableResources {
 
     /// Params:
     ///     tileOptions = Pack options set for the tile resource.
-    protected Pack.Resource!string[] getDecoration(const ResourceOptions* tileOptions) @trusted {
+    Pack.Resource!string[] getDecoration(const ResourceOptions* tileOptions) @trusted {
 
         Pack.Resource!string[] result;
 

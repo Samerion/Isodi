@@ -130,7 +130,7 @@ abstract class Model : Object3D, WithDrawableResources {
     // TODO: stopAnimation
 
     ///
-    protected Pack.Resource!string getBone(const SkeletonNode node) @trusted {
+    Pack.Resource!string getBone(const SkeletonNode node) @trusted {
 
         import std.path, std.array, std.algorithm;
 
