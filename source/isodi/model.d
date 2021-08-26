@@ -77,10 +77,22 @@ abstract class Model : Object3D, WithDrawableResources {
     abstract SkeletonNode[] skeletonBones();
 
     /// Add a new bone.
-    abstract void addBone(SkeletonNode node);
+    /// Returns: Index of the new bone.
+    abstract size_t addNode(SkeletonNode node);
 
     /// Replace a bone at given index.
-    abstract void replaceBone(SkeletonNode node, size_t index);
+    abstract void replaceNode(SkeletonNode node, size_t index);
+
+    /// Get the bone at given index.
+    abstract SkeletonNode* getNode(size_t index);
+
+    /// Get the bone with given ID
+    abstract SkeletonNode* getNode(string id);
+
+    deprecated {
+        alias addBone = addNode;
+        alias replaceBone = replaceNode;
+    }
 
     /// Change the variant used for the node with given ID.
     /// Params:

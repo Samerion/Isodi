@@ -58,7 +58,7 @@ final class RaylibModel : Model, WithDrawableResources {
         bones.length = nodes.length;
 
         // Add them
-        foreach (i, node; nodes) replaceBone(node, i);
+        foreach (i, node; nodes) replaceNode(node, i);
 
     }
 
@@ -70,7 +70,7 @@ final class RaylibModel : Model, WithDrawableResources {
         bones.length = rlmodel.bones.length;
 
         // Add the bones
-        foreach (i, bone; rlmodel.bones) replaceBone(bone.node, i);
+        foreach (i, bone; rlmodel.bones) replaceNode(bone.node, i);
 
     }
 
@@ -80,14 +80,17 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
-    override void addBone(SkeletonNode node) {
+    override size_t addNode(SkeletonNode node) {
 
+        const index = bones.length;
         bones ~= null;
-        replaceBone(node, bones.length - 1);
+        replaceNode(node, index);
+
+        return index;
 
     }
 
-    override void replaceBone(SkeletonNode node, size_t index) {
+    override void replaceNode(SkeletonNode node, size_t index) {
 
         auto bone = new Bone(this, index != 0, node, getBone(node));
         bones[index] = bone;
@@ -95,6 +98,26 @@ final class RaylibModel : Model, WithDrawableResources {
         // Save by ID
         assert(node.id !in bonesID);
         bonesID[node.id] = bone;
+
+    }
+
+    override SkeletonNode* getNode(size_t index) {
+
+        return index < bones.length
+            ? &bones[index].node
+            : null;
+
+    }
+
+    override SkeletonNode* getNode(string id) {
+
+        if (auto bone = id in bonesID) {
+
+            return &(*bone).node;
+
+        }
+
+        else return null;
 
     }
 
@@ -112,7 +135,7 @@ final class RaylibModel : Model, WithDrawableResources {
         bonesID = null;
 
         // Regenerate each bone
-        foreach (i, bone; bones) replaceBone(bone.node, i);
+        foreach (i, bone; bones) replaceNode(bone.node, i);
 
     }
 
