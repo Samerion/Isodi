@@ -54,6 +54,9 @@ final class RaylibModel : Model, WithDrawableResources {
 
     override void changeSkeleton(SkeletonNode[] nodes) {
 
+        // Unregister all bones
+        bonesID = null;
+
         // Prepare the array
         bones.length = nodes.length;
 
@@ -92,12 +95,73 @@ final class RaylibModel : Model, WithDrawableResources {
 
     override void replaceNode(SkeletonNode node, size_t index) {
 
+        import std.format;
+
+        // Remove the old node
+        if (index < bones.length) {
+
+            // Get the bone
+            if (auto bone = bones[index]) {
+
+                // Remove it from the list.
+                bonesID.remove(bone.node.id);
+
+            }
+
+        }
+
         auto bone = new Bone(this, index != 0, node, getBone(node));
         bones[index] = bone;
 
         // Save by ID
-        assert(node.id !in bonesID);
+        assert(node.id !in bonesID, node.id.format!"Duplicate skeleton node ID %s");
         bonesID[node.id] = bone;
+
+    }
+
+    override SkeletonNode[] removeNodes(string[] nodes...) {
+        // TODO: unittest?
+
+        SkeletonNode[] newBones;
+        SkeletonNode[] removed;
+        size_t[] newIndexes;
+
+        // Remove the nodes
+        foreach (i, bone; bones) {
+
+            newIndexes ~= i - removed.length;
+
+            // This node is to be removed
+            if (auto found = nodes.canFind([bone.node.id], [bone.node.parent])) {
+
+                // Found removed parent, so this is a child
+                // We need to add it to the target list to also remove grandchildren
+                if (found == 2) nodes ~= bone.node.id;
+
+                // List as removed
+                removed ~= bone.node;
+
+                continue;
+
+            }
+
+            // This node is to be kept
+            else {
+
+                // The parent might have moved
+                bone.node.parent = newIndexes[bone.node.parent];
+
+                // Add again
+                newBones ~= bone.node;
+
+            }
+
+        }
+
+        // It's easier to just reset the skeleton
+        changeSkeleton(newBones);
+
+        return removed;
 
     }
 
