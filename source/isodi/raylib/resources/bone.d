@@ -30,6 +30,9 @@ struct Bone {
         /// Skeleton node represented by this bone.
         SkeletonNode node;
 
+        /// If true, the bone has individual bone debugging enabled.
+        bool boneDebug;
+
     }
 
     // Translation matrixes and related data for this bone.
@@ -148,17 +151,17 @@ struct Bone {
         // Push a matrix if debugging bones
         static if (debugPoints) {{
 
+            auto end = Vector3(node.boneEnd[0], node.boneEnd[1], node.boneEnd[2]);
+
+            // Draw a line from here to bone end
+            DrawLine3D(Vector3(0, 0, -1), end, Colors.ORANGE);
+
             // Draw node start debug
             DrawCircle3D(
                 Vector3(0, 0, -1), 0.4,
                 Vector3(), 0,
                 Colors.GREEN
             );
-
-            auto end = Vector3(node.boneEnd[0], node.boneEnd[1], node.boneEnd[2]);
-
-            // Draw a line from here to bone end
-            DrawLine3D(Vector3(), end, Colors.ORANGE);
 
             rlPushMatrix();
             scope (exit) rlPopMatrix();

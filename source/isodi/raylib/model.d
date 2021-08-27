@@ -29,9 +29,19 @@ final class RaylibModel : Model, WithDrawableResources {
 
     public {
 
-        /// If true, enable debugging important bone points.
-        debug (Isodi_BoneDebug) bool boneDebug = true;
-        else bool boneDebug = false;
+        /// If true, enable debugging all bone points.
+        debug (Isodi_BoneDebug) {
+
+            bool boneDebug = true;
+            bool positionDebug = true;
+
+        }
+        else {
+
+            bool boneDebug = false;
+            bool positionDebug = false;
+
+        }
 
     }
 
@@ -40,6 +50,13 @@ final class RaylibModel : Model, WithDrawableResources {
 
         super(display, type);
         changeSkeleton(type);
+
+    }
+
+    /// Get/set bone debug for a node.
+    ref bool nodeBoneDebug(size_t index) {
+
+        return bones[index].boneDebug;
 
     }
 
@@ -213,7 +230,7 @@ final class RaylibModel : Model, WithDrawableResources {
         runAnimations();
 
         // Debug mode
-        if (boneDebug) {
+        if (positionDebug) {
 
             rlPushMatrix();
             scope(exit) rlPopMatrix();
@@ -228,16 +245,29 @@ final class RaylibModel : Model, WithDrawableResources {
 
         }
 
+        // Get bones to have bone debugging enabled for
+        Bone*[] boneDebugTargets;
+
         // Sort the bones
         auto boneRange = bones[].map!((a) => cameraDistance(a, rad))
             .array
-            .sort!((a, b) => a[1] > b[1]);
+            .sort!((a, b) => a[1] > b[1])
+            .tee!((bone) {
+
+                // Check if bone debugging is enabled for this bone
+                if (!bone[0].boneDebug) return;
+                boneDebugTargets ~= bone[0];
+
+            });
 
         // Draw them
         boneRange.each!(a => a[0].draw());
 
         // Debug mode: draw debug points
         if (boneDebug) boneRange.each!(a => a[0].draw!true);
+
+        // Otherwise draw debug points only for chosen nodes
+        else boneDebugTargets.each!(a => a.draw!true);
 
     }
 
