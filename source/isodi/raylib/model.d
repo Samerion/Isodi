@@ -136,34 +136,52 @@ final class RaylibModel : Model, WithDrawableResources {
 
     }
 
-    override SkeletonNode[] removeNodes(string[] nodes...) {
+    override SkeletonNode[] removeNodes(string[] nodes...) @system
+    out(r) {
+
+        if (r.length == 0) {
+
+            // Top parent of the removed node must be 0.
+            assert(r[0].parent == 0);
+
+        }
+
+    }
+    do {
         // TODO: unittest?
 
         SkeletonNode[] newBones;
         SkeletonNode[] removed;
         size_t[] newIndexes;
+        size_t[] removedIndexes;
 
         // Remove the nodes
         foreach (i, bone; bones) {
 
-            newIndexes ~= i - removed.length;
+            // The node is to be removed, or its parent has been removed
+            const toRemove = nodes.canFind(bone.node.id);
+            const parentRemoved = removedIndexes.canFind(bone.node.parent);
 
-            // This node is to be removed
-            if (auto found = nodes.canFind([bone.node.id], [bone.node.parent])) {
+            // Then this node is to be removed
+            if (toRemove || parentRemoved) {
 
-                // Found removed parent, so this is a child
-                // We need to add it to the target list to also remove grandchildren
-                if (found == 2) nodes ~= bone.node.id;
+                newIndexes ~= removed.length;
+
+                // Make parent of the node refer to local index within `removed`
+                bone.node.parent = parentRemoved
+                    ? newIndexes[bone.node.parent]
+                    : 0;
 
                 // List as removed
                 removed ~= bone.node;
-
-                continue;
+                removedIndexes ~= i;
 
             }
 
             // This node is to be kept
             else {
+
+                newIndexes ~= newBones.length;
 
                 // The parent might have moved
                 bone.node.parent = newIndexes[bone.node.parent];
