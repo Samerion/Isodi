@@ -84,7 +84,10 @@ abstract class Model : Object3D, WithDrawableResources {
     abstract void replaceNode(SkeletonNode node, size_t index);
 
     /// Remove a list of nodes.
-    /// Returns: All removed nodes; this is given nodes plus their children
+    /// Returns:
+    ///     All removed nodes; this is given nodes plus their children.
+    ///
+    ///     Returned nodes will have parent indexes adjusted to point to indexes within the returned array.
     abstract SkeletonNode[] removeNodes(string[] ids...);
 
     /// Get the bone at given index.
