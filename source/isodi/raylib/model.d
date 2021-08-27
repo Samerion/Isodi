@@ -206,6 +206,8 @@ final class RaylibModel : Model, WithDrawableResources {
     ///
     void draw() @trusted {
 
+        import std.range;
+
         const rad = display.camera.angle.x * std.math.PI / 180;
 
         runAnimations();
@@ -227,12 +229,15 @@ final class RaylibModel : Model, WithDrawableResources {
         }
 
         // Sort the bones
-        bones.map!((a) => cameraDistance(a, rad))
+        auto boneRange = bones[].map!((a) => cameraDistance(a, rad))
             .array
-            .sort!((a, b) => a[1] > b[1])
+            .sort!((a, b) => a[1] > b[1]);
 
-            // Draw them
-            .each!(a => a[0].draw());
+        // Draw them
+        boneRange.each!(a => a[0].draw());
+
+        // Debug mode: draw debug points
+        if (boneDebug) boneRange.each!(a => a[0].draw!true);
 
     }
 

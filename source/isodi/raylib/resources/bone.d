@@ -116,8 +116,9 @@ struct Bone {
 
     }
 
-    ///
-    void draw() const @trusted {
+    /// Params:
+    ///     debugPoints = If true, will draw debug circles instead of the texture itself
+    void draw(bool debugPoints = false)() const @trusted {
 
         // Ignore if not displaying
         if (node.hidden) return;
@@ -145,7 +146,34 @@ struct Bone {
         frameSnap(atlasFrame, frameDelimiter);
 
         // Push a matrix if debugging bones
-        if (model.boneDebug) rlPushMatrix();
+        static if (debugPoints) {{
+
+            // Draw node start debug
+            DrawCircle3D(
+                Vector3(0, 0, -1), 0.4,
+                Vector3(), 0,
+                Colors.GREEN
+            );
+
+            auto end = Vector3(node.boneEnd[0], node.boneEnd[1], node.boneEnd[2]);
+
+            // Draw a line from here to bone end
+            DrawLine3D(Vector3(), end, Colors.ORANGE);
+
+            rlPushMatrix();
+            scope (exit) rlPopMatrix();
+
+            // Move to node end
+            rlTranslatef(end.tupleof);
+
+            // Draw that transform
+            DrawCircle3D(
+                Vector3(0, 0, -1), 0.4,
+                Vector3(), 0,
+                Colors.RED
+            );
+
+        }}
 
         // Translate the texture
         rlTranslatef(
@@ -157,8 +185,20 @@ struct Bone {
         // Check for mirroring
         const textureFrame = node.mirror ? atlasFrame : options.angles - atlasFrame;
 
-        // Draw the texture
-        texture.DrawTextureRec(
+        // Draw debug points
+        static if (debugPoints) {
+
+            // Draw texture debug
+            DrawCircle3D(
+                Vector3(0, 0, -1), 0.2,
+                Vector3(), 0,
+                Colors.BLUE
+            );
+
+        }
+
+        // Draw the texture otherwise
+        else texture.DrawTextureRec(
             Rectangle(
                 atlasWidth * textureFrame, 0,
                 -mirrorScale * cast(int) atlasWidth, -texture.height
@@ -166,28 +206,6 @@ struct Bone {
             Vector2(),
             Colors.WHITE
         );
-
-        // Draw debug points
-        if (model.boneDebug) {
-
-            // Draw texture debug
-            DrawCircle3D(
-                Vector3(0, 0, -1), 0.2,
-                Vector3(), 1,
-                Colors.BLUE
-            );
-
-            // Remove texture transform
-            rlPopMatrix();
-
-            // Draw node debug
-            DrawCircle3D(
-                Vector3(0, 0, 0), 0.4,
-                Vector3(), 1,
-                Colors.GREEN
-            );
-
-        }
 
     }
 
