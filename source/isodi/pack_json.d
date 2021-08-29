@@ -9,7 +9,7 @@ import rcdata.json;
 
 import isodi.pack;
 import isodi.internal;
-import isodi.exceptions;
+import isodi.exception;
 
 
 @safe:

@@ -12,7 +12,7 @@ import isodi.cell;
 import isodi.tests;
 import isodi.display;
 import isodi.position;
-import isodi.exceptions;
+import isodi.exception;
 
 /// A start leet code, just for fun (and identification)
 private immutable int leet = 0x150D1;

@@ -15,7 +15,7 @@ import isodi.bind;
 import isodi.pack;
 import isodi.model;
 import isodi.resource;
-import isodi.exceptions;
+import isodi.exception;
 
 
 @safe:

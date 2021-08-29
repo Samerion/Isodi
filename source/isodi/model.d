@@ -152,6 +152,7 @@ abstract class Model : Object3D, WithDrawableResources {
     Pack.Resource!string getBone(const SkeletonNode node) @trusted {
 
         import std.path, std.array, std.algorithm;
+        import std.exception, isodi.exception;
 
         // Hidden, don't load
         if (node.hidden) {
@@ -167,6 +168,10 @@ abstract class Model : Object3D, WithDrawableResources {
         const matches = node.variants.length
             ? glob.matches.filter!(a => node.variants.canFind(a.baseName(".png"))).array
             : glob.matches;
+
+        enforce!PackException(matches.length, format!"Bone %s found, but no variants matching %s"(
+            node.name, node.variants
+        ));
 
         const file = matches[].choice(rng);
 

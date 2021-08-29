@@ -26,7 +26,7 @@ import rcdata.json;
 import isodi.model;
 import isodi.internal;
 import isodi.resource;
-import isodi.exceptions;
+import isodi.exception;
 
 public {
 
