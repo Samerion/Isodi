@@ -118,7 +118,8 @@ abstract class Model : Object3D, WithDrawableResources {
 
     /// Run an animation.
     /// Params:
-    ///     type     = Type of the animation.
+    ///     type     = (1) Type of the animation to load.
+    ///     data     = (2) Animation data to load.
     ///     duration = Time it should take for one loop of the animation to complete.
     ///     times    = How many times the animation should be ran.
     void animate(string type, Duration duration, uint times = 1) {
@@ -132,6 +133,23 @@ abstract class Model : Object3D, WithDrawableResources {
             cast(float) frameCount / duration.total!"msecs" * 1000f,
             times,
             resource.match
+        );
+
+    }
+
+    /// ditto
+    void animate(AnimationPart[] data, Duration duration, uint times = 1) {
+
+        import std.algorithm;
+
+        // Count frames in the animation
+        auto frameCount = data.fold!"a + b.length"(0);
+
+        // Push the animation
+        animations ~= Animation(
+            cast(float) frameCount / duration.total!"msecs" * 1000f,
+            times,
+            data
         );
 
     }

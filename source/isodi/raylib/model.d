@@ -282,10 +282,10 @@ final class RaylibModel : Model, WithDrawableResources {
         boneRange.each!(a => a[0].draw());
 
         // Debug mode: draw debug points
-        if (boneDebug) boneRange.each!(a => a[0].draw!true);
+        if (boneDebug) boneRange.each!(a => a[0].drawDebug);
 
         // Otherwise draw debug points only for chosen nodes
-        else boneDebugTargets.each!(a => a.draw!true);
+        else boneDebugTargets.each!(a => a.drawDebug);
 
     }
 

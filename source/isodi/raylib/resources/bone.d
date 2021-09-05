@@ -119,9 +119,8 @@ struct Bone {
 
     }
 
-    /// Params:
-    ///     debugPoints = If true, will draw debug circles instead of the texture itself
-    void draw(bool debugPoints = false)() const @trusted {
+    ///
+    void draw() const @trusted {
 
         // Ignore if not displaying
         if (node.hidden) return;
@@ -129,54 +128,12 @@ struct Bone {
         rlPushMatrix();
         scope (exit) rlPopMatrix();
 
-        import std.conv : to;
+        // Get frame to display
+        const frame = atlasFrame();
 
-        // Get the current atlas frame
-        const rotationY = 360 - model.display.camera.angle.x;
-        const frameDelimiter = 360.0 / options.angles;
-        const atlasFrame = to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
-
-        /// Get the matrix
-        auto matrixf = localMatrix(atlasFrame).MatrixToFloat;
-
-        // Apply the matrix
-        rlMultMatrixf(matrixf.ptr);
-
-        // Scale appropriately
-        rlScalef(scale, scale, scale);
-
-        // Snap to frame
-        frameSnap(atlasFrame, frameDelimiter);
-
-        // Push a matrix if debugging bones
-        static if (debugPoints) {{
-
-            auto end = Vector3(node.boneEnd[0], node.boneEnd[1], node.boneEnd[2]);
-
-            // Draw a line from here to bone end
-            DrawLine3D(Vector3(0, 0, -1), end, Colors.ORANGE);
-
-            // Draw node start debug
-            DrawCircle3D(
-                Vector3(0, 0, -1), 0.4,
-                Vector3(), 0,
-                Colors.GREEN
-            );
-
-            rlPushMatrix();
-            scope (exit) rlPopMatrix();
-
-            // Move to node end
-            rlTranslatef(end.tupleof);
-
-            // Draw that transform
-            DrawCircle3D(
-                Vector3(0, 0, -1), 0.4,
-                Vector3(), 0,
-                Colors.RED
-            );
-
-        }}
+        // Apply transforms for this bone
+        applyBoneTranslate(frame, false);
+        applyBoneRotation(frame);
 
         // Translate the texture
         rlTranslatef(
@@ -186,22 +143,10 @@ struct Bone {
         );
 
         // Check for mirroring
-        const textureFrame = node.mirror ? atlasFrame : options.angles - atlasFrame;
+        const textureFrame = node.mirror ? frame : options.angles - frame;
 
-        // Draw debug points
-        static if (debugPoints) {
-
-            // Draw texture debug
-            DrawCircle3D(
-                Vector3(0, 0, -1), 0.2,
-                Vector3(), 0,
-                Colors.BLUE
-            );
-
-        }
-
-        // Draw the texture otherwise
-        else texture.DrawTextureRec(
+        // Draw the texture
+        texture.DrawTextureRec(
             Rectangle(
                 atlasWidth * textureFrame, 0,
                 -mirrorScale * cast(int) atlasWidth, -texture.height
@@ -212,19 +157,125 @@ struct Bone {
 
     }
 
+    void drawDebug() const @trusted {
+
+        // Ignore if not displaying
+        if (node.hidden) return;
+
+        const frame = atlasFrame();
+
+        // Start
+        {
+
+            rlPushMatrix();
+            scope (exit) rlPopMatrix();
+
+            // Apply transforms for this bone
+            applyBoneTranslate(frame, false);
+
+            // Draw debug points if debugging bones
+            auto end = Vector3(node.boneEnd[0], node.boneEnd[1], node.boneEnd[2]);
+
+            // Draw a line from here to bone end
+            DrawLine3D(Vector3(0, 0, 0), end, Colors.ORANGE);
+
+            // Apply frame rotation now
+            applyBoneRotation(frame);
+
+            // Draw node start debug
+            DrawCircle3D(
+                Vector3(0, 0, 0), 0.4,
+                Vector3(), 0,
+                Colors.GREEN
+            );
+
+            // Translate the texture
+            rlTranslatef(
+                node.texturePosition[0] + 1,
+                node.texturePosition[1] - texture.height,
+                node.texturePosition[2],
+            );
+
+            // Draw texture debug
+            DrawCircle3D(
+                Vector3(0, 0, 0), 0.2,
+                Vector3(), 0,
+                Colors.BLUE
+            );
+
+        }
+
+        // End
+        {
+
+            rlPushMatrix();
+            scope (exit) rlPopMatrix();
+
+            // Move to node end
+            applyBoneTranslate(frame, true);
+            applyBoneRotation(frame);
+
+            // Draw that transform
+            DrawCircle3D(
+                Vector3(0, 0, 0), 0.4,
+                Vector3(), 0,
+                Colors.RED
+            );
+
+        }
+
+    }
+
+    /// Get current textue part/angle to display.
+    private uint atlasFrame() const {
+
+        import std.conv : to;
+
+        // Get camera options
+        const rotationY = 360 - model.display.camera.angle.x;
+        const frameDelimiter = 360.0 / options.angles;
+
+        return to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
+
+    }
+
+    private void applyBoneTranslate(uint frame, bool end) const @trusted {
+
+        /// Get the matrix
+        auto matrixf = localMatrix(frame, end).MatrixToFloat;
+
+        // Apply the matrix
+        rlMultMatrixf(matrixf.ptr);
+
+        // Scale appropriately
+        rlScalef(scale, scale, scale);
+
+    }
+
+    private void applyBoneRotation(uint frame) const {
+
+        // Snap to frame
+        frameSnap(frame, 360.0 / options.angles);
+
+    }
+
     /// Get local matrix for bone start.
     ///
     /// Params:
     ///     atlasFrame = Current atlas frame of the texture.
-    private Matrix localMatrix(float atlasFrame) const @trusted {
+    private Matrix localMatrix(float atlasFrame, bool end) const @trusted {
 
         immutable rad = std.math.PI / 180;
 
         const camAngle = model.display.camera.angle;
+        const start = end
+            ? boneEnd
+            : boneStart;
+
         return mult(
 
             // Move the bone to its position in the model
-            boneStart,
+            start,
 
             // Negate camera vertical rotation
             MatrixRotateY(camAngle.x * rad),
