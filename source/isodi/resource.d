@@ -148,7 +148,7 @@ struct AnimationPart {
     uint length = 1;
 
     /// Change the model offset or position.
-    Nullable!(float[3]) offset;
+    float[3] offset;
 
     /// Apply changes to a bone
     AnimationBone[string] bone;
@@ -159,9 +159,9 @@ struct AnimationPart {
 struct AnimationBone {
 
     /// Rotate the bone.
-    Nullable!(float[3]) rotate;
+    float[3] rotate;
 
     /// Rotate the bone.
-    Nullable!float scale;
+    float scale;
 
 }
