@@ -27,14 +27,14 @@
 			"name": "headless",
 			"targetType": "library",
 			"versions": ["Isodi_Headless"],
-			"excludedSourceFiles": ["source/isodi/raylib/*"]
+			"excludedSourceFiles": ["source/isodi/raylib/*", "source/isodi/future/*"]
 		},
 		{
 			"name": "headless-unittest",
 			"targetType": "executable",
 			"versions": ["Isodi_Headless"],
 			"mainSourceFile": "source/isodi/headless/tests.d",
-			"excludedSourceFiles": ["source/isodi/raylib/*"]
+			"excludedSourceFiles": ["source/isodi/raylib/*", "source/isodi/future/*"]
 		}
 	],
 	"copyright": "Copyright © 2020, soaku",

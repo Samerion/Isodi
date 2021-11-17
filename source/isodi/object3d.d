@@ -107,15 +107,7 @@ abstract class Object3D {
         /// want to offset it, use `positionOff`.
         const(Position) offset(Position value) {
 
-            return _visualPosition = Position(
-                _position.x + value.x,
-                _position.y + value.y,
-                _position.layer + value.layer,
-                Height(
-                    _position.height.top + value.height.top,
-                    _position.height.depth + value.height.depth,
-                )
-            );
+            return _visualPosition = _position.sum(value);
 
         }
 

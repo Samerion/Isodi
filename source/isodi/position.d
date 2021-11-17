@@ -76,3 +76,17 @@ inout(UniquePosition) toUnique(inout Position position) {
     return UniquePosition(position.x, position.y, position.layer);
 
 }
+
+Position sum(Position a, Position b) {
+
+    return Position(
+        a.x + b.x,
+        a.y + b.y,
+        a.layer + b.layer,
+        Height(
+            a.height.top + b.height.top,
+            a.height.depth + b.height.depth,
+        )
+    );
+
+}
