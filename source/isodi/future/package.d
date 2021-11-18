@@ -9,6 +9,8 @@ module isodi.future;
 
 public {
 
+    import isodi.future.model;
     import isodi.future.render_bundle;
+    import isodi.future.resource;
 
 }
