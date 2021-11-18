@@ -1,15 +1,15 @@
 /// Implements RenderBundle. This module is exclusive to raylib-d, see #20 and #21.
 module isodi.future.render_bundle;
 
-version (Have_raylib_d):
-
 import raylib;
 
 import isodi.tests;
 import isodi.position;
+import isodi.camera : Camera;
+
 import isodi.raylib.model;
 import isodi.raylib.display;
-import isodi.camera : Camera;
+import isodi.raylib.camera;
 
 import isodi.future.resource;
 
@@ -43,9 +43,12 @@ class RenderBundle : AdvancedDrawableResource {
         const outputPosition = position.sum(offset);
 
         // Move to the appropriate position
-        rlTranslatef(outputPosition.toTuple3(100).expand);
+        rlTranslatef(outputPosition.toTuple3(100, CellPoint.center).expand);
 
         foreach (resource; resources) {
+
+            rlPushMatrix();
+            scope (exit) rlPopMatrix();
 
             if (auto advancedResource = cast(AdvancedDrawableResource) resource) {
 
@@ -72,7 +75,13 @@ mixin DisplayTest!((display) {
 
         void draw(ref Camera camera) @trusted {
 
-            DrawText("This is a test", 0, 0, 20, Colors.BLACK);
+            DrawGrid(10, 100);
+
+            camera.applyBillboard();
+            rlScalef(1, -1, 1);
+
+            auto textWidth = MeasureText("This is a test", 20);
+            DrawText("This is a test", -textWidth/2, 0, 20, Colors.BLACK);
 
         }
 
@@ -90,6 +99,6 @@ mixin DisplayTest!((display) {
 
         bundle2.draw(display.camera);
 
-    });
+    }).position = bundle2.position;
 
 });

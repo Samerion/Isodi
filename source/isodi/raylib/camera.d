@@ -7,7 +7,7 @@ import std.traits;
 
 import raylib;
 
-import isodi.camera;
+import isodi.camera : Camera;
 import isodi.object3d;
 
 
@@ -130,7 +130,7 @@ struct CameraKeybindings {
 }
 
 /// Helper for quickly binding keys to freely move the camera.
-void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) @trusted {
+void updateCamera(ref Camera camera, CameraKeybindings keybinds) @trusted {
 
     assert(camera.follow !is null,
         "camera.follow must be set for updateCamera to work, and it must use the Object3D.Implement mixin");
@@ -204,5 +204,14 @@ void updateCamera(ref isodi.camera.Camera camera, CameraKeybindings keybinds) @t
         }
 
     }}
+
+}
+
+/// Apply a billboard effect on the current object.
+void applyBillboard(ref Camera camera) @trusted {
+
+    // Rotate to counter the camera
+    rlRotatef(camera.angle.x, 0, 1, 0);
+    rlRotatef(-camera.angle.y, 1, 0, 0);
 
 }

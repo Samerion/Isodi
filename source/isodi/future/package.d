@@ -5,6 +5,8 @@
 /// on this value at all, as it will likely change in the future.
 module isodi.future;
 
+// TODO: consider using Matrix transformations instead of rlgl directly.
+
 public {
 
     import isodi.future.render_bundle;

@@ -131,9 +131,9 @@ struct Bone {
         import std.conv : to;
 
         // Get the current atlas frame
-        const rotationY = 360 - model.display.camera.angle.x;
+        const rotationX = 360 - model.display.camera.angle.x;
         const frameDelimiter = 360.0 / options.angles;
-        const atlasFrame = to!uint(rotationY / frameDelimiter + 0.5 + 1e-7) % options.angles;
+        const atlasFrame = to!uint(rotationX / frameDelimiter + 0.5 + 1e-7) % options.angles;
 
         /// Get the matrix
         auto matrixf = localMatrix(atlasFrame).MatrixToFloat;

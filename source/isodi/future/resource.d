@@ -1,7 +1,9 @@
 module isodi.future.resource;
 
-import isodi.camera;
+import raylib;
+
 import isodi.position;
+import isodi.camera : Camera;
 
 
 @safe:
