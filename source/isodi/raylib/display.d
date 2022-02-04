@@ -69,9 +69,15 @@ final class RaylibDisplay : Display {
     /// Params:
     ///     inverted = Shoots the ray behind the camera. It might be useful to check both the normal and inverted ray
     ///         the ray doesn't recognize camera height properly.
+    /// Note:
+    ///     This function will only work properly if ConfigFlags.FLAG_WINDOW_HIGHDPI is enabled.
     Ray mouseRay(bool inverted) const @trusted {
 
-        auto ray = GetMouseRay(GetMousePosition, raycam);
+        const vector = Vector2Multiply(GetMousePosition, GetWindowScaleDPI);
+        // IDK why but nothing seems to work when HiDPI is enabled but the window flag is not set... there's a random
+        // offset
+
+        auto ray = GetMouseRay(vector, raycam);
 
         if (inverted) {
 
