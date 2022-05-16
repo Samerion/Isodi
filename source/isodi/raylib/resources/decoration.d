@@ -19,7 +19,7 @@ import isodi.raylib.internal;
 
 
 private struct DecoPart {
-    uint x, y;
+    int x, y;
     Texture2D texture;
     const(ResourceOptions)* options;
     float scale;
@@ -75,10 +75,10 @@ struct Decoration {
 
         // Get a random position for the top-left corner of the hard area
         rng.seed(seed);
-        const int x = uniform(0, tileSize - hardArea[2], rng);
+        const int x = uniform!"[]"(0, tileSize - hardArea[2], rng);
 
         rng.seed(seed + 1);
-        const int y = uniform(0, tileSize - hardArea[3], rng);
+        const int y = uniform!"[]"(0, tileSize - hardArea[3], rng);
 
         // Get a position in the bounds
         return tuple(
@@ -107,39 +107,33 @@ struct Decoration {
             const atlasWidth = deco.texture.width / deco.options.angles;
             const tileScale = cell.tile.scale;
 
-            // I tried to use a billboard here before but it didn't display at all. Idk why.
-            // Also billboard are affected by camera Y angle which we do not want, so they can't be used.
-
             // Translate to the correct position
             rlTranslatef(cell.visualPosition.toTuple3(cellSize).expand);
 
             // Place within the tile
             rlTranslatef(
-                deco.x * tileScale,
-                0,
-                deco.y * tileScale - cellSize,
+              deco.x * tileScale,
+              0,
+              deco.y * tileScale,
             );
 
             // Scale the tile to fit cell size
             rlScalef(deco.scale, deco.scale, deco.scale);
 
-            // Undo the center
-            rlTranslatef(atlasWidth/2.0, 0, 0);
+            // Counter camera rotation
+            rlTranslatef(atlasWidth/2.0, 0, atlasWidth/2.0);
+            rlRotatef(cell.display.camera.angle.x + 180, 0, 1, 0);
+            rlTranslatef(atlasWidth/-2.0, 0, 0);
+            rlRotatef(cell.display.camera.angle.y, 1, 0, 0);
 
-            // Rotate to counter the camera
-            rlRotatef(cell.display.camera.angle.x, 0, 1, 0);
-            rlRotatef(-cell.display.camera.angle.y, 1, 0, 0);
-
-            // Make sure to center before rotating
-            rlTranslatef(atlasWidth/-2.0, -deco.texture.height, 0);
-            // We can assume centering is safe, because anchors are set per whole texture, not per angle, enforcing
-            // centering. Y shoud be good too, it just pulls the texture to the ground.
+            // Correct position
+            rlTranslatef(0, 0, 1);
 
             // Draw
             deco.texture.DrawTextureRec(
                 Rectangle(
                     atlasWidth * angle, 0,
-                    atlasWidth, deco.texture.height
+                    atlasWidth, -deco.texture.height
                 ),
                 Vector2(),
                 cell.color
