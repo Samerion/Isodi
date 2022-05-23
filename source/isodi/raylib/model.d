@@ -57,7 +57,6 @@ final class RaylibModel : Model, WithDrawableResources {
             bones ~= bone;
 
             // Save by ID
-            assert(bone.node.id !in bonesID);
             bonesID[bone.node.id] = bone;
 
         }

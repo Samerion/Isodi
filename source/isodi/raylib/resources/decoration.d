@@ -68,7 +68,14 @@ struct Decoration {
 
         // Get the tile and decoration size
         const tileSize = cell.tile.texture.width;
-        const hardArea = options.hardArea;  // TODO: default value
+        const hardArea = options.hardArea != options.hardArea.init
+            ? options.hardArea
+            : cast(const int[4]) [
+                texture.width / 2 / options.angles,
+                0,
+                1,
+                1,
+            ];
 
         // Create an RNG
         Mt19937_64 rng;
@@ -78,12 +85,12 @@ struct Decoration {
         const int x = uniform!"[]"(0, tileSize - hardArea[2], rng);
 
         rng.seed(seed + 1);
-        const int y = uniform!"[]"(0, tileSize - hardArea[3], rng);
+        const int y = uniform!"[]"(0, tileSize - hardArea[2], rng);
 
         // Get a position in the bounds
         return tuple(
             x - cast(int) hardArea[0],
-            y - cast(int) hardArea[1],
+            y - cast(int) hardArea[0],
         );
 
     }
@@ -127,15 +134,21 @@ struct Decoration {
             rlRotatef(cell.display.camera.angle.y, 1, 0, 0);
 
             // Correct position
-            rlTranslatef(0, 0, 1);
+            rlTranslatef(atlasWidth, deco.texture.height, 1);
 
             // Draw
-            deco.texture.DrawTextureRec(
+            DrawTexturePro(
+                deco.texture,
                 Rectangle(
                     atlasWidth * angle, 0,
-                    atlasWidth, -deco.texture.height
+                    atlasWidth, deco.texture.height
+                ),
+                Rectangle(
+                    0, 0,
+                    atlasWidth, deco.texture.height
                 ),
                 Vector2(),
+                180,
                 cell.color
             );
 

@@ -121,7 +121,7 @@ abstract class PackList {
 
     }
 
-    // Barely a unittest, needs more packs to work
+    // Barely a proper test, needs more packs to work
     @system unittest {
 
         auto packs = PackList.make(
