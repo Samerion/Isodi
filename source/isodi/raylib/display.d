@@ -210,7 +210,6 @@ final class RaylibDisplay : Display {
         const rad = std.math.PI / 180;
         const radX = camera.angle.x * rad;
         const radY = camera.angle.y * rad;
-        const cosY = cos(camera.angle.y * rad);
 
         // Calculate the target
         const target = camera.follow is null
@@ -232,9 +231,9 @@ final class RaylibDisplay : Display {
 
         // And place the camera
         raycam.position = raycam.target + Vector3(
-            radX.sin * cosY,
+            radY.cos * radX.sin,
             radY.sin,
-            radX.cos * cosY,
+            radY.cos * radX.cos,
         ) * camera.distance;
 
     }
