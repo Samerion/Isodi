@@ -118,22 +118,22 @@ struct Chunk {
             vertices.assign(i,
 
                 // Tile
-                position + Vector3(-0.5, 0, -0.5),
                 position + Vector3(-0.5, 0, 0.5),
                 position + Vector3(0.5, 0, 0.5),
                 position + Vector3(0.5, 0, -0.5),
+                position + Vector3(-0.5, 0, -0.5),
 
                 // North side (negative Z)
+                position + Vector3(0.5, depth, -0.5),
                 position + Vector3(-0.5, depth, -0.5),
                 position + Vector3(-0.5, 0, -0.5),
                 position + Vector3(0.5, 0, -0.5),
-                position + Vector3(0.5, depth, -0.5),
 
                 // East side (positive X)
-                position + Vector3(0.5, 0, 0.5),
                 position + Vector3(0.5, depth, 0.5),
                 position + Vector3(0.5, depth, -0.5),
                 position + Vector3(0.5, 0, -0.5),
+                position + Vector3(0.5, 0, 0.5),
 
                 // South side (positive Z)
                 position + Vector3(-0.5, depth, 0.5),
@@ -142,10 +142,10 @@ struct Chunk {
                 position + Vector3(-0.5, 0, 0.5),
 
                 // West side (negative X)
-                position + Vector3(-0.5, 0, 0.5),
-                position + Vector3(-0.5, 0, -0.5),
                 position + Vector3(-0.5, depth, -0.5),
                 position + Vector3(-0.5, depth, 0.5),
+                position + Vector3(-0.5, 0, 0.5),
+                position + Vector3(-0.5, 0, -0.5),
 
             );
 
@@ -154,34 +154,34 @@ struct Chunk {
             texcoords.assign(i,
 
                 // Tile
-                Vector2(0, 0),
-                Vector2(0.5, 0),
-                Vector2(0.5, 1),
                 Vector2(0, 1),
+                Vector2(0.5, 1),
+                Vector2(0.5, 0),
+                Vector2(0, 0),
 
                 // North (-Z)
-                Vector2(0.5, 0),
-                Vector2(1, 0),
-                Vector2(1, 1),
                 Vector2(0.5, 1),
+                Vector2(1, 1),
+                Vector2(1, 0),
+                Vector2(0.5, 0),
 
                 // East (X)
-                Vector2(0.5, 0),
-                Vector2(1, 0),
-                Vector2(1, 1),
                 Vector2(0.5, 1),
+                Vector2(1, 1),
+                Vector2(1, 0),
+                Vector2(0.5, 0),
 
                 // Sorth (Z)
-                Vector2(0.5, 0),
-                Vector2(1, 0),
-                Vector2(1, 1),
                 Vector2(0.5, 1),
+                Vector2(1, 1),
+                Vector2(1, 0),
+                Vector2(0.5, 0),
 
                 // West (-X)
-                Vector2(0.5, 0),
-                Vector2(1, 0),
-                Vector2(1, 1),
                 Vector2(0.5, 1),
+                Vector2(1, 1),
+                Vector2(1, 0),
+                Vector2(0.5, 0),
 
             );
 

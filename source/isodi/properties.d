@@ -3,6 +3,8 @@ module isodi.properties;
 import raylib;
 import std.math;
 
+import isodi.resources;
+
 private alias PI = std.math.PI;
 
 
@@ -22,9 +24,8 @@ struct Properties {
     /// Transform matrix affecting the object.
     Matrix transform;
 
-    /// Pack with resources for the object to use.
-    version (none)
-    Pack pack;
+    /// Resource data to be used by this object.
+    ResourceData resources;
 
 }
 
@@ -48,5 +49,11 @@ struct Perspective {
         angleY = PI_2 - sgn(pos.x) * asin(sine.y);
 
     }
+
+}
+
+struct ResourceData {
+
+    ResourceLoader loader;
 
 }
