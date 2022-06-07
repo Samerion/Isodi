@@ -7,8 +7,11 @@ import core.stdc.stdlib;
 @safe:
 
 
+
 /// Malloc an array and return it.
 T[] mallocArray(T)(size_t count) @system @nogc {
+
+    // TODO check mallocArray for safety, specifically against signal 6
 
     auto ptr = cast(T*) malloc(T.sizeof * count);
     return ptr[0..count];
@@ -16,7 +19,7 @@ T[] mallocArray(T)(size_t count) @system @nogc {
 }
 
 /// Assign a single chunk of values to an array, assuming the array is made up of fixed size chunks.
-void assign(T)(T[] range, size_t index, T[] values...) @system @nogc {
+void assign(T)(T[] range, size_t index, T[] values...) @nogc pure {
 
     foreach (i, value; values) {
 
@@ -45,7 +48,7 @@ unittest {
 /// Assign a single chunk of values to an array, altering the array first.
 template assign(alias fun) {
 
-    void assign(T)(T[] range, size_t index, T[] values...) @system @nogc {
+    void assign(T)(T[] range, size_t index, T[] values...) @nogc pure {
 
         alias funnier = unaryFun!fun;
 
@@ -72,5 +75,13 @@ unittest {
     }
 
     assert(foo == [1, 2, 3, 4, 5, 6]);
+
+}
+
+/// Assign multiple copies of the same value to the array, indexing it by chunks of the same size.
+void assign(T)(T[] range, size_t index, size_t count, T value) @nogc pure {
+
+    const start = count * index;
+    range[start .. start + count] = value;
 
 }

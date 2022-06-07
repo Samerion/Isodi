@@ -77,8 +77,8 @@ void main() {
     Chunk chunk;
     chunk.addX(
         &grass,
-        BlockPosition(0, 0), 0, 2, 6, 10, 10, 10, 12, 16, 14,
-        BlockPosition(0, 1), 0, 4, 4, 8, 10, 12, 12, 16, 16,
+        BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
+        BlockPosition(0, 1, 0, 5), 0, 4, 4, 8, 10, 12, 12, 16, 16,
     );
 
     auto mesh = chunk.makeMesh();
