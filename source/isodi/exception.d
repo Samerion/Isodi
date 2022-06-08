@@ -1,7 +1,7 @@
 ///
 module isodi.exception;
 
-import std.exception;
+public import std.exception;
 
 
 @safe:

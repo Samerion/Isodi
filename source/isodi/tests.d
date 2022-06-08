@@ -73,44 +73,32 @@ void main() {
     };
     SetCameraMode(camera, CameraMode.CAMERA_FREE);
 
-    auto grass = BlockType("grass");
+    auto grass = BlockType(0);
 
     Chunk chunk;
+    chunk.atlas[grass] = BlockUV(
+        Rectangle(0, 0, 1, 1/4f),
+        Rectangle(0, 1/4f, 1, 3/4f),
+        1/4f, 3/4f,
+    );
     chunk.addX(
-        &grass,
+        grass,
         BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
         BlockPosition(0, 1, 0, 5), 0, 4, 4, 8, 10, 12, 12, 16, 16,
+        BlockPosition(-2, -1, 0,  0), 10,
+        BlockPosition(-2,  0, 0,  5), 10,
+        BlockPosition(-2,  1, 0, 15), 10,
+        BlockPosition(-2,  2, 0, 50), 10,
     );
 
-    auto mesh = chunk.makeMesh();
-    UploadMesh(&mesh, false);
-    scope (exit) UnloadMesh(mesh);
+    auto texture = LoadTexture("res/samerion-retro/blocks/grass.png");
+    scope (exit) UnloadTexture(texture);  // :thinking:
 
-    auto material = LoadMaterialDefault();
-    material.shader = LoadShader(null, "res/shader.fs");
-    scope (exit) UnloadMaterial(material);
-    // Note: Shader is unloaded by the material
+    auto model = chunk.makeModel(texture);
+    scope (exit) UnloadModel(model);
 
-    // Temporary sample image for testing direction
-    // Tiles: Green is north (-Z), blue is east (+X)
-    // Sides: Green is top (Y), blue is east
-    auto image = GenImageColor(10, 5, Color(0x26, 0x26, 0x26, 0xff));
-    ImageDrawRectangle(&image, 5, 0, 5, 5, Color(0x1c, 0x1c, 0x1c, 0xff));
-    ImageDrawPixel(&image, 2, 1, Color(0x87, 0xff, 0xaf, 0xff));
-    ImageDrawPixel(&image, 1, 2, Color(0xf2, 0xf0, 0x02, 0xff));
-    ImageDrawPixel(&image, 3, 2, Color(0x14, 0xfb, 0xfb, 0xff));
-    ImageDrawPixel(&image, 2, 3, Color(0xf8, 0x28, 0xfa, 0xff));
-    ImageDrawPixel(&image, 7, 1, Color(0x87, 0xff, 0xaf, 0xff));
-    ImageDrawPixel(&image, 6, 2, Color(0xf2, 0xf0, 0x02, 0xff));
-    ImageDrawPixel(&image, 8, 2, Color(0x14, 0xfb, 0xfb, 0xff));
-    ImageDrawPixel(&image, 7, 3, Color(0xf8, 0x28, 0xfa, 0xff));
-
-    scope (exit) UnloadImage(image);
-
-    auto texture = LoadTextureFromImage(image);
-    scope (exit) UnloadTexture(texture);
-
-    SetMaterialTexture(&material, MaterialMapIndex.MATERIAL_MAP_ALBEDO, texture);
+    // Load packs
+    auto pack = getPack("res/samerion-retro/pack.json");
 
     //auto chunkTexture = packBlockTextures();
 
@@ -125,11 +113,8 @@ void main() {
         BeginMode3D(camera);
         scope (exit) EndMode3D();
 
-        auto matrix = MatrixTranslate(0.5, 0, 0.5);
-
         DrawGrid(100, 1);
-        DrawMesh(mesh, material, matrix);
-        //DrawTexture(chunkTexture, 3, 0, Colors.WHITE);
+        DrawModel(model, Vector3(0, 0, 0), 1.0, Colors.WHITE);
 
         // Draw spheres to show the terrain direction
         DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North

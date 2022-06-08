@@ -23,12 +23,12 @@
 	"copyright": "Copyright © 2020, Artha",
 	"dependencies": {
 		"rcdata": ">=1.0.0-alpha <1.1.0-0",
-		"raylib-d": "~>3.7.0"
+		"raylib-d": "~>4.0.0"
 	},
 	"description": "A 3D orthographic rendering engine",
 	"license": "BSL-1.0",
 	"name": "isodi",
 	"targetPath": "build",
 	"targetType": "library",
-	"dflags": ["-preview=shortenedMethods"]
+	"dflags": ["-preview=shortenedMethods", "-preview=dip1000"]
 }
