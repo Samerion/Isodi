@@ -8,6 +8,7 @@ import std.path;
 import std.file;
 import std.string;
 
+import isodi.chunk;
 import isodi.utils;
 
 public import isodi.resources.pack_json;
@@ -41,8 +42,15 @@ struct ResourceOptions {
     /// Defaults to `4`.
     uint angles = 4;
 
-    uint[4] tileArea;
-    uint[4] decorationArea;
+    long[4] tileArea;
+    long[4] decorationArea;
+
+    auto blockUV() const => BlockUV(
+        cast(RectangleL) tileArea,
+        cast(RectangleL) decorationArea,
+        tileSize,
+        decorationSize
+    );
 
 }
 

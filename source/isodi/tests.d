@@ -75,12 +75,11 @@ void main() {
 
     auto grass = BlockType(0);
 
+    // Load packs
+    auto pack = getPack("res/samerion-retro/pack.json");
+
     Chunk chunk;
-    chunk.atlas[grass] = BlockUV(
-        Rectangle(0, 0, 1, 1/4f),
-        Rectangle(0, 1/4f, 1, 3/4f),
-        1/4f, 3/4f,
-    );
+    chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
     chunk.addX(
         grass,
         BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
@@ -96,9 +95,6 @@ void main() {
 
     auto model = chunk.makeModel(texture);
     scope (exit) UnloadModel(model);
-
-    // Load packs
-    auto pack = getPack("res/samerion-retro/pack.json");
 
     //auto chunkTexture = packBlockTextures();
 

@@ -1,7 +1,9 @@
 module isodi.utils;
 
+import raylib;
 import core.stdc.stdlib;
 
+import std.random;
 import std.string;
 import std.functional;
 
@@ -9,6 +11,47 @@ import std.functional;
 @safe:
 
 
+struct Vector2L {
+
+    long x, y;
+
+    Vector2L opBinary(string op)(Vector2L vec) const => Vector2L(
+        mixin("x" ~ op ~ "vec.x"),
+        mixin("y" ~ op ~ "vec.y"),
+    );
+
+    /// Get hash of the position.
+    size_t toHash() const nothrow @nogc => y + 0x9e3779b9 + (x << 6) + (x >>> 2);
+    // Taken from https://github.com/dlang/phobos/blob/master/std/typecons.d#L1234
+    // Which in turn takes from https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
+
+}
+
+struct RectangleL {
+
+    long x, y;
+    long width, height;
+
+    /// Given a position relative to the boundaries of the rectangle (0 is start, 1 is end), return its position
+    /// in global coordinates.
+    Vector2 locateMul(float offsetX, float offsetY) const @nogc => Vector2(
+        x + offsetX * width,
+        y + offsetY * height,
+    );
+
+    ///
+    unittest {
+
+        import std.math;
+
+        const rect = RectangleL(10, 12, 22, 52);
+        const vect = rect.locateMul(0.5, 0.5);
+
+        assert(vect.x.isClose(21) && vect.y.isClose(38));
+
+    }
+
+}
 
 /// Malloc an array and return it.
 T[] mallocArray(T)(size_t count) @system @nogc {
@@ -167,5 +210,30 @@ struct Ancestors {
         return 0;
 
     }
+
+}
+
+/// Generate a random variant in the given atlas.
+/// Param:
+///     atlasSize = Size of the atlas used.
+///     resultSize = Expected size of the result
+///     seed = Seed to use
+/// Returns: Offset of the variant texture in the given atlas.
+Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) {
+
+    auto rng = Mt19937_64(seed);
+
+    // Get the grid dimensions
+    const gridSize = atlasSize / resultSize;
+
+    // Get the variant number
+    const tileVariantCount = gridSize.x * gridSize.y;
+    const variant = uniform(0, tileVariantCount, rng);
+
+    // Get the offset
+    return resultSize * Vector2L(
+        variant % gridSize.x,
+        variant / gridSize.x,
+    );
 
 }

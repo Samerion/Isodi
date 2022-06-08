@@ -4,6 +4,7 @@ import raylib;
 
 import std.range;
 import std.format;
+import std.random;
 
 import isodi.utils;
 import isodi.properties;
@@ -45,6 +46,9 @@ struct Chunk {
 
         /// Properties of the chunk.
         Properties properties;
+
+        /// Seed to use to generate variants on this chunk.
+        ulong seed;
 
         /// Mapping of block types to their position in the texture.
         BlockUV[BlockType] atlas;
@@ -107,7 +111,7 @@ struct Chunk {
                 auto blockPosition = position;
                 blockPosition.height = item;
 
-                blocks[position.positionXY] = Block(type, blockPosition);
+                blocks[position.vector] = Block(type, blockPosition);
 
                 // Update the position
                 __traits(getMember, position, direction) += 1;
@@ -120,12 +124,51 @@ struct Chunk {
 
     }
 
+    /// Get texture area in the atlas to use for given block.
+    RectangleL getTile(Vector2L position, BlockType type) @trusted const => getTileImpl(position, type);
+
     /// Generate a mesh for the chunk.
     ///
     /// The mesh must be manually freed using `UnloadMesh`
-    Mesh makeMesh() @nogc @trusted const {
+    ///
+    /// Params:
+    ///     atlasSize = Image dimensions (in pixels) of the chunk's texture atlas.
+    Mesh makeMesh(Vector2 atlasSize) @trusted const => makeMeshImpl(atlasSize);
 
-        // We must NOT allocate in the GC to prevent memory corruption when the mesh is unloaded
+    /// Create a model with the chunk's mesh and an appropriate material.
+    ///
+    /// The model must be manually freed with `UnloadModel`. If this happens, the given texture will be removed along
+    /// with the model.
+    Model makeModel(return Texture2D texture) @trusted const => makeModelImpl(texture);
+
+    private RectangleL getTileImpl(Vector2L position, BlockType type) @nogc @trusted const {
+
+        // RNG can allocate, it's fine
+        scope randomVariant = cast(Vector2L function(Vector2L, Vector2L, ulong) @nogc) &randomVariant;
+
+        // Get texture segment for this block
+        const uv = type in atlas;
+        assert(uv, "Chunk contains a block not present in texture");
+
+        // Get tile variant to use
+        const variant = randomVariant(
+            Vector2L(uv.tileArea.width, uv.tileArea.height),
+            Vector2L(uv.tileSize, uv.tileSize),
+            seed + position.toHash,
+        );
+
+        return RectangleL(
+            uv.tileArea.x + variant.x,
+            uv.tileArea.y + variant.y,
+            uv.tileSize,
+            uv.tileSize,
+        );
+
+    }
+
+    private Mesh makeMeshImpl(Vector2 atlasSize) @nogc @trusted const {
+
+        // We must NOT allocate anything in the mesh with the GC to prevent memory corruption when the mesh is unloaded.
 
         const verticesPerBlock = 5*4;
         const trianglesPerBlock = 5*2;
@@ -152,6 +195,9 @@ struct Chunk {
             );
 
             const depth = -cast(float) block.position.depth / properties.heightSteps;
+
+            // Get the variants
+            const tileVariant = getTileImpl(block.position.vector, block.type);
 
             // Vertices
             vertices.assign(i,
@@ -192,10 +238,10 @@ struct Chunk {
             texcoords.assign(i,
 
                 // Tile
-                Vector2(0, 1),
-                Vector2(0.5, 1),
-                Vector2(0.5, 0),
-                Vector2(0, 0),
+                tileVariant.locateMul(0, 1).Vector2Divide(atlasSize),
+                tileVariant.locateMul(1, 1).Vector2Divide(atlasSize),
+                tileVariant.locateMul(1, 0).Vector2Divide(atlasSize),
+                tileVariant.locateMul(0, 0).Vector2Divide(atlasSize),
 
                 // North (-Z)
                 Vector2(0.5, 1),
@@ -258,21 +304,17 @@ struct Chunk {
 
     }
 
-    /// Create a model with the chunk's mesh and an appropriate material.
-    ///
-    /// The model must be manually freed with `UnloadModel`. If this happens, the given texture will be removed along
-    /// with the model.
-    Model makeModel(return Texture2D texture) @nogc @trusted const {
+    private Model makeModelImpl(return Texture2D texture) @nogc @trusted const {
 
         import std.algorithm;
 
         // Create the mesh
         auto meshes = mallocArray!Mesh(1);
-        meshes[0] = makeMesh();
+        meshes[0] = makeMeshImpl(Vector2(texture.width, texture.height));
 
         // Create the material
         auto materials = mallocArray!Material(1);
-        //{
+        {
 
             // Load the default material so we can make our own
             materials[0] = LoadMaterialDefault();
@@ -288,7 +330,7 @@ struct Chunk {
                 maps[MATERIAL_MAP_METALNESS].color = Colors.WHITE;
            }
 
-        //}
+        }
 
         // Create an array binding meshes to materials
         auto bindings = mallocArray!int(1);
@@ -304,27 +346,9 @@ struct Chunk {
             meshMaterial: bindings.ptr,
         };
 
-        debug {
-
-            // We can GC-allocate in writeln, no need to care about that
-            scope auto fundebug = delegate {
-
-                import std.stdio;
-
-            };
-            (cast(void delegate() @nogc) fundebug)();
-
-        }
-
         return model;
 
     }
-
-}
-
-struct Vector2L {
-
-    long x, y;
 
 }
 
@@ -333,7 +357,7 @@ struct BlockPosition {
     long x, y;
     long height, depth;
 
-    Vector2L positionXY() const => Vector2L(x, y);
+    Vector2L vector() @nogc const => Vector2L(x, y);
 
 }
 
@@ -351,13 +375,29 @@ struct BlockType {
 }
 
 /// Texture position data for given block.
-///
-/// Coordinates correspond to OpenGL shaders — (0,0) is the bottom-left corner of the texture, (1,1) is the top-right.
 struct BlockUV {
 
-    Rectangle tiles;
-    Rectangle decoration;
-    float tileSize;
-    float decorationSize;
+    RectangleL tileArea;
+    RectangleL decorationArea;
+    uint tileSize;
+    uint decorationSize;
+
+}
+
+/// Awful workaround to get writefln in @nogc :D
+private debug template writefln(T...) {
+
+    void writefln(Args...)(Args args) @nogc @system {
+
+        // We can GC-allocate in writeln, no need to care about that
+        scope auto fundebug = delegate {
+
+            import io = std.stdio;
+            io.writefln!T(args);
+
+        };
+        (cast(void delegate() @nogc) fundebug)();
+
+    }
 
 }
