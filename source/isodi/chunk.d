@@ -18,12 +18,46 @@ struct Chunk {
     /// Default fragment shader used to render chunks.
     ///
     /// The data is null-terminated for C compatibility.
+    immutable vertexShader = q{
+
+        #version 330
+
+        in vec3 vertexPosition;
+        in vec2 vertexTexCoord;
+        in vec4 vertexColor;
+        in vec4 vertexVariantUV;
+
+        uniform mat4 mvp;
+
+        out vec2 fragTexCoord;
+        out vec4 fragColor;
+        out vec4 fragVariantUV;
+
+        void main() {
+
+            // Send vertex attributes to fragment shader
+            fragTexCoord = vertexTexCoord;
+            fragColor = vertexColor;
+            fragVariantUV = vertexVariantUV;
+
+            // Calculate final vertex position
+            gl_Position = mvp * vec4(vertexPosition, 1.0);
+
+        }
+
+
+    } ~ '\0';
+
+    /// Default fragment shader used to render chunks.
+    ///
+    /// The data is null-terminated for C compatibility.
     immutable fragmentShader = q{
 
         #version 330
 
         in vec2 fragTexCoord;
         in vec4 fragColor;
+        in vec4 fragVariantUV;
 
         uniform sampler2D texture0;
         uniform vec4 colDiffuse;
@@ -32,8 +66,14 @@ struct Chunk {
 
         void main() {
 
+            // Get texture coordinates in the atlas
+            vec2 coords = vec2(fragVariantUV.x, fragVariantUV.y);
+
+            // Get offset by fragment coordinates (frac to repeat)
+            vec2 offset = fract(fragTexCoord * vec2(fragVariantUV.z, fragVariantUV.w));
+
             // Texel color fetching from texture sampler
-            vec4 texelColor = texture(texture0, fragTexCoord);
+            vec4 texelColor = texture(texture0, coords + offset);
 
             finalColor = texelColor * colDiffuse;
 
@@ -146,7 +186,8 @@ struct Chunk {
 
     }
 
-    Mesh makeMesh(Vector2 atlasSize) @nogc @trusted const {
+    /// Make mesh for the chunk.
+    Mesh makeMesh(Vector2 atlasSize, int variantAttributeLoc) @nogc @trusted const {
 
         // We must NOT allocate anything in the mesh with the GC to prevent memory corruption when the mesh is unloaded.
 
@@ -162,6 +203,7 @@ struct Chunk {
         // TODO Verify mallocArray safety
         auto vertices  = mallocArray!Vector3(mesh.vertexCount);
         auto texcoords = mallocArray!Vector2(mesh.vertexCount);
+        auto variants  = mallocArray!Rectangle(mesh.vertexCount);
         auto normals   = mallocArray!Vector3(mesh.vertexCount);
         auto indices   = mallocArray!ushort(mesh.triangleCount*3);
 
@@ -177,7 +219,7 @@ struct Chunk {
             const depth = -cast(float) block.position.depth / properties.heightSteps;
 
             // Get the variants
-            const tileVariant = getTile(block.position.vector, block.type);
+            const tileVariant = getTile(block.position.vector, block.type).toShader(atlasSize);
 
             // Vertices
             vertices.assign(i,
@@ -218,28 +260,28 @@ struct Chunk {
             texcoords.assign(i,
 
                 // Tile
-                tileVariant.locateMul(0, 1).Vector2Divide(atlasSize),
-                tileVariant.locateMul(1, 1).Vector2Divide(atlasSize),
-                tileVariant.locateMul(1, 0).Vector2Divide(atlasSize),
-                tileVariant.locateMul(0, 0).Vector2Divide(atlasSize),
+                Vector2(0, 1),
+                Vector2(1, 1),
+                Vector2(1, 0),
+                Vector2(0, 0),
 
                 // North (-Z)
-                Vector2(0.5, 1),
+                Vector2(0, 1),
                 Vector2(1, 1),
                 Vector2(1, 0),
-                Vector2(0.5, 0),
+                Vector2(0, 0),
 
                 // East (X)
-                Vector2(0.5, 1),
+                Vector2(0, 1),
                 Vector2(1, 1),
                 Vector2(1, 0),
-                Vector2(0.5, 0),
+                Vector2(0, 0),
 
                 // Sorth (Z)
-                Vector2(0.5, 1),
+                Vector2(0, 1),
                 Vector2(1, 1),
                 Vector2(1, 0),
-                Vector2(0.5, 0),
+                Vector2(0, 0),
 
                 // West (-X)
                 Vector2(0.5, 1),
@@ -249,14 +291,21 @@ struct Chunk {
 
             );
 
-            const normalIndex = i * trianglesPerBlock/2;
+            const chunkIndex = i * trianglesPerBlock/2;
+
+            // Variants
+            variants.assign(chunkIndex + 0, 4, tileVariant);
+            variants.assign(chunkIndex + 1, 4, tileVariant); // tiles for sides, temporarily
+            variants.assign(chunkIndex + 2, 4, tileVariant);
+            variants.assign(chunkIndex + 3, 4, tileVariant);
+            variants.assign(chunkIndex + 4, 4, tileVariant);
 
             // Normals
-            normals.assign(normalIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
-            normals.assign(normalIndex + 1, 4, Vector3( 0, 1, -1));  // North (-Z)
-            normals.assign(normalIndex + 2, 4, Vector3(+1, 1,  0));  // East (X)
-            normals.assign(normalIndex + 3, 4, Vector3( 0, 1, +1));  // South (Z)
-            normals.assign(normalIndex + 4, 4, Vector3(-1, 1,  0));  // West (-X)
+            normals.assign(chunkIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
+            normals.assign(chunkIndex + 1, 4, Vector3( 0, 1, -1));  // North (-Z)
+            normals.assign(chunkIndex + 2, 4, Vector3(+1, 1,  0));  // East (X)
+            normals.assign(chunkIndex + 3, 4, Vector3( 0, 1, +1));  // South (Z)
+            normals.assign(chunkIndex + 4, 4, Vector3(-1, 1,  0));  // West (-X)
 
             ushort value(ushort offset) => cast(ushort) (i*verticesPerBlock + offset);
 
@@ -271,7 +320,7 @@ struct Chunk {
 
         }
 
-        // Assign data
+        // Assign general data
         mesh.vertices = cast(float*) vertices.ptr;
         mesh.texcoords = cast(float*) texcoords.ptr;
         mesh.normals = cast(float*) normals.ptr;
@@ -279,6 +328,17 @@ struct Chunk {
 
         // Send the mesh to the GPU
         UploadMesh(&mesh, false);
+
+        rlEnableVertexArray(mesh.vaoId);
+        scope (exit) rlDisableVertexArray();
+
+        // Assign variants
+        // Warning: NOT FREED
+        // TODO: Make Chunk a Mesh superset with `LoadChunk` and `UnloadChunk` functions
+        const bufferSize = cast(int) (variants.length * variants[0].sizeof);
+        const bufferID = rlLoadVertexBuffer(variants.ptr, bufferSize, false);
+        rlSetVertexAttribute(variantAttributeLoc, 4, RL_FLOAT, 0, 0, null);
+        rlEnableVertexAttribute(variantAttributeLoc);
 
         return mesh;
 
@@ -288,9 +348,15 @@ struct Chunk {
 
         import std.algorithm;
 
+        // Create the shader
+        auto shader = LoadShaderFromMemory(vertexShader.ptr, fragmentShader.ptr);
+
+        // Find variant location
+        auto variantLoc = GetShaderLocationAttrib(shader, "vertexVariantUV");
+
         // Create the mesh
         auto meshes = mallocArray!Mesh(1);
-        meshes[0] = makeMesh(Vector2(texture.width, texture.height));
+        meshes[0] = makeMesh(Vector2(texture.width, texture.height), variantLoc);
 
         // Create the material
         auto materials = mallocArray!Material(1);
@@ -301,7 +367,7 @@ struct Chunk {
 
             // Load the shader
             // TODO check if it's possible to reuse a shader
-            materials[0].shader = LoadShaderFromMemory(null, fragmentShader.ptr);
+            materials[0].shader = shader;
 
             // Initialize the important ones
             with (MaterialMapIndex) with (materials[0]) {
@@ -362,24 +428,5 @@ struct BlockUV {
     RectangleL decorationArea;
     uint tileSize;
     uint decorationSize;
-
-}
-
-/// Awful workaround to get writefln in @nogc :D
-/// Yes, it does allocate in the GC.
-private debug template writefln(T...) {
-
-    void writefln(Args...)(Args args) @nogc @system {
-
-        // We can GC-allocate in writeln, no need to care about that
-        scope auto fundebug = delegate {
-
-            import io = std.stdio;
-            io.writefln!T(args);
-
-        };
-        (cast(void delegate() @nogc) fundebug)();
-
-    }
 
 }

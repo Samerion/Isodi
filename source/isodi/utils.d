@@ -32,24 +32,13 @@ struct RectangleL {
     long x, y;
     long width, height;
 
-    /// Given a position relative to the boundaries of the rectangle (0 is start, 1 is end), return its position
-    /// in global coordinates.
-    Vector2 locateMul(float offsetX, float offsetY) const @nogc => Vector2(
-        x + offsetX * width,
-        y + offsetY * height,
+    /// Convert the rectangle to a shader rectangle relative to texture size.
+    Rectangle toShader(Vector2 textureSize) @nogc const => Rectangle(
+        x / textureSize.x,
+        y / textureSize.y,
+        width  / textureSize.x,
+        height / textureSize.y,
     );
-
-    ///
-    unittest {
-
-        import std.math;
-
-        const rect = RectangleL(10, 12, 22, 52);
-        const vect = rect.locateMul(0.5, 0.5);
-
-        assert(vect.x.isClose(21) && vect.y.isClose(38));
-
-    }
 
 }
 
@@ -214,19 +203,33 @@ struct Ancestors {
 }
 
 /// Get a random number in inclusive range.
-T randomNumber(T, RNG)(T min, T max, ref RNG rng)
+T randomNumber(T, RNG)(T min, T max, ref RNG rng) @trusted
 in (min <= max, "minimum value must be lesser or equal to max")
 do {
 
-    // This is a copy-paste from https://github.com/dlang/phobos/blob/master/std/random.d#L2148
-    // but without that single enforce that makes this not compile under @nogc
+    import std.conv;
 
-    T result = min + (max - min)
-        * cast(T) (rng.front - rng.min)
-        / (rng.max - rng.min);
-    rng.popFront();
+    // This is a copy-paste from https://github.com/dlang/phobos/blob/v2.100.0/std/random.d#L2218
+    // but made @nogc
 
-    return result;
+    auto upperDist = unsigned(max - min) + 1u;
+    assert(upperDist != 0);
+
+    alias UpperType = typeof(upperDist);
+    static assert(UpperType.min == 0);
+
+    UpperType offset, rnum, bucketFront;
+    do {
+
+        rnum = uniform!UpperType(rng);
+        offset = rnum % upperDist;
+        bucketFront = rnum - offset;
+    }
+
+    // While we're in an unfair bucket...
+    while (bucketFront > (UpperType.max - (upperDist - 1)));
+
+    return cast(T) (min + offset);
 
 }
 
@@ -254,5 +257,24 @@ Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) @nog
         variant % gridSize.x,
         variant / gridSize.x,
     );
+
+}
+
+/// Awful workaround to get writefln in @nogc :D
+/// Yes, it does allocate in the GC.
+package debug template writefln(T...) {
+
+    void writefln(Args...)(Args args) @nogc @system {
+
+        // We can GC-allocate in writeln, no need to care about that
+        scope auto fundebug = delegate {
+
+            import io = std.stdio;
+            io.writefln!T(args);
+
+        };
+        (cast(void delegate() @nogc) fundebug)();
+
+    }
 
 }
