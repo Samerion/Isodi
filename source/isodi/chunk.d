@@ -243,43 +243,23 @@ struct Chunk {
 
             );
 
-            // UVs
-            // TODO: shorten this
-            texcoords.assign(i,
+            const chunkIndex = i * trianglesPerBlock/2;
 
-                // Tile
+            // UVs — tile
+            texcoords.assign(chunkIndex + 0,
                 Vector2(0, 1),
                 Vector2(1, 1),
                 Vector2(1, 0),
                 Vector2(0, 0),
-
-                // North (-Z)
-                Vector2(0, depth),
-                Vector2(1, depth),
-                Vector2(1, 0),
-                Vector2(0, 0),
-
-                // East (X)
-                Vector2(0, depth),
-                Vector2(1, depth),
-                Vector2(1, 0),
-                Vector2(0, 0),
-
-                // Sorth (Z)
-                Vector2(0, depth),
-                Vector2(1, depth),
-                Vector2(1, 0),
-                Vector2(0, 0),
-
-                // West (-X)
-                Vector2(0, depth),
-                Vector2(1, depth),
-                Vector2(1, 0),
-                Vector2(0, 0),
-
             );
 
-            const chunkIndex = i * trianglesPerBlock/2;
+            // UVs — sides
+            foreach (j; 1..5) texcoords.assign(chunkIndex + j,
+                Vector2(0, depth),
+                Vector2(1, depth),
+                Vector2(1, 0),
+                Vector2(0, 0),
+            );
 
             // Normals
             normals.assign(chunkIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
