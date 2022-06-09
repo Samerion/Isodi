@@ -88,6 +88,7 @@ void main() {
         BlockPosition(-2,  0, 0,  5), 10,
         BlockPosition(-2,  1, 0, 15), 10,
         BlockPosition(-2,  2, 0, 50), 10,
+        BlockPosition(-2,  3, 0, 30), 10,
     );
 
     auto texture = LoadTexture("res/samerion-retro/blocks/grass.png");

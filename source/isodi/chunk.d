@@ -2,6 +2,7 @@ module isodi.chunk;
 
 import raylib;
 
+import std.meta;
 import std.range;
 import std.format;
 
@@ -69,10 +70,22 @@ struct Chunk {
             // Get texture coordinates in the atlas
             vec2 coords = vec2(fragVariantUV.x, fragVariantUV.y);
 
-            // Get offset by fragment coordinates (frac to repeat)
-            vec2 offset = fract(fragTexCoord * vec2(fragVariantUV.z, fragVariantUV.w));
+            // Get size of the texture
+            vec2 size = vec2(fragVariantUV.z, fragVariantUV.w);
 
-            // Texel color fetching from texture sampler
+            // Get texture ratio
+            vec2 ratio = vec2(1, size.y / size.x);
+
+            // Get segment where the texture starts to repeat
+            vec2 fold = vec2(0, size.y - size.x);
+
+            // Get offset 1. until the fold
+            vec2 offset = min(fold, fragTexCoord * size / ratio)
+
+                // 2. repeat after the fold
+                + fract(max(vec2(0), fragTexCoord - ratio + 1))*size.x;
+
+            // Fetch the data from the texture
             vec4 texelColor = texture(texture0, coords + offset);
 
             finalColor = texelColor * colDiffuse;
@@ -163,29 +176,6 @@ struct Chunk {
 
     }
 
-    /// Get texture area in the atlas to use for given block.
-    RectangleL getTile(Vector2L position, BlockType type) @nogc @trusted const {
-
-        // Get texture segment for this block
-        const uv = type in atlas;
-        assert(uv, "Chunk contains a block not present in texture");
-
-        // Get tile variant to use
-        const variant = randomVariant(
-            Vector2L(uv.tileArea.width, uv.tileArea.height),
-            Vector2L(uv.tileSize, uv.tileSize),
-            seed + position.toHash,
-        );
-
-        return RectangleL(
-            uv.tileArea.x + variant.x,
-            uv.tileArea.y + variant.y,
-            uv.tileSize,
-            uv.tileSize,
-        );
-
-    }
-
     /// Make mesh for the chunk.
     Mesh makeMesh(Vector2 atlasSize, int variantAttributeLoc) @nogc @trusted const {
 
@@ -216,10 +206,7 @@ struct Chunk {
                 block.position.y,
             );
 
-            const depth = -cast(float) block.position.depth / properties.heightSteps;
-
-            // Get the variants
-            const tileVariant = getTile(block.position.vector, block.type).toShader(atlasSize);
+            const depth = cast(float) block.position.depth / properties.heightSteps;
 
             // Vertices
             vertices.assign(i,
@@ -231,32 +218,33 @@ struct Chunk {
                 position + Vector3(-0.5, 0, -0.5),
 
                 // North side (negative Z)
-                position + Vector3(0.5, depth, -0.5),
-                position + Vector3(-0.5, depth, -0.5),
+                position + Vector3(0.5, -depth, -0.5),
+                position + Vector3(-0.5, -depth, -0.5),
                 position + Vector3(-0.5, 0, -0.5),
                 position + Vector3(0.5, 0, -0.5),
 
                 // East side (positive X)
-                position + Vector3(0.5, depth, 0.5),
-                position + Vector3(0.5, depth, -0.5),
+                position + Vector3(0.5, -depth, 0.5),
+                position + Vector3(0.5, -depth, -0.5),
                 position + Vector3(0.5, 0, -0.5),
                 position + Vector3(0.5, 0, 0.5),
 
                 // South side (positive Z)
-                position + Vector3(-0.5, depth, 0.5),
-                position + Vector3(0.5, depth, 0.5),
+                position + Vector3(-0.5, -depth, 0.5),
+                position + Vector3(0.5, -depth, 0.5),
                 position + Vector3(0.5, 0, 0.5),
                 position + Vector3(-0.5, 0, 0.5),
 
                 // West side (negative X)
-                position + Vector3(-0.5, depth, -0.5),
-                position + Vector3(-0.5, depth, 0.5),
+                position + Vector3(-0.5, -depth, -0.5),
+                position + Vector3(-0.5, -depth, 0.5),
                 position + Vector3(-0.5, 0, 0.5),
                 position + Vector3(-0.5, 0, -0.5),
 
             );
 
             // UVs
+            // TODO: shorten this
             texcoords.assign(i,
 
                 // Tile
@@ -266,39 +254,32 @@ struct Chunk {
                 Vector2(0, 0),
 
                 // North (-Z)
-                Vector2(0, 1),
-                Vector2(1, 1),
+                Vector2(0, depth),
+                Vector2(1, depth),
                 Vector2(1, 0),
                 Vector2(0, 0),
 
                 // East (X)
-                Vector2(0, 1),
-                Vector2(1, 1),
+                Vector2(0, depth),
+                Vector2(1, depth),
                 Vector2(1, 0),
                 Vector2(0, 0),
 
                 // Sorth (Z)
-                Vector2(0, 1),
-                Vector2(1, 1),
+                Vector2(0, depth),
+                Vector2(1, depth),
                 Vector2(1, 0),
                 Vector2(0, 0),
 
                 // West (-X)
-                Vector2(0.5, 1),
-                Vector2(1, 1),
+                Vector2(0, depth),
+                Vector2(1, depth),
                 Vector2(1, 0),
-                Vector2(0.5, 0),
+                Vector2(0, 0),
 
             );
 
             const chunkIndex = i * trianglesPerBlock/2;
-
-            // Variants
-            variants.assign(chunkIndex + 0, 4, tileVariant);
-            variants.assign(chunkIndex + 1, 4, tileVariant); // tiles for sides, temporarily
-            variants.assign(chunkIndex + 2, 4, tileVariant);
-            variants.assign(chunkIndex + 3, 4, tileVariant);
-            variants.assign(chunkIndex + 4, 4, tileVariant);
 
             // Normals
             normals.assign(chunkIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
@@ -306,6 +287,22 @@ struct Chunk {
             normals.assign(chunkIndex + 2, 4, Vector3(+1, 1,  0));  // East (X)
             normals.assign(chunkIndex + 3, 4, Vector3( 0, 1, +1));  // South (Z)
             normals.assign(chunkIndex + 4, 4, Vector3(-1, 1,  0));  // West (-X)
+
+            // Get the variants
+            const blockUV = block.type in atlas;
+            assert(blockUV, "Some block type is not present in atlas");  // TODO a more precise message
+
+            // Tile variant
+            const tileVariant = blockUV.getTile(block.position.vector, seed).toShader(atlasSize);
+            variants.assign(chunkIndex + 0, 4, tileVariant);
+
+            // Side variant
+            foreach (j; 1..5) {
+
+                const sideVariant = blockUV.getSide(block.position.vector, seed+j).toShader(atlasSize);
+                variants.assign(chunkIndex + j, 4, sideVariant);
+
+            }
 
             ushort value(ushort offset) => cast(ushort) (i*verticesPerBlock + offset);
 
@@ -425,8 +422,46 @@ struct BlockType {
 struct BlockUV {
 
     RectangleL tileArea;
-    RectangleL decorationArea;
+    RectangleL sideArea;
     uint tileSize;
-    uint decorationSize;
+    uint sideSize;
+
+    /// Get random tile variant within the UV.
+    RectangleL getTile(Vector2L position, ulong seed) @nogc @trusted const {
+
+        // Get tile variant to use
+        const variant = randomVariant(
+            Vector2L(tileArea.width, tileArea.height),
+            Vector2L(tileSize, tileSize),
+            seed + position.toHash,
+        );
+
+        return RectangleL(
+            tileArea.x + variant.x,
+            tileArea.y + variant.y,
+            tileSize,
+            tileSize,
+        );
+
+    }
+
+    /// Get random side variant within the UV.
+    RectangleL getSide(Vector2L position, ulong seed) @nogc @trusted const {
+
+        // Get tile variant to use
+        const variant = randomVariant(
+            Vector2L(sideArea.width, sideArea.height),
+            Vector2L(tileSize, sideSize),
+            seed + position.toHash,
+        );
+
+        return RectangleL(
+            sideArea.x + variant.x,
+            sideArea.y + variant.y,
+            tileSize,
+            sideSize,
+        );
+
+    }
 
 }

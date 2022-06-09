@@ -30,8 +30,8 @@ struct ResourceOptions {
     /// Required.
     uint tileSize;
 
-    /// Decoration texture height.
-    uint decorationSize;
+    /// Side texture height.
+    uint sideSize;
 
     /// Amount of angles each multi-directional texture will provide. All angles should be placed in a single
     /// row in the image.
@@ -43,13 +43,13 @@ struct ResourceOptions {
     uint angles = 4;
 
     long[4] tileArea;
-    long[4] decorationArea;
+    long[4] sideArea;
 
     auto blockUV() const => BlockUV(
         cast(RectangleL) tileArea,
-        cast(RectangleL) decorationArea,
+        cast(RectangleL) sideArea,
         tileSize,
-        decorationSize
+        sideSize,
     );
 
 }
