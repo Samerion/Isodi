@@ -4,7 +4,6 @@ import raylib;
 
 import std.range;
 import std.format;
-import std.random;
 
 import isodi.utils;
 import isodi.properties;
@@ -125,26 +124,7 @@ struct Chunk {
     }
 
     /// Get texture area in the atlas to use for given block.
-    RectangleL getTile(Vector2L position, BlockType type) @trusted const => getTileImpl(position, type);
-
-    /// Generate a mesh for the chunk.
-    ///
-    /// The mesh must be manually freed using `UnloadMesh`
-    ///
-    /// Params:
-    ///     atlasSize = Image dimensions (in pixels) of the chunk's texture atlas.
-    Mesh makeMesh(Vector2 atlasSize) @trusted const => makeMeshImpl(atlasSize);
-
-    /// Create a model with the chunk's mesh and an appropriate material.
-    ///
-    /// The model must be manually freed with `UnloadModel`. If this happens, the given texture will be removed along
-    /// with the model.
-    Model makeModel(return Texture2D texture) @trusted const => makeModelImpl(texture);
-
-    private RectangleL getTileImpl(Vector2L position, BlockType type) @nogc @trusted const {
-
-        // RNG can allocate, it's fine
-        scope randomVariant = cast(Vector2L function(Vector2L, Vector2L, ulong) @nogc) &randomVariant;
+    RectangleL getTile(Vector2L position, BlockType type) @nogc @trusted const {
 
         // Get texture segment for this block
         const uv = type in atlas;
@@ -166,7 +146,7 @@ struct Chunk {
 
     }
 
-    private Mesh makeMeshImpl(Vector2 atlasSize) @nogc @trusted const {
+    Mesh makeMesh(Vector2 atlasSize) @nogc @trusted const {
 
         // We must NOT allocate anything in the mesh with the GC to prevent memory corruption when the mesh is unloaded.
 
@@ -197,7 +177,7 @@ struct Chunk {
             const depth = -cast(float) block.position.depth / properties.heightSteps;
 
             // Get the variants
-            const tileVariant = getTileImpl(block.position.vector, block.type);
+            const tileVariant = getTile(block.position.vector, block.type);
 
             // Vertices
             vertices.assign(i,
@@ -304,13 +284,13 @@ struct Chunk {
 
     }
 
-    private Model makeModelImpl(return Texture2D texture) @nogc @trusted const {
+    Model makeModel(return Texture2D texture) @nogc @trusted const {
 
         import std.algorithm;
 
         // Create the mesh
         auto meshes = mallocArray!Mesh(1);
-        meshes[0] = makeMeshImpl(Vector2(texture.width, texture.height));
+        meshes[0] = makeMesh(Vector2(texture.width, texture.height));
 
         // Create the material
         auto materials = mallocArray!Material(1);
@@ -370,6 +350,7 @@ struct Block {
 
 struct BlockType {
 
+    /// Global user-defined block ID.
     ulong typeID;
 
 }
@@ -385,6 +366,7 @@ struct BlockUV {
 }
 
 /// Awful workaround to get writefln in @nogc :D
+/// Yes, it does allocate in the GC.
 private debug template writefln(T...) {
 
     void writefln(Args...)(Args args) @nogc @system {

@@ -6,29 +6,38 @@
 		{
 			"name": "raylib",
 			"targetType": "library",
-			"versions": ["Isodi_Regular"]
+			"versions": [
+				"Isodi_Regular"
+			]
 		},
 		{
 			"name": "headless",
 			"targetType": "library",
-			"versions": ["Isodi_Headless"]
+			"versions": [
+				"Isodi_Headless"
+			]
 		},
 		{
-			"name": "unittest",
-			"targetType": "executable",
+			"libs": [
+				"raylib"
+			],
 			"mainSourceFile": "source/isodi/tests.d",
-			"libs": ["raylib"]
+			"name": "unittest",
+			"targetType": "executable"
 		}
 	],
 	"copyright": "Copyright © 2020, Artha",
 	"dependencies": {
-		"rcdata": ">=1.0.0-alpha <1.1.0-0",
-		"raylib-d": "~>4.0.0"
+		"raylib-d": "~>4.0.0",
+		"rcdata": ">=1.0.0-alpha <1.1.0-0"
 	},
 	"description": "A 3D orthographic rendering engine",
+	"dflags": [
+		"-preview=shortenedMethods",
+		"-preview=dip1000"
+	],
 	"license": "BSL-1.0",
 	"name": "isodi",
 	"targetPath": "build",
-	"targetType": "library",
-	"dflags": ["-preview=shortenedMethods", "-preview=dip1000"]
+	"targetType": "library"
 }

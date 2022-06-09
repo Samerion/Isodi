@@ -3,8 +3,8 @@ module isodi.utils;
 import raylib;
 import core.stdc.stdlib;
 
-import std.random;
 import std.string;
+import std.random;
 import std.functional;
 
 
@@ -213,13 +213,30 @@ struct Ancestors {
 
 }
 
+/// Get a random number in inclusive range.
+T randomNumber(T, RNG)(T min, T max, ref RNG rng)
+in (min <= max, "minimum value must be lesser or equal to max")
+do {
+
+    // This is a copy-paste from https://github.com/dlang/phobos/blob/master/std/random.d#L2148
+    // but without that single enforce that makes this not compile under @nogc
+
+    T result = min + (max - min)
+        * cast(T) (rng.front - rng.min)
+        / (rng.max - rng.min);
+    rng.popFront();
+
+    return result;
+
+}
+
 /// Generate a random variant in the given atlas.
 /// Param:
 ///     atlasSize = Size of the atlas used.
 ///     resultSize = Expected size of the result
 ///     seed = Seed to use
 /// Returns: Offset of the variant texture in the given atlas.
-Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) {
+Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) @nogc {
 
     auto rng = Mt19937_64(seed);
 
@@ -228,7 +245,9 @@ Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) {
 
     // Get the variant number
     const tileVariantCount = gridSize.x * gridSize.y;
-    const variant = uniform(0, tileVariantCount, rng);
+    assert(tileVariantCount > 0, "Invalid atlasSize or resultSize, all parameters must be positive");
+
+    const variant = randomNumber(0, tileVariantCount-1, rng);
 
     // Get the offset
     return resultSize * Vector2L(
