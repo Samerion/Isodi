@@ -5,6 +5,7 @@ import std.stdio;
 import core.runtime;
 
 import isodi.chunk;
+import isodi.tilemap;
 import isodi.resources;
 
 
@@ -66,9 +67,9 @@ void main() {
 
     /// Prepare the camera
     Camera camera = {
-        position: Vector3(-20, 20, -20),
+        position: Vector3(-1, 1, -1) * 50,
         up: Vector3(0.0f, 1f, 0.0f),
-        fovy: 15.0f,
+        fovy: 150.0f,
         projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
     };
     SetCameraMode(camera, CameraMode.CAMERA_FREE);
@@ -78,26 +79,33 @@ void main() {
     // Load packs
     auto pack = getPack("res/samerion-retro/pack.json");
 
-    Chunk chunk;
-    chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
-    chunk.addX(
-        grass,
-        BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
-        BlockPosition(0, 1, 0, 5), 0, 4, 4, 8, 10, 12, 12, 16, 16,
-        BlockPosition(-2, -1, 0,  0), 10,
-        BlockPosition(-2,  0, 0,  5), 10,
-        BlockPosition(-2,  1, 0, 15), 10,
-        BlockPosition(-2,  2, 0, 50), 10,
-        BlockPosition(-2,  3, 0, 30), 10,
-    );
+    Chunk[] chunks;
+    Model[] models;
+    //chunk.addX(
+    //    grass,
+    //    BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
+    //    BlockPosition(0, 1, 0, 5), 0, 4, 4, 8, 10, 12, 12, 16, 16,
+    //    BlockPosition(-2, -1, 0,  0), 10,
+    //    BlockPosition(-2,  0, 0,  5), 10,
+    //    BlockPosition(-2,  1, 0, 15), 10,
+    //    BlockPosition(-2,  2, 0, 50), 10,
+    //    BlockPosition(-2,  3, 0, 30), 10,
+    //);
 
     auto texture = LoadTexture("res/samerion-retro/blocks/grass.png");
     scope (exit) UnloadTexture(texture);  // :thinking:
 
-    auto model = chunk.makeModel(texture);
-    scope (exit) UnloadModel(model);
+    import std.file;
 
-    //auto chunkTexture = packBlockTextures();
+    foreach (map; "../server/resources/maps".dirEntries(SpanMode.shallow)) {
+
+        auto chunk = loadTilemap(cast(ubyte[]) map.read);
+        chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
+
+        models ~= chunk.makeModel(texture);
+
+    }
+    // TODO unload resources
 
     while (!WindowShouldClose) {
 
@@ -107,17 +115,28 @@ void main() {
         ClearBackground(Colors.WHITE);
         UpdateCamera(&camera);
 
-        BeginMode3D(camera);
-        scope (exit) EndMode3D();
+        {
 
-        DrawGrid(100, 1);
-        DrawModel(model, Vector3(0, 0, 0), 1.0, Colors.WHITE);
+            BeginMode3D(camera);
+            scope (exit) EndMode3D();
 
-        // Draw spheres to show the terrain direction
-        DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North
-        DrawSphere(Vector3(+1, 0,  0), 0.2, Colors.BLUE);    // East
-        DrawSphere(Vector3( 0, 0, +1), 0.2, Colors.PINK);    // South
-        DrawSphere(Vector3(-1, 0,  0), 0.2, Colors.YELLOW);  // West
+            DrawGrid(100, 1);
+
+            foreach (model; models) {
+
+                DrawModel(model, Vector3(0, 0, 0), 1.0, Colors.WHITE);
+
+            }
+
+            // Draw spheres to show the terrain direction
+            DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North
+            DrawSphere(Vector3(+1, 0,  0), 0.2, Colors.BLUE);    // East
+            DrawSphere(Vector3( 0, 0, +1), 0.2, Colors.PINK);    // South
+            DrawSphere(Vector3(-1, 0,  0), 0.2, Colors.YELLOW);  // West
+
+        }
+
+        DrawFPS(0, 0);
 
     }
 
