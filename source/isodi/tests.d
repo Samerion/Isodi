@@ -4,9 +4,7 @@ import raylib;
 import std.stdio;
 import core.runtime;
 
-import isodi.chunk;
-import isodi.tilemap;
-import isodi.resources;
+import isodi;
 
 
 @system:
@@ -80,7 +78,7 @@ void main() {
     auto pack = getPack("res/samerion-retro/pack.json");
 
     Chunk[] chunks;
-    Model[] models;
+    ChunkModel[] models;
     //chunk.addX(
     //    grass,
     //    BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
@@ -97,7 +95,7 @@ void main() {
 
     import std.file;
 
-    foreach (map; "../server/resources/maps".dirEntries(SpanMode.shallow)) {
+    foreach (map; "/home/soaku/git/samerion/server/resources/maps".dirEntries(SpanMode.shallow)) {
 
         auto chunk = loadTilemap(cast(ubyte[]) map.read);
         chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
@@ -124,7 +122,7 @@ void main() {
 
             foreach (model; models) {
 
-                DrawModel(model, Vector3(0, 0, 0), 1.0, Colors.WHITE);
+                model.draw();
 
             }
 

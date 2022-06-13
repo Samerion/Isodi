@@ -19,13 +19,21 @@ struct Properties {
     int heightSteps = 10;
 
     /// Perspective of the viewer, used to correctly render models and other flat objects.
-    Perspective* perspective;
+    const(Perspective)* perspective;
 
     /// Transform matrix affecting the object.
-    Matrix transform;
+    Matrix transform = Matrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    );
 
     /// Resource data to be used by this object.
     ResourceData resources;
+
+    /// Color to modulate the object with.
+    Color tint = Colors.WHITE;
 
 }
 

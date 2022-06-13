@@ -53,9 +53,7 @@ T[] mallocArray(T)(size_t count) @system @nogc {
 }
 
 /// Assign a single chunk of values to an array, assuming the array is made up of fixed size chunks.
-void assign(T)(T[] range, size_t index, T[] values...) @nogc pure {
-
-    // TODO: rename to assignChunk
+void assignChunk(T)(T[] range, size_t index, T[] values...) @nogc pure {
 
     foreach (i, value; values) {
 
@@ -73,7 +71,7 @@ unittest {
 
     foreach (i; 0 .. foo.length/3) {
 
-        foo[].assign(i, 1, 2);
+        foo[].assignChunk(i, 1, 2);
 
     }
 
@@ -82,9 +80,9 @@ unittest {
 }
 
 /// Assign a single chunk of values to an array, altering the array first.
-template assign(alias fun) {
+template assignChunk(alias fun) {
 
-    void assign(T)(T[] range, size_t index, T[] values...) @nogc pure {
+    void assignChunk(T, U)(T[] range, size_t index, U[] values...) @nogc pure {
 
         alias funnier = unaryFun!fun;
 
@@ -106,7 +104,7 @@ unittest {
 
     foreach (i; 0 .. foo.length/3) {
 
-        foo[].assign!(a => cast(int) i*2 + a)(i, 1, 2);
+        foo[].assignChunk!(a => cast(int) i*2 + a)(i, 1, 2);
 
     }
 
