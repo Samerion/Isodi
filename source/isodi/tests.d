@@ -57,7 +57,7 @@ void main() {
 
     // Create the window
     SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
-    SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE | ConfigFlags.FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
     InitWindow(1600, 900, "Isodi test runner");
     SetWindowMinSize(800, 600);
     SetTargetFPS(60);
@@ -65,7 +65,7 @@ void main() {
 
     /// Prepare the camera
     Camera camera = {
-        position: Vector3(-1, 1, -1) * 10,
+        position: Vector3(-1, 1, -1) * 15,
         up: Vector3(0.0f, 1f, 0.0f),
         fovy: 15.0f,
         projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
@@ -123,6 +123,13 @@ void main() {
             foreach (model; models) {
 
                 model.properties.transform = MatrixTranslate(0.5, 0, 0.5);
+                model.draw();
+
+            }
+
+            foreach (model; models) {
+
+                model.properties.transform = MatrixTranslate(0.5, 1, 0.5);
                 model.draw();
 
             }

@@ -65,6 +65,7 @@ struct ChunkModel {
 
         // Locations of shader uniforms.
         uint textureLoc;
+        uint transformLoc;
         uint mvpLoc;
         uint colDiffuseLoc;
 
@@ -84,6 +85,7 @@ struct ChunkModel {
             in vec4 vertexVariantUV;
             in vec2 vertexAnchor;
 
+            uniform mat4 transform;
             uniform mat4 mvp;
 
             out vec2 fragTexCoord;
@@ -98,7 +100,7 @@ struct ChunkModel {
                 fragAnchor = vertexAnchor;
 
                 // Calculate final vertex position
-                gl_Position = mvp * vec4(vertexPosition, 1.0);
+                gl_Position = mvp * transform * vec4(vertexPosition, 1.0);
 
             }
 
@@ -118,6 +120,7 @@ struct ChunkModel {
 
             uniform sampler2D texture0;
             uniform vec4 colDiffuse;
+            uniform mat4 transform;
             uniform mat4 mvp;
 
             out vec4 finalColor;
@@ -152,16 +155,19 @@ struct ChunkModel {
 
             void setDepth() {
 
-                vec4 clip = mvp * vec4(fragAnchor.x, 0, fragAnchor.y, 1);
+                vec4 anchor = transform * vec4(fragAnchor.x, 0, fragAnchor.y, 0);
+                vec4 clip = mvp * vec4(anchor.x, 0, anchor.z, 1);
                 float depth = (clip.z / clip.w + 1) / 2.0;
                 gl_FragDepth = gl_DepthRange.diff * depth + gl_DepthRange.near;
+                //gl_FragDepth = 1;
+                //finalColor = vec4(vec3(depth), 1);
 
             }
 
             void main() {
 
-                setColor();
                 setDepth();
+                setColor();
 
             }
 
@@ -193,6 +199,7 @@ struct ChunkModel {
 
         // Find locations
         textureLoc = rlGetLocationUniform(shader, "texture0");
+        transformLoc = rlGetLocationUniform(shader, "transform");
         mvpLoc = rlGetLocationUniform(shader, "mvp");
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
 
@@ -273,12 +280,15 @@ struct ChunkModel {
         rlSetUniform(textureLoc, &slot, Type.RL_SHADER_UNIFORM_INT, 1);
         scope (exit) rlDisableTexture;
 
+        // Set transform matrix
+        const transformMatrix = properties.transform
+            .MatrixMultiply(rlGetMatrixTransform);
+        rlSetUniformMatrix(transformLoc, transformMatrix);
+
         // Set model view projection matrix
-        const matrix = properties.transform
-            .MatrixMultiply(rlGetMatrixTransform)
-            .MatrixMultiply(rlGetMatrixModelview)
+        const mvpMatrix = rlGetMatrixModelview
             .MatrixMultiply(rlGetMatrixProjection);
-        rlSetUniformMatrix(mvpLoc, matrix);
+        rlSetUniformMatrix(mvpLoc, mvpMatrix);
 
         // Enable the vertex array
         const enabled = rlEnableVertexArray(vertexArrayID);
