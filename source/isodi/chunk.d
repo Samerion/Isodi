@@ -198,6 +198,9 @@ struct Chunk {
             normals.assign(chunkIndex + 3, 4, Vector3( 0, 1, +1));  // South (Z)
             normals.assign(chunkIndex + 4, 4, Vector3(-1, 1,  0));  // West (-X)
 
+            // Anchors
+            anchors.assign(i, 5*4, Vector2(position.x, position.z));
+
             // Get the variants
             const blockUV = block.type in atlas;
             assert(blockUV, format!"%s is not present in chunk atlas"(block.type));

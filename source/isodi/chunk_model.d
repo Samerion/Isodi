@@ -82,17 +82,20 @@ struct ChunkModel {
             in vec3 vertexPosition;
             in vec2 vertexTexCoord;
             in vec4 vertexVariantUV;
+            in vec2 vertexAnchor;
 
             uniform mat4 mvp;
 
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
+            out vec2 fragAnchor;
 
             void main() {
 
                 // Send vertex attributes to fragment shader
                 fragTexCoord = vertexTexCoord;
                 fragVariantUV = vertexVariantUV;
+                fragAnchor = vertexAnchor;
 
                 // Calculate final vertex position
                 gl_Position = mvp * vec4(vertexPosition, 1.0);
@@ -111,9 +114,11 @@ struct ChunkModel {
 
             in vec2 fragTexCoord;
             in vec4 fragVariantUV;
+            in vec2 fragAnchor;
 
             uniform sampler2D texture0;
             uniform vec4 colDiffuse;
+            uniform mat4 mvp;
 
             out vec4 finalColor;
 
@@ -145,25 +150,18 @@ struct ChunkModel {
 
             }
 
-            //void setDepth() {
-            //
-            //    vec3 pos = vec3(
-            //        position.x,
-            //        0,         // Ignore height
-            //        anchor.z
-            //    );
-            //
-            //    vec4 clip = mvp * vec4(pos, 1);
-            //    float depth = (clip.z / clip.w + 1) / 2.0;
-            //    gl_FragDepth = gl_DepthRange.diff * depth + gl_DepthRange.near;
-            //
-            //
-            //}
+            void setDepth() {
+
+                vec4 clip = mvp * vec4(fragAnchor.x, 0, fragAnchor.y, 1);
+                float depth = (clip.z / clip.w + 1) / 2.0;
+                gl_FragDepth = gl_DepthRange.diff * depth + gl_DepthRange.near;
+
+            }
 
             void main() {
 
                 setColor();
-                //setDepth();
+                setDepth();
 
             }
 
@@ -242,8 +240,8 @@ struct ChunkModel {
         verticesBufferID = registerBuffer(vertices, "vertexPosition", RL_FLOAT);
         variantsBufferID = registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
         texcoordsBufferID = registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
-        //normalsBufferID = registerBuffer(normals, "vertexNormal", 3, RL_FLOAT);
-        //anchorsBufferID = registerBuffer(anchors, "vertexAnchor", 2, RL_FLOAT);
+        //normalsBufferID = registerBuffer(normals, "vertexNormal", RL_FLOAT);
+        anchorsBufferID = registerBuffer(anchors, "vertexAnchor", RL_FLOAT);
         trianglesBufferID = rlLoadVertexBufferElement(triangles.ptr, cast(int) (triangles.length * 3 * ushort.sizeof),
             false);
 
@@ -251,8 +249,11 @@ struct ChunkModel {
     }
 
     /// Draw the model.
+    ///
+    /// Note: Each vertex in the model will be drawn as if it was on Y=0. It is recommended you draw other Isodi objects
+    /// in order of height.
     void draw() const @trusted @nogc
-    in (vertices.length <= ushort.max, "Model cannot be drawn, too many vertices exist")
+    in (vertices.length <= ushort.max, "This model cannot be drawn, too many vertices exist")
     do {
 
         alias Type = rlShaderUniformDataType;

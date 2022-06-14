@@ -65,9 +65,9 @@ void main() {
 
     /// Prepare the camera
     Camera camera = {
-        position: Vector3(-1, 1, -1) * 50,
+        position: Vector3(-1, 1, -1) * 10,
         up: Vector3(0.0f, 1f, 0.0f),
-        fovy: 150.0f,
+        fovy: 15.0f,
         projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
     };
     SetCameraMode(camera, CameraMode.CAMERA_FREE);
@@ -122,6 +122,7 @@ void main() {
 
             foreach (model; models) {
 
+                model.properties.transform = MatrixTranslate(0.5, 0, 0.5);
                 model.draw();
 
             }
