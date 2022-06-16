@@ -1,8 +1,10 @@
 module isodi.tests;
 
 import raylib;
-import std.stdio;
 import core.runtime;
+
+import std.file;
+import std.stdio;
 
 import isodi;
 
@@ -52,7 +54,6 @@ shared static this() {
 
 void main() {
 
-    // TODO do run tests!
     Runtime.extendedModuleUnitTester = null;
 
     // Create the window
@@ -67,35 +68,28 @@ void main() {
     Camera camera = {
         position: Vector3(-1, 1, -1) * 15,
         up: Vector3(0.0f, 1f, 0.0f),
-        fovy: 15.0f,
+        fovy: 5.0f,
         projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
     };
     SetCameraMode(camera, CameraMode.CAMERA_FREE);
 
-    auto grass = BlockType(0);
+    const grass = BlockType(0);
 
     // Load packs
-    auto pack = getPack("res/samerion-retro/pack.json");
+    const pack = getPack("res/samerion-retro/pack.json");
 
-    Chunk[] chunks;
-    ChunkModel[] models;
-    //chunk.addX(
-    //    grass,
-    //    BlockPosition(0, 0, 0, 5), 0, 2, 6, 10, 10, 10, 12, 16, 14,
-    //    BlockPosition(0, 1, 0, 5), 0, 4, 4, 8, 10, 12, 12, 16, 16,
-    //    BlockPosition(-2, -1, 0,  0), 10,
-    //    BlockPosition(-2,  0, 0,  5), 10,
-    //    BlockPosition(-2,  1, 0, 15), 10,
-    //    BlockPosition(-2,  2, 0, 50), 10,
-    //    BlockPosition(-2,  3, 0, 30), 10,
-    //);
+    IsodiModel[] models;
 
+    // Load textures
     auto texture = LoadTexture("res/samerion-retro/blocks/grass.png");
-    scope (exit) UnloadTexture(texture);  // :thinking:
+    scope (exit) UnloadTexture(texture);
 
-    import std.file;
+    auto modelTexture = LoadTexture("res/samerion-retro/bones/white-wraith.png");
+    scope (exit) UnloadTexture(modelTexture);
 
+    // Load chunks
     foreach (map; "/home/soaku/git/samerion/server/resources/maps".dirEntries(SpanMode.shallow)) {
+        // Yes, I'm loading some chunks I have not uploaded to the repository
 
         auto chunk = loadTilemap(cast(ubyte[]) map.read);
         chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
@@ -103,8 +97,30 @@ void main() {
         models ~= chunk.makeModel(texture);
 
     }
-    // TODO unload resources
 
+    // Load a skeleton
+    {
+
+        const hips = BoneType(0);
+        const abdomen = BoneType(1);
+
+        Skeleton skeleton;
+
+        skeleton.atlas[hips] = BoneUV([
+            RectangleL(1, 52, 40, 6),
+        ]);
+        skeleton.atlas[abdomen] = BoneUV([
+            RectangleL(1, 33, 31, 7),
+        ]);
+
+        const hipsBone = skeleton.addBone(hips, MatrixTranslate(0, 19.5 / 32, 0), Vector3(0, 4.0 / 32, 0));
+        skeleton.addBone(abdomen, MatrixTranslate(0, 6.0 / 32, 0), Vector3(0, 1.0 / 32, 0));
+
+        models ~= skeleton.makeModel(modelTexture);
+
+    }
+
+    // Drawing loop
     while (!WindowShouldClose) {
 
         BeginDrawing();

@@ -3,12 +3,14 @@ module isodi.chunk;
 import raylib;
 
 import std.meta;
+import std.array;
 import std.range;
 import std.format;
+import std.algorithm;
 
 import isodi.utils;
 import isodi.properties;
-import isodi.chunk_model;
+import isodi.isodi_model;
 
 
 @safe:
@@ -28,14 +30,7 @@ struct Chunk {
         /// Mapping of block types to their position in the texture.
         BlockUV[BlockType] atlas;
 
-    }
-
-    private {
-
         /// Blocks making up the chunk.
-        ///
-        /// Note: Private, because the underlying structure might change, even at runtime. The lookup mechanism might
-        /// switch to using regular arrays for a row of contiguous blocks. (not implemented)
         Block[Vector2L] blocks;
 
     }
@@ -100,7 +95,7 @@ struct Chunk {
     }
 
     /// Make model for the chunk.
-    ChunkModel makeModel(return Texture2D texture) const {
+    IsodiModel makeModel(return Texture2D texture) const {
 
         import core.lifetime;
 
@@ -115,16 +110,16 @@ struct Chunk {
         const triangleCount = blocks.length * trianglesPerBlock;
 
         // Prepare the model
-        ChunkModel model = {
+        IsodiModel model = {
             properties: properties,
             texture: texture,
         };
-        model.vertices.length = vertexCount;
+        model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;
-        model.texcoords.length = vertexCount;
+        model.texcoords.reserve = vertexCount;
         model.normals.length = vertexCount;
         model.anchors.length = vertexCount;
-        model.triangles.length = triangleCount;
+        model.triangles.reserve = triangleCount;
         // TODO: side culling
 
         // Add each block
@@ -139,7 +134,7 @@ struct Chunk {
             const depth = cast(float) block.position.depth / properties.heightSteps;
 
             // Vertices
-            vertices.assignChunk(i,
+            vertices ~= [
 
                 // Tile
                 position + Vector3(-0.5, 0, 0.5),
@@ -171,25 +166,25 @@ struct Chunk {
                 position + Vector3(-0.5, 0, 0.5),
                 position + Vector3(-0.5, 0, -0.5),
 
-            );
-
-            const chunkIndex = i * trianglesPerBlock/2;
+            ];
 
             // UVs — tile
-            texcoords.assignChunk(chunkIndex + 0,
+            texcoords ~= [
                 Vector2(0, 1),
                 Vector2(1, 1),
                 Vector2(1, 0),
                 Vector2(0, 0),
-            );
+            ];
 
             // UVs — sides
-            foreach (j; 1..5) texcoords.assignChunk(chunkIndex + j,
+            foreach (j; 1..5) texcoords ~= [
                 Vector2(0, depth),
                 Vector2(1, depth),
                 Vector2(1, 0),
                 Vector2(0, 0),
-            );
+            ];
+
+            const chunkIndex = i * trianglesPerBlock/2;
 
             // Normals
             normals.assign(chunkIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
@@ -224,13 +219,13 @@ struct Chunk {
             ];
 
             // Triangles (2 per rectangle)
-            assignChunk!value(triangles, i,
+            triangles ~= map!value([
                 [ 0,  1,  2],  [ 0,  2,  3],
                 [ 4,  5,  6],  [ 4,  6,  7],
                 [ 8,  9, 10],  [ 8, 10, 11],
                 [12, 13, 14],  [12, 14, 15],
                 [16, 17, 18],  [16, 18, 19],
-            );
+            ]).array;
 
         }
 

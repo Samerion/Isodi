@@ -1,17 +1,17 @@
-module isodi.chunk_model;
+module isodi.isodi_model;
 
 import raylib;
+import std.format;
 
-import isodi.chunk;
 import isodi.properties;
 
 
 @safe:
 
 
-/// This struct represents a chunk model uploaded to the GPU. Its resources are managed by Isodi and must NOT be cleaned
-/// up with Raylib functions.
-struct ChunkModel {
+/// This struct represents an Isodi model uploaded to the GPU. Its resources are managed by Isodi and must NOT be
+/// cleaned up with Raylib functions, with the exception of the texture.
+struct IsodiModel {
 
     public {
 
@@ -73,7 +73,7 @@ struct ChunkModel {
 
     immutable {
 
-        /// Default fragment shader used to render chunks.
+        /// Default fragment shader used to render the model.
         ///
         /// The data is null-terminated for C compatibility.
         immutable vertexShader = q{
@@ -107,7 +107,7 @@ struct ChunkModel {
 
         } ~ '\0';
 
-        /// Default fragment shader used to render chunks.
+        /// Default fragment shader used to render the model.
         ///
         /// The data is null-terminated for C compatibility.
         immutable fragmentShader = q{
@@ -186,10 +186,10 @@ struct ChunkModel {
 
     }
 
-    /// Prepare the chunk shader
+    /// Prepare the model shader
     private void makeShader() @trusted {
 
-        assert(IsWindowReady, "Cannot create shader for ChunkModel, there's no window open");
+        assert(IsWindowReady, "Cannot create shader for IsodiModel, there's no window open");
 
         // Ignore if already constructed
         if (shader != 0) return;
@@ -209,6 +209,14 @@ struct ChunkModel {
     void upload() @trusted
     in (vertexArrayID == 0, "The model has already been uploaded")  // TODO: allow updates
     in (vertices.length <= ushort.max, "Model cannot be drawn, too many vertices exist")
+    in (variants.length == vertices.length,
+        format!"Variant count (%s) doesn't match vertex count (%s)"(variants.length, vertices.length))
+    in (texcoords.length == vertices.length,
+        format!"Texcoord count (%s) doesn't match vertex count (%s)"(texcoords.length, vertices.length))
+    in (normals.length == vertices.length,
+        format!"Normal count (%s) doesn't match vertex count (%s)"(normals.length, vertices.length))
+    in (anchors.length == vertices.length,
+        format!"Anchor count (%s) doesn't match vertex count (%s)"(anchors.length, vertices.length))
     do {
 
         uint registerBuffer(T)(T[] arr, const char* attribute, int type) {
