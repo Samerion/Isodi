@@ -21,6 +21,9 @@ struct IsodiModel {
         /// Atlas texture to be used by the model. Will NOT be freed along with the model.
         Texture2D texture;
 
+        /// If true, the model should "fold" the textures, letting them repeat automatically — used for block sides.
+        int performFold;
+
         /// Vertices making up the model.
         Vector3[] vertices;
 
@@ -68,6 +71,7 @@ struct IsodiModel {
         uint transformLoc;
         uint mvpLoc;
         uint colDiffuseLoc;
+        uint performFoldLoc;
 
     }
 
@@ -122,6 +126,7 @@ struct IsodiModel {
             uniform vec4 colDiffuse;
             uniform mat4 transform;
             uniform mat4 mvp;
+            uniform int performFold;
 
             out vec4 finalColor;
 
@@ -133,20 +138,37 @@ struct IsodiModel {
                 // Get size of the texture
                 vec2 size = vec2(fragVariantUV.z, fragVariantUV.w);
 
-                // Get texture ratio
-                vec2 ratio = vec2(1, size.y / size.x);
+                vec2 offset;
 
-                // Get segment where the texture starts to repeat
-                vec2 fold = vec2(0, size.y - size.x);
+                // No folding, render like normal
+                if (performFold == 0) {
 
-                // Get offset 1. until the fold
-                vec2 offset = min(fold, fragTexCoord * size / ratio)
+                    // Set the offset in the region with no special overrides
+                    offset = fragTexCoord * size;
 
-                    // 2. repeat after the fold
-                    + fract(max(vec2(0), fragTexCoord - ratio + 1))*size.x;
+                }
+
+                // Perform fold
+                else {
+
+                    // Get texture ratio
+                    vec2 ratio = vec2(1, size.y / size.x);
+
+                    // Get segment where the texture starts to repeat
+                    vec2 fold = vec2(0, size.y - size.x);
+
+                    // Get offset 1. until the fold
+                    offset = min(fold, fragTexCoord * size / ratio)
+
+                        // 2. repeat after the fold
+                        + fract(max(vec2(0), fragTexCoord - ratio + 1))*size.x;
+
+                }
 
                 // Fetch the data from the texture
                 vec4 texelColor = texture(texture0, coords + offset);
+
+                if (texelColor.w == 0) discard;
 
                 // Set the color
                 finalColor = texelColor * colDiffuse;
@@ -202,6 +224,7 @@ struct IsodiModel {
         transformLoc = rlGetLocationUniform(shader, "transform");
         mvpLoc = rlGetLocationUniform(shader, "mvp");
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
+        performFoldLoc = rlGetLocationUniform(shader, "performFold");
 
     }
 
@@ -280,6 +303,9 @@ struct IsodiModel {
         // Set colDiffuse
         float[4] colDiffuse = [properties.tint.tupleof] / 255f;
         rlSetUniform(colDiffuseLoc, &colDiffuse, Type.RL_SHADER_UNIFORM_VEC4, 1);
+
+        // Set fold
+        rlSetUniform(performFoldLoc, &performFold, Type.RL_SHADER_UNIFORM_INT, 1);
 
         // Set texture to use
         int slot = 0;

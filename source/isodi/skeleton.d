@@ -38,9 +38,9 @@ struct Skeleton {
     }
 
     /// Add a bone from the given bone set.
-    Bone* addBone(BoneType type, Bone* parent, Matrix matrix, Vector3 vector) return {
+    Bone* addBone(BoneType type, const Bone* parent, Matrix matrix, Vector3 vector) return {
 
-        bones ~= Bone(type, parent, matrix, vector);
+        bones ~= Bone(bones.length, type, parent, matrix, vector);
         return &bones[$-1];
 
     }
@@ -50,7 +50,7 @@ struct Skeleton {
         => addBone(type, null, matrix, vector);
 
     /// ditto
-    Bone* addBone(BoneType type, Bone* parent) @trusted return
+    Bone* addBone(BoneType type, const Bone* parent) @trusted return
         => addBone(type, parent, MatrixIdentity, Vector3(0, 1, 0));
 
     /// ditto
@@ -78,7 +78,7 @@ struct Skeleton {
         model.anchors.length = vertexCount;
         model.triangles.reserve = triangleCount;
 
-        /// Copy the bones and apply all the transformations.
+        // Copy the bones and apply all the transformations
         auto transBones = bones[].dup;
 
         // Add each bone
@@ -88,42 +88,62 @@ struct Skeleton {
             assert(boneUV, format!"%s not present in skeleton atlas"(bone));
 
             // Get the variant
-            const boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
+            auto boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
+            boneVariant.width /= 4;  // TODO
+
+            import std.stdio;
+            float[4] f = (cast(float[4]) boneVariant)[] * atlasSize.x;
+            writefln!"%s"(f);
 
             // Get the size of the bone
             Vector2 boneSize;
             boneSize.y = Vector3Length(bone.vector);
             boneSize.x = boneSize.y * boneVariant.width / boneVariant.height;
-
-            // Inherit transform
-            if (bone.parent) {
-                bone.transform = MatrixMultiply(bone.parent.transform, bone.transform);
-            }
-
-            // Vertices
-            vertices ~= [
+            writefln!"%s %s %s %s"(
                 Vector3(-boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
                 Vector3(+boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
                 Vector3(+boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
                 Vector3(-boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
+            );
+
+            // Inherit transform
+            if (bone.parent) {
+
+                // Get the parent bone
+                const parent = transBones[bone.parent.index];
+
+                // Apply its transform
+                bone.transform = MatrixMultiply(parent.transform, bone.transform);
+
+            }
+
+            // Vertices
+            vertices ~= [
+                Vector3(-boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
+                Vector3(+boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
+                Vector3(+boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
+                Vector3(-boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
             ];
 
             // UVs
             texcoords ~= [
-                Vector2(0, 1),
-                Vector2(1, 1),
-                Vector2(1, 0),
                 Vector2(0, 0),
+                Vector2(1, 0),
+                Vector2(1, 1),
+                Vector2(0, 1),
             ];
 
-            // TODO: verify this one
             const normalMatrix = MatrixMultiply(
+                MatrixRotate(Vector3(-1, 0, 0), PI / 2),
                 bone.transform,
-                MatrixRotate(Vector3(1, 0, 0), PI / 2),
             );
 
             // Normals
             normals.assign(i, 4, Vector3(0, 1, 0).Vector3Transform(normalMatrix));
+
+            // Anchors
+            const anchor = Vector3(0, 0, 0).Vector3Transform(bone.transform);
+            anchors.assign(i, 4, Vector2(anchor.x, anchor.z));
 
             // Variants
             variants.assign(i, 4, boneVariant);
@@ -146,6 +166,32 @@ struct Skeleton {
         model.upload();
 
         return model;
+
+    }
+
+    /// Draw lines for each bone to visualise the skeleton.
+    void drawDebug() @trusted {
+
+        /// Copy the bones and apply all the transformations.
+        auto transBones = bones[].dup;
+
+        // Add each bone
+        foreach (i, ref bone; transBones) {
+
+            // Inherit transform
+            Matrix parentTransform = bone.parent
+                ? transBones[bone.parent.index].transform
+                : properties.transform;
+
+            bone.transform = MatrixMultiply(parentTransform, bone.transform);
+
+            DrawLine3D(
+                Vector3Transform(Vector3(), bone.transform),
+                Vector3Transform(bone.vector, bone.transform),
+                Colors.RED,
+            );
+
+        }
 
     }
 
@@ -176,6 +222,7 @@ struct BoneUV {
 
 struct Bone {
 
+    const size_t index;
     BoneType type;
     const(Bone)* parent;
     Matrix transform;

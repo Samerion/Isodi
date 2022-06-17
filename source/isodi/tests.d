@@ -92,6 +92,7 @@ void main() {
         // Yes, I'm loading some chunks I have not uploaded to the repository
 
         auto chunk = loadTilemap(cast(ubyte[]) map.read);
+        chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
         chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
 
         models ~= chunk.makeModel(texture);
@@ -99,22 +100,25 @@ void main() {
     }
 
     // Load a skeleton
+    Skeleton skeleton;
     {
+
+        const cellSize = 8;
 
         const hips = BoneType(0);
         const abdomen = BoneType(1);
 
-        Skeleton skeleton;
+        skeleton.properties.transform = MatrixTranslate(0.5, 0, 0.5);
 
         skeleton.atlas[hips] = BoneUV([
             RectangleL(1, 52, 40, 6),
         ]);
         skeleton.atlas[abdomen] = BoneUV([
-            RectangleL(1, 33, 31, 7),
+            RectangleL(1, 33, 32, 7),
         ]);
 
-        const hipsBone = skeleton.addBone(hips, MatrixTranslate(0, 19.5 / 32, 0), Vector3(0, 4.0 / 32, 0));
-        skeleton.addBone(abdomen, MatrixTranslate(0, 6.0 / 32, 0), Vector3(0, 1.0 / 32, 0));
+        const hipsBone = skeleton.addBone(hips, MatrixTranslate(0, 19.5 / cellSize, 0), Vector3(0, 6.0 / cellSize, 0));
+        skeleton.addBone(abdomen, hipsBone, MatrixTranslate(0, 5.0 / cellSize, 1.0 / cellSize), Vector3(0, 7.0 / cellSize, 0));
 
         models ~= skeleton.makeModel(modelTexture);
 
@@ -138,17 +142,11 @@ void main() {
 
             foreach (model; models) {
 
-                model.properties.transform = MatrixTranslate(0.5, 0, 0.5);
                 model.draw();
 
             }
 
-            foreach (model; models) {
-
-                model.properties.transform = MatrixTranslate(0.5, 1, 0.5);
-                model.draw();
-
-            }
+            skeleton.drawDebug();
 
             // Draw spheres to show the terrain direction
             DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North

@@ -113,6 +113,7 @@ struct Chunk {
         IsodiModel model = {
             properties: properties,
             texture: texture,
+            performFold: true,
         };
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;
