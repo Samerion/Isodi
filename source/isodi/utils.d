@@ -42,6 +42,21 @@ struct RectangleL {
 
 }
 
+/// Multiplying matrices the proper way
+Matrix mul(Matrix[] ms...) @trusted @nogc nothrow {
+
+    auto result = ms[0];
+
+    foreach (m; ms[1..$]) {
+
+        result = MatrixMultiply(result, m);
+
+    }
+
+    return result;
+
+}
+
 /// Malloc an array and return it.
 T[] mallocArray(T)(size_t count) @system @nogc {
 

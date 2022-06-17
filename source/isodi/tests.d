@@ -103,22 +103,53 @@ void main() {
     Skeleton skeleton;
     {
 
-        const cellSize = 8;
+        const cellSize = 16;
 
         const hips = BoneType(0);
         const abdomen = BoneType(1);
+        const torso = BoneType(2);
+        const head = BoneType(3);
+        const upperArm = BoneType(4);
+        const forearm = BoneType(5);
+        const hand = BoneType(6);
 
         skeleton.properties.transform = MatrixTranslate(0.5, 0, 0.5);
 
-        skeleton.atlas[hips] = BoneUV([
-            RectangleL(1, 52, 40, 6),
-        ]);
-        skeleton.atlas[abdomen] = BoneUV([
-            RectangleL(1, 33, 32, 7),
-        ]);
+        auto simpleUV(long[4] data...) => BoneUV([RectangleL(data[0], data[1], data[2], data[3])]);
 
-        const hipsBone = skeleton.addBone(hips, MatrixTranslate(0, 19.5 / cellSize, 0), Vector3(0, 6.0 / cellSize, 0));
-        skeleton.addBone(abdomen, hipsBone, MatrixTranslate(0, 5.0 / cellSize, 1.0 / cellSize), Vector3(0, 7.0 / cellSize, 0));
+        skeleton.atlas[hips] = simpleUV(1, 52, 40, 6);
+        skeleton.atlas[abdomen] = simpleUV(1, 33, 32, 7);
+        skeleton.atlas[torso] = simpleUV(1, 1, 56, 16);
+        skeleton.atlas[head] = simpleUV(1, 18, 40, 14);
+        skeleton.atlas[upperArm] = simpleUV(43, 31, 20, 13);
+        skeleton.atlas[forearm] = simpleUV(51, 49, 12, 9);
+        skeleton.atlas[hand] = simpleUV(43, 45, 20, 3);
+
+        auto vec3(alias f = Vector3)(float[3] vals...) {
+
+            vals[] /= cellSize;
+            return f(vals[0], vals[1], vals[2]);
+
+        }
+
+        const hipsBone    = skeleton.addBone(hips, vec3!MatrixTranslate(0, 19.5, 0), vec3(0, 6, 0));
+        const abdomenBone = skeleton.addBone(abdomen, hipsBone, vec3!MatrixTranslate(0, -1, 1), vec3(0, 7, 0));
+        const torsoBone   = skeleton.addBone(torso, abdomenBone, vec3!MatrixTranslate(0, -3, -1), vec3(0, 16, 0));
+        const headBone    = skeleton.addBone(head, torsoBone, vec3!MatrixTranslate(0, -1, 0), vec3(0, 14, 0));
+
+        foreach (i; 0..2) {
+
+            const direction = i ? -7.5 : 7.5;
+            const invert = i ? MatrixIdentity : MatrixScale(-1, 1, 1);
+
+            const upperArmBone = skeleton.addBone(upperArm, torsoBone,
+                mul(invert, vec3!MatrixTranslate(direction, 0, 0)),
+                vec3(0, -13, 0)
+            );
+            const forearmBone = skeleton.addBone(forearm, upperArmBone,
+                vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+
+        }
 
         models ~= skeleton.makeModel(modelTexture);
 

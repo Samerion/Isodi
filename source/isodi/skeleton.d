@@ -2,6 +2,7 @@ module isodi.skeleton;
 
 import raylib;
 
+import std.math;
 import std.array;
 import std.format;
 import std.algorithm;
@@ -9,6 +10,8 @@ import std.algorithm;
 import isodi.utils;
 import isodi.properties;
 import isodi.isodi_model;
+
+private alias PI = std.math.PI;
 
 
 @safe:
@@ -91,20 +94,13 @@ struct Skeleton {
             auto boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
             boneVariant.width /= 4;  // TODO
 
-            import std.stdio;
-            float[4] f = (cast(float[4]) boneVariant)[] * atlasSize.x;
-            writefln!"%s"(f);
-
             // Get the size of the bone
             Vector2 boneSize;
             boneSize.y = Vector3Length(bone.vector);
             boneSize.x = boneSize.y * boneVariant.width / boneVariant.height;
-            writefln!"%s %s %s %s"(
-                Vector3(-boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
-                Vector3(+boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
-                Vector3(+boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
-                Vector3(-boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
-            );
+
+            /// Matrix for the start of the bone
+            Matrix startMatrix = bone.transform;
 
             // Inherit transform
             if (bone.parent) {
@@ -112,27 +108,62 @@ struct Skeleton {
                 // Get the parent bone
                 const parent = transBones[bone.parent.index];
 
-                // Apply its transform
-                bone.transform = MatrixMultiply(parent.transform, bone.transform);
+                // Inherit parent's transform
+                startMatrix = MatrixMultiply(startMatrix, parent.transform);
 
             }
 
+            /// Matrix for getting the other end of the bone
+            const toEnd = MatrixTranslate(bone.vector.tupleof);
+
+            /// Matrix for the end of the bone
+            bone.transform = mul(toEnd, startMatrix);
+
+            bool invertX, invertY;
+
+            Vector3 makeVertex(bool start, int sign, bool adjust = false) {
+
+                // Revert start and left, if needed, to make the bone face the right direction
+                if (!adjust) {
+                    sign  *= invertX ? -1 : 1;
+                    start ^= invertY;
+                }
+
+                /// Matrix to adjust the horizontal position of the vertex
+                const translation = MatrixTranslate(sign * boneSize.x / 2, 0, 0);
+
+                /// Matrix to move to the start point of the bone
+                const toStart = startMatrix;
+
+                /// Final matrix
+                const matrix = start
+                    ? mul(translation, toStart)
+                    : mul(toEnd, translation, toStart);
+
+                return Vector3().Vector3Transform(matrix);
+
+            }
+
+            invertX = makeVertex(true, -1, true).x > makeVertex(true,  1, true).x;
+            invertY = makeVertex(true,  1, true).y > makeVertex(false, 1, true).y;
+
             // Vertices
             vertices ~= [
-                Vector3(-boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
-                Vector3(+boneSize.x/2, boneSize.y, 0).Vector3Transform(bone.transform),
-                Vector3(+boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
-                Vector3(-boneSize.x/2, 0, 0).Vector3Transform(bone.transform),
+                makeVertex(false, -1),
+                makeVertex(false, +1),
+                makeVertex(true,  +1),
+                makeVertex(true,  -1),
             ];
 
             // UVs
             texcoords ~= [
-                Vector2(0, 0),
-                Vector2(1, 0),
-                Vector2(1, 1),
-                Vector2(0, 1),
+                Vector2( invertX,  invertY),
+                Vector2(!invertX,  invertY),
+                Vector2(!invertX, !invertY),
+                Vector2( invertX, !invertY),
             ];
 
+            // TODO verify this
             const normalMatrix = MatrixMultiply(
                 MatrixRotate(Vector3(-1, 0, 0), PI / 2),
                 bone.transform,
@@ -142,7 +173,7 @@ struct Skeleton {
             normals.assign(i, 4, Vector3(0, 1, 0).Vector3Transform(normalMatrix));
 
             // Anchors
-            const anchor = Vector3(0, 0, 0).Vector3Transform(bone.transform);
+            const anchor = makeVertex(false, 0);
             anchors.assign(i, 4, Vector2(anchor.x, anchor.z));
 
             // Variants
@@ -183,12 +214,15 @@ struct Skeleton {
                 ? transBones[bone.parent.index].transform
                 : properties.transform;
 
-            bone.transform = MatrixMultiply(parentTransform, bone.transform);
+            const start = MatrixMultiply(parentTransform, bone.transform);
+            const toEnd = MatrixTranslate(bone.vector.tupleof);
+            const end = bone.transform = MatrixMultiply(start, toEnd);
 
-            DrawLine3D(
-                Vector3Transform(Vector3(), bone.transform),
-                Vector3Transform(bone.vector, bone.transform),
-                Colors.RED,
+            DrawCylinderEx(
+                Vector3Transform(Vector3(), start),
+                Vector3Transform(Vector3(), end),
+                0.01, 0.01, 3,
+                ColorFromHSV(i * 360 / 16, 0.6, 1),
             );
 
         }
@@ -227,5 +261,19 @@ struct Bone {
     const(Bone)* parent;
     Matrix transform;
     Vector3 vector;
+
+}
+
+/// Polyfill from Raylib master branch
+private float Vector3Angle(Vector3 v1, Vector3 v2) @nogc pure {
+
+    float result = 0.0f;
+
+    auto cross = Vector3(v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x);
+    float len = sqrt(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
+    float dot = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+    result = atan2(len, dot);
+
+    return result;
 
 }
