@@ -177,18 +177,22 @@ struct IsodiModel {
 
             void setDepth() {
 
+                // Transform the anchor in the world
                 vec4 anchor = transform * vec4(fragAnchor.x, 0, fragAnchor.y, 0);
-                vec4 clip = mvp * vec4(anchor.x, 0, anchor.z, 1);
+
+                // Calculate the depth
+                vec4 clip = mvp * vec4(anchor.x, anchor.y, anchor.z, 1);
                 float depth = (clip.z / clip.w + 1) / 2.0;
+
+                // Linearize it
                 gl_FragDepth = gl_DepthRange.diff * depth + gl_DepthRange.near;
-                //gl_FragDepth = 1;
-                //finalColor = vec4(vec3(depth), 1);
 
             }
 
             void main() {
 
-                setDepth();
+                // TODO: replace depth test with stencil test
+                //setDepth();
                 setColor();
 
             }
@@ -300,12 +304,12 @@ struct IsodiModel {
         rlEnableShader(shader);
         scope (exit) rlDisableShader();
 
+        // Set data
+        rlSetUniform(performFoldLoc, &performFold, Type.RL_SHADER_UNIFORM_INT, 1);
+
         // Set colDiffuse
         float[4] colDiffuse = [properties.tint.tupleof] / 255f;
         rlSetUniform(colDiffuseLoc, &colDiffuse, Type.RL_SHADER_UNIFORM_VEC4, 1);
-
-        // Set fold
-        rlSetUniform(performFoldLoc, &performFold, Type.RL_SHADER_UNIFORM_INT, 1);
 
         // Set texture to use
         int slot = 0;

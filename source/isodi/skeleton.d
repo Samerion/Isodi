@@ -69,7 +69,7 @@ struct Skeleton {
         const vertexCount = bones.length * 4;
         const triangleCount = bones.length * 2;
 
-        // Create an empty model (for now)
+        // Create a model
         IsodiModel model = {
             properties: properties,
             texture: texture,
@@ -197,35 +197,6 @@ struct Skeleton {
         model.upload();
 
         return model;
-
-    }
-
-    /// Draw lines for each bone to visualise the skeleton.
-    void drawDebug() @trusted {
-
-        /// Copy the bones and apply all the transformations.
-        auto transBones = bones[].dup;
-
-        // Add each bone
-        foreach (i, ref bone; transBones) {
-
-            // Inherit transform
-            Matrix parentTransform = bone.parent
-                ? transBones[bone.parent.index].transform
-                : properties.transform;
-
-            const start = MatrixMultiply(parentTransform, bone.transform);
-            const toEnd = MatrixTranslate(bone.vector.tupleof);
-            const end = bone.transform = MatrixMultiply(start, toEnd);
-
-            DrawCylinderEx(
-                Vector3Transform(Vector3(), start),
-                Vector3Transform(Vector3(), end),
-                0.01, 0.01, 3,
-                ColorFromHSV(i * 360 / 16, 0.6, 1),
-            );
-
-        }
 
     }
 

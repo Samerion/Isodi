@@ -66,9 +66,9 @@ void main() {
 
     /// Prepare the camera
     Camera camera = {
-        position: Vector3(-1, 1, -1) * 15,
+        position: Vector3(-1, 1, -1) * 10,
         up: Vector3(0.0f, 1f, 0.0f),
-        fovy: 5.0f,
+        fovy: 10.0f,
         projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
     };
     SetCameraMode(camera, CameraMode.CAMERA_FREE);
@@ -90,6 +90,8 @@ void main() {
     // Load chunks
     foreach (map; "/home/soaku/git/samerion/server/resources/maps".dirEntries(SpanMode.shallow)) {
         // Yes, I'm loading some chunks I have not uploaded to the repository
+        // They're legacy, so I'm gonna replace them with something new later on
+        // Contact me for the proper ones, ok? Not feeling like having them here!
 
         auto chunk = loadTilemap(cast(ubyte[]) map.read);
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
@@ -99,9 +101,27 @@ void main() {
 
     }
 
-    // Load a skeleton
-    Skeleton skeleton;
+    // One more chunk for testing stuff
     {
+
+        Chunk chunk;
+        chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
+        chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
+
+        chunk.addX(
+            grass,
+            BlockPosition(2, 2, 0, 1), 20, 22, 24, 26, 28, 30,
+            BlockPosition(2, 3, 0, 1), 20, 20, 20, 20, 20, 20
+        );
+
+        models ~= chunk.makeModel(texture);
+
+    }
+
+    // Load a skeleton
+    {
+
+        Skeleton skeleton;
 
         const cellSize = 16;
 
@@ -112,8 +132,9 @@ void main() {
         const upperArm = BoneType(4);
         const forearm = BoneType(5);
         const hand = BoneType(6);
-
-        skeleton.properties.transform = MatrixTranslate(0.5, 0, 0.5);
+        const thigh = BoneType(7);
+        const lowerLeg = BoneType(8);
+        const foot = BoneType(9);
 
         auto simpleUV(long[4] data...) => BoneUV([RectangleL(data[0], data[1], data[2], data[3])]);
 
@@ -124,6 +145,9 @@ void main() {
         skeleton.atlas[upperArm] = simpleUV(43, 31, 20, 13);
         skeleton.atlas[forearm] = simpleUV(51, 49, 12, 9);
         skeleton.atlas[hand] = simpleUV(43, 45, 20, 3);
+        skeleton.atlas[thigh] = simpleUV(43, 18, 20, 12);
+        skeleton.atlas[lowerLeg] = simpleUV(1, 41, 12, 9);
+        skeleton.atlas[foot] = simpleUV(11, 59, 52, 4);
 
         auto vec3(alias f = Vector3)(float[3] vals...) {
 
@@ -132,26 +156,48 @@ void main() {
 
         }
 
-        const hipsBone    = skeleton.addBone(hips, vec3!MatrixTranslate(0, 19.5, 0), vec3(0, 6, 0));
+        // Torso
+        const hipsBone    = skeleton.addBone(hips, vec3!MatrixTranslate(0, 20, 0), vec3(0, 6, 0));
         const abdomenBone = skeleton.addBone(abdomen, hipsBone, vec3!MatrixTranslate(0, -1, 1), vec3(0, 7, 0));
         const torsoBone   = skeleton.addBone(torso, abdomenBone, vec3!MatrixTranslate(0, -3, -1), vec3(0, 16, 0));
         const headBone    = skeleton.addBone(head, torsoBone, vec3!MatrixTranslate(0, -1, 0), vec3(0, 14, 0));
 
         foreach (i; 0..2) {
 
-            const direction = i ? -7.5 : 7.5;
+            const direction = i ? -1 : 1;
             const invert = i ? MatrixIdentity : MatrixScale(-1, 1, 1);
 
+            // Arms
             const upperArmBone = skeleton.addBone(upperArm, torsoBone,
-                mul(invert, vec3!MatrixTranslate(direction, 0, 0)),
-                vec3(0, -13, 0)
-            );
+                mul(invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
+                vec3(0, -13, 0));
             const forearmBone = skeleton.addBone(forearm, upperArmBone,
                 vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+            const handBone = skeleton.addBone(hand, forearmBone,
+                vec3!MatrixTranslate(1, 1, 0), vec3(0, -3, 0));
+
+            // Legs
+            const thighBone = skeleton.addBone(thigh, hipsBone,
+                mul(invert, vec3!MatrixTranslate(direction * 2.5, -3, 0)),
+                vec3(0, -12, 0));
+            const lowerLegBone = skeleton.addBone(lowerLeg, thighBone,
+                vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+            const footBone = skeleton.addBone(foot, lowerLegBone,
+                vec3!MatrixTranslate(0, 1, 0), vec3(0, -4, 0));
 
         }
 
+        // Instance one: on terrain
+        skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
         models ~= skeleton.makeModel(modelTexture);
+
+        // Test instances for collisions etc
+        foreach (i; 2..8) {
+
+            skeleton.properties.transform = MatrixTranslate(i + 0.5, 2.0, 3.5);
+            models ~= skeleton.makeModel(modelTexture);
+
+        }
 
     }
 
@@ -176,8 +222,6 @@ void main() {
                 model.draw();
 
             }
-
-            skeleton.drawDebug();
 
             // Draw spheres to show the terrain direction
             DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North
