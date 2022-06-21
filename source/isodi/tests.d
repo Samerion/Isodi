@@ -110,8 +110,9 @@ void main() {
 
         chunk.addX(
             grass,
-            BlockPosition(2, 2, 0, 1), 20, 22, 24, 26, 28, 30,
-            BlockPosition(2, 3, 0, 1), 20, 20, 20, 20, 20, 20
+            BlockPosition(2, 2, 0, 5),  20, 22, 24, 26, 28, 30,
+            BlockPosition(2, 3, 0, 5),  20, 20, 20, 20, 20, 20,
+            BlockPosition(2, 4, 0, 35), 60, 62, 64, 66, 68, 70,
         );
 
         models ~= chunk.makeModel(texture);

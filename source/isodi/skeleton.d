@@ -73,6 +73,7 @@ struct Skeleton {
         IsodiModel model = {
             properties: properties,
             texture: texture,
+            flatten: true,
         };
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;

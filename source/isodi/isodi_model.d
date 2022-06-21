@@ -24,6 +24,9 @@ struct IsodiModel {
         /// If true, the model should "fold" the textures, letting them repeat automatically — used for block sides.
         int performFold;
 
+        /// If true, the model will stay aligned to the camera on the Y camera-space axis.
+        int flatten;
+
         /// Vertices making up the model.
         Vector3[] vertices;
 
@@ -73,6 +76,7 @@ struct IsodiModel {
         uint projectionLoc;
         uint colDiffuseLoc;
         uint performFoldLoc;
+        uint flattenLoc;
 
     }
 
@@ -93,6 +97,7 @@ struct IsodiModel {
             uniform mat4 transform;
             uniform mat4 modelview;
             uniform mat4 projection;
+            uniform int flatten;
 
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
@@ -105,8 +110,44 @@ struct IsodiModel {
                 fragVariantUV = vertexVariantUV;
                 fragAnchor = vertexAnchor;
 
-                // Calculate final vertex position
-                gl_Position = projection * modelview * transform * vec4(vertexPosition, 1.0);
+                // Regular shape
+                if (flatten == 0) {
+
+                    // Calculate final vertex position
+                    gl_Position = projection * modelview * transform * vec4(vertexPosition, 1.0);
+
+                }
+
+                // Flattened shape
+                else {
+
+                    // Flat: Camera transform excluding vertex height
+                    mat4 flatview = modelview;
+                    flatview[0].y = 0;
+                    flatview[1].y = 1;
+                    flatview[2].y = 0;
+                    // Keep [3] to let sharpview through
+
+                    // Sharp: Camera transform only affecting height
+                    mat4 sharpview = mat4(
+                        1, modelview[0].y, 0, 0,
+                        0, modelview[1].y, 0, 0,
+                        0, modelview[2].y, 1, 0,
+                        0, modelview[3].y, 0, 1
+                    );
+
+                    // Calculate the final position in flat mode
+                    gl_Position = projection * flatview * (
+
+                        // Use flat positions for each vertex
+                        vec4(vertexPosition, 1)
+
+                        // And regular (flat+sharp) for model transform
+                        + sharpview * (transform * vec4(1, 1, 1, 1) - vec4(1, 1, 1, 1))
+
+                    );
+
+                }
 
             }
 
@@ -247,6 +288,7 @@ struct IsodiModel {
         projectionLoc = rlGetLocationUniform(shader, "projection");
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
         performFoldLoc = rlGetLocationUniform(shader, "performFold");
+        flattenLoc = rlGetLocationUniform(shader, "flatten");
 
     }
 
@@ -324,6 +366,7 @@ struct IsodiModel {
 
         // Set data
         rlSetUniform(performFoldLoc, &performFold, Type.RL_SHADER_UNIFORM_INT, 1);
+        rlSetUniform(flattenLoc, &flatten, Type.RL_SHADER_UNIFORM_INT, 1);
 
         // Set colDiffuse
         float[4] colDiffuse = [properties.tint.tupleof] / 255f;
