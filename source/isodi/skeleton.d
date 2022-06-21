@@ -78,7 +78,7 @@ struct Skeleton {
         model.variants.length = vertexCount;
         model.texcoords.reserve = vertexCount;
         model.normals.length = vertexCount;
-        model.anchors.length = vertexCount;
+        model.anchors.reserve = vertexCount;
         model.triangles.reserve = triangleCount;
 
         // Copy the bones and apply all the transformations
@@ -172,9 +172,20 @@ struct Skeleton {
             // Normals
             normals.assign(i, 4, Vector3(0, 1, 0).Vector3Transform(normalMatrix));
 
+            Vector2 anchor(bool start) {
+                return Vector2(
+                    makeVertex(start, 0).x.round,
+                    makeVertex(start, 0).z.round,
+                );
+            }
+
             // Anchors
-            const anchor = makeVertex(false, 0);
-            anchors.assign(i, 4, Vector2(anchor.x, anchor.z));
+            anchors ~= [
+                anchor(false),
+                anchor(false),
+                anchor(true),
+                anchor(true),
+            ];
 
             // Variants
             variants.assign(i, 4, boneVariant);

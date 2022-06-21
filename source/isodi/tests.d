@@ -169,7 +169,7 @@ void main() {
 
             // Arms
             const upperArmBone = skeleton.addBone(upperArm, torsoBone,
-                mul(invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
+                mul(invert, MatrixRotateX(PI/4), vec3!MatrixTranslate(direction * 7.5, 0, 0)),
                 vec3(0, -13, 0));
             const forearmBone = skeleton.addBone(forearm, upperArmBone,
                 vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
