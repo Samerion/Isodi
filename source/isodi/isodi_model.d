@@ -69,7 +69,8 @@ struct IsodiModel {
         // Locations of shader uniforms.
         uint textureLoc;
         uint transformLoc;
-        uint mvpLoc;
+        uint modelviewLoc;
+        uint projectionLoc;
         uint colDiffuseLoc;
         uint performFoldLoc;
 
@@ -90,7 +91,8 @@ struct IsodiModel {
             in vec2 vertexAnchor;
 
             uniform mat4 transform;
-            uniform mat4 mvp;
+            uniform mat4 modelview;
+            uniform mat4 projection;
 
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
@@ -104,7 +106,7 @@ struct IsodiModel {
                 fragAnchor = vertexAnchor;
 
                 // Calculate final vertex position
-                gl_Position = mvp * transform * vec4(vertexPosition, 1.0);
+                gl_Position = projection * modelview * transform * vec4(vertexPosition, 1.0);
 
             }
 
@@ -125,7 +127,8 @@ struct IsodiModel {
             uniform sampler2D texture0;
             uniform vec4 colDiffuse;
             uniform mat4 transform;
-            uniform mat4 mvp;
+            uniform mat4 modelview;
+            uniform mat4 projection;
             uniform int performFold;
 
             out vec4 finalColor;
@@ -177,22 +180,34 @@ struct IsodiModel {
 
             void setDepth() {
 
+                // Change Y axis in the modelview matrix to (0, 1, 0, 0) so camera height doesn't affect depth
+                // calculations
+                mat4 flatview = modelview;
+                flatview[0].y = 0;
+                flatview[1].y = 1;
+                flatview[2].y = 0;
+                flatview[3].y = 0;
+                mat4 flatform = transform;
+                flatform[0].y = 0;
+                flatform[1].y = 1;
+                flatform[2].y = 0;
+                flatform[3].y = 0;
+
                 // Transform the anchor in the world
-                vec4 anchor = transform * vec4(fragAnchor.x, 0, fragAnchor.y, 0);
+                vec4 anchor = flatview * flatform * vec4(fragAnchor.x, 0, fragAnchor.y, 1);
 
-                // Calculate the depth
-                vec4 clip = mvp * vec4(anchor.x, anchor.y, anchor.z, 1);
+                // Get the clip space coordinates
+                vec4 clip = projection * anchor * vec4(1, 0, 1, 1);
+
+                // Convert to OpenGL's value range
                 float depth = (clip.z / clip.w + 1) / 2.0;
-
-                // Linearize it
                 gl_FragDepth = gl_DepthRange.diff * depth + gl_DepthRange.near;
 
             }
 
             void main() {
 
-                // TODO: replace depth test with stencil test
-                //setDepth();
+                setDepth();
                 setColor();
 
             }
@@ -202,7 +217,7 @@ struct IsodiModel {
     }
 
     /// Destroy the shader
-    static ~this() @trusted {
+    static ~this() @trusted @nogc {
 
         // Ignore if the window isn't open anymore
         if (!IsWindowReady) return;
@@ -212,8 +227,10 @@ struct IsodiModel {
 
     }
 
-    /// Prepare the model shader
-    private void makeShader() @trusted {
+    /// Prepare the model shader.
+    ///
+    /// Automatically performed when making the model.
+    void makeShader() @trusted @nogc {
 
         assert(IsWindowReady, "Cannot create shader for IsodiModel, there's no window open");
 
@@ -226,7 +243,8 @@ struct IsodiModel {
         // Find locations
         textureLoc = rlGetLocationUniform(shader, "texture0");
         transformLoc = rlGetLocationUniform(shader, "transform");
-        mvpLoc = rlGetLocationUniform(shader, "mvp");
+        modelviewLoc = rlGetLocationUniform(shader, "modelview");
+        projectionLoc = rlGetLocationUniform(shader, "projection");
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
         performFoldLoc = rlGetLocationUniform(shader, "performFold");
 
@@ -323,10 +341,9 @@ struct IsodiModel {
             .MatrixMultiply(rlGetMatrixTransform);
         rlSetUniformMatrix(transformLoc, transformMatrix);
 
-        // Set model view projection matrix
-        const mvpMatrix = rlGetMatrixModelview
-            .MatrixMultiply(rlGetMatrixProjection);
-        rlSetUniformMatrix(mvpLoc, mvpMatrix);
+        // Set model view & projection matrices
+        rlSetUniformMatrix(modelviewLoc, rlGetMatrixModelview);
+        rlSetUniformMatrix(projectionLoc, rlGetMatrixProjection);
 
         // Enable the vertex array
         const enabled = rlEnableVertexArray(vertexArrayID);
