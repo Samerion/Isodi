@@ -126,29 +126,29 @@ void main() {
 
         const cellSize = 16;
 
-        const hips = BoneType(0);
-        const abdomen = BoneType(1);
-        const torso = BoneType(2);
-        const head = BoneType(3);
+        const hips     = BoneType(0);
+        const abdomen  = BoneType(1);
+        const torso    = BoneType(2);
+        const head     = BoneType(3);
         const upperArm = BoneType(4);
-        const forearm = BoneType(5);
-        const hand = BoneType(6);
-        const thigh = BoneType(7);
+        const forearm  = BoneType(5);
+        const hand     = BoneType(6);
+        const thigh    = BoneType(7);
         const lowerLeg = BoneType(8);
-        const foot = BoneType(9);
+        const foot     = BoneType(9);
 
         auto simpleUV(long[4] data...) => BoneUV([RectangleL(data[0], data[1], data[2], data[3])]);
 
-        skeleton.atlas[hips] = simpleUV(1, 52, 40, 6);
-        skeleton.atlas[abdomen] = simpleUV(1, 33, 32, 7);
-        skeleton.atlas[torso] = simpleUV(1, 1, 56, 16);
-        skeleton.atlas[head] = simpleUV(1, 18, 40, 14);
-        skeleton.atlas[upperArm] = simpleUV(43, 31, 20, 13);
-        skeleton.atlas[forearm] = simpleUV(51, 49, 12, 9);
-        skeleton.atlas[hand] = simpleUV(43, 45, 20, 3);
-        skeleton.atlas[thigh] = simpleUV(43, 18, 20, 12);
-        skeleton.atlas[lowerLeg] = simpleUV(1, 41, 12, 9);
-        skeleton.atlas[foot] = simpleUV(11, 59, 52, 4);
+        skeleton.atlas[hips]     = simpleUV(1,  52,  40, 6);
+        skeleton.atlas[abdomen]  = simpleUV(1,  33,  32, 7);
+        skeleton.atlas[torso]    = simpleUV(1,  1,   56, 16);
+        skeleton.atlas[head]     = simpleUV(1,  18,  40, 14);
+        skeleton.atlas[upperArm] = simpleUV(43, 31,  20, 13);
+        skeleton.atlas[forearm]  = simpleUV(51, 49,  12, 9);
+        skeleton.atlas[hand]     = simpleUV(43, 45,  20, 3);
+        skeleton.atlas[thigh]    = simpleUV(43, 18,  20, 12);
+        skeleton.atlas[lowerLeg] = simpleUV(1,  41,  12, 9);
+        skeleton.atlas[foot]     = simpleUV(11, 59,  52, 4);
 
         auto vec3(alias f = Vector3)(float[3] vals...) {
 
@@ -170,12 +170,14 @@ void main() {
 
             // Arms
             const upperArmBone = skeleton.addBone(upperArm, torsoBone,
-                mul(invert, MatrixRotateX(PI/4), vec3!MatrixTranslate(direction * 7.5, 0, 0)),
+                mul(MatrixRotateX(PI/5), MatrixRotateY(PI/4), invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
                 vec3(0, -13, 0));
             const forearmBone = skeleton.addBone(forearm, upperArmBone,
-                vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+                mul(MatrixRotateZ(PI/2), vec3!MatrixTranslate(0, 1, 0)),
+                vec3(0, -9, 0));
             const handBone = skeleton.addBone(hand, forearmBone,
-                vec3!MatrixTranslate(1, 1, 0), vec3(0, -3, 0));
+                mul(MatrixRotateX(PI/4), vec3!MatrixTranslate(1, 1, 0)),
+                vec3(0, -3, 0));
 
             // Legs
             const thighBone = skeleton.addBone(thigh, hipsBone,

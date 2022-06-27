@@ -145,8 +145,19 @@ struct Skeleton {
 
             }
 
-            invertX = makeVertex(true, -1, true).x > makeVertex(true,  1, true).x;
-            invertY = makeVertex(true,  1, true).y > makeVertex(false, 1, true).y;
+            // Check inverts
+            {
+
+                const xstart = makeVertex(true, -1, true);
+                const xend   = makeVertex(true, +1, true);
+
+                const ystart = makeVertex(true,  +1, true);
+                const yend   = makeVertex(false, +1, true);
+
+                invertX = xstart.x > xend.x;
+                invertY = ystart.y > yend.y;
+
+            }
 
             // Vertices
             vertices ~= [

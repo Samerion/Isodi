@@ -39,7 +39,7 @@ struct IsodiModel {
         /// Normals of each model face.
         Vector3[] normals;
 
-        /// Position of the middle of each face on the Z axis. Used to calculate face depth.
+        /// Position of the middle of each vertex on the Z axis. Used to calculate face depth.
         Vector2[] anchors;
 
         /// Triangles in the model, each is an index in the vertex array.
@@ -66,7 +66,8 @@ struct IsodiModel {
 
         /// Shader used for the model.
         ///
-        /// Note: Currently TLS'd but it might be thread-safe — I'm not sure.
+        /// Note: Currently TLS'd but it might be thread-safe — I'm not sure. Regardless though GPU data should only be
+        /// accessed from a single thread.
         uint shader;
 
         // Locations of shader uniforms.
