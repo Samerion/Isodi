@@ -21,6 +21,16 @@ struct IsodiModel {
         /// Atlas texture to be used by the model. Will NOT be freed along with the model.
         Texture2D texture;
 
+        /// Texture used to send matrices to the model.
+        ///
+        /// The expected texture format is R32G32B32A32 (each pixel is a single matrix column). The image is to be 4
+        /// pixels wide and as high as the model's bone count.
+        ///
+        /// Requires setting `bones` for each vertex.
+        Texture2D matrices;
+        // TODO embed variant data in this texture as well. Using two booleans we could control if matrices are to be
+        // embedded or not and dictate texture size based on that.
+
         /// If true, the model should "fold" the textures, letting them repeat automatically — used for block sides.
         int performFold;
 
@@ -42,6 +52,9 @@ struct IsodiModel {
         /// Position of the middle of each vertex on the Z axis. Used to calculate face depth.
         Vector2[] anchors;
 
+        /// Bone each vertex belongs to. Each should be a fraction (bone index/bone count).
+        float[] bones;
+
         /// Triangles in the model, each is an index in the vertex array.
         ushort[3][] triangles;
 
@@ -52,13 +65,8 @@ struct IsodiModel {
         /// ID of the uploaded array.
         uint vertexArrayID;
 
-        // IDs of each buffer.
-        uint verticesBufferID;
-        uint variantsBufferID;
-        uint texcoordsBufferID;
-        uint normalsBufferID;
-        uint anchorsBufferID;
-        uint trianglesBufferID;
+        /// ID of the bone buffer, if any.
+        uint bonesBufferID;
 
     }
 
@@ -70,7 +78,7 @@ struct IsodiModel {
         /// accessed from a single thread.
         uint shader;
 
-        // Locations of shader uniforms.
+        // Locations of shader uniforms
         uint textureLoc;
         uint transformLoc;
         uint modelviewLoc;
@@ -78,6 +86,7 @@ struct IsodiModel {
         uint colDiffuseLoc;
         uint performFoldLoc;
         uint flattenLoc;
+        uint matricesLoc;
 
     }
 
@@ -94,11 +103,13 @@ struct IsodiModel {
             in vec2 vertexTexCoord;
             in vec4 vertexVariantUV;
             in vec2 vertexAnchor;
+            in float vertexBone;
 
             uniform mat4 transform;
             uniform mat4 modelview;
             uniform mat4 projection;
             uniform int flatten;
+            uniform sampler2D matrices;
 
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
@@ -290,36 +301,79 @@ struct IsodiModel {
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
         performFoldLoc = rlGetLocationUniform(shader, "performFold");
         flattenLoc = rlGetLocationUniform(shader, "flatten");
+        matricesLoc = rlGetLocationUniform(shader, "matrices");
 
     }
 
     /// Upload the model to the GPU.
     void upload() @trusted
-    in (vertexArrayID == 0, "The model has already been uploaded")  // TODO: allow updates
-    in (vertices.length <= ushort.max, "Model cannot be drawn, too many vertices exist")
-    in (variants.length == vertices.length,
-        format!"Variant count (%s) doesn't match vertex count (%s)"(variants.length, vertices.length))
-    in (texcoords.length == vertices.length,
-        format!"Texcoord count (%s) doesn't match vertex count (%s)"(texcoords.length, vertices.length))
-    in (normals.length == vertices.length,
-        format!"Normal count (%s) doesn't match vertex count (%s)"(normals.length, vertices.length))
-    in (anchors.length == vertices.length,
-        format!"Anchor count (%s) doesn't match vertex count (%s)"(anchors.length, vertices.length))
+    in {
+
+        // Check buffers
+        assert(vertexArrayID == 0, "The model has already been uploaded");  // TODO: allow updates
+        assert(vertices.length <= ushort.max, "Model cannot be drawn, too many vertices exist");
+        assert(variants.length == vertices.length,
+            format!"Variant count (%s) doesn't match vertex count (%s)"(variants.length, vertices.length));
+        assert(texcoords.length == vertices.length,
+            format!"Texcoord count (%s) doesn't match vertex count (%s)"(texcoords.length, vertices.length));
+        assert(normals.length == vertices.length,
+            format!"Normal count (%s) doesn't match vertex count (%s)"(normals.length, vertices.length));
+        assert(anchors.length == vertices.length,
+            format!"Anchor count (%s) doesn't match vertex count (%s)"(anchors.length, vertices.length));
+
+        // Check matrices
+        if (matrices.id != 0) {
+
+            assert(matrices.width == 4,
+                format!"Matrix texture width (%s) must be 4."(matrices.width));
+            assert(matrices.height != 0, format!"Matrix texture height must not be 0.");
+            assert(bones.length == vertices.length,
+                format!"Bone count (%s) doesn't match vertex count (%s)"(bones.length, vertices.length));
+
+        }
+
+        else assert(bones.length == 0, "Vertex bone definitions are present, but no matrices are attached");
+
+    }
     do {
 
         uint registerBuffer(T)(T[] arr, const char* attribute, int type) {
 
-            // Load the buffer
-            auto bufferID = rlLoadVertexBuffer(arr.ptr, cast(int) (arr.length * T.sizeof), false);
+            // Determine size of the type
+            static if (__traits(compiles, T.tupleof)) enum length = T.tupleof.length;
+            else enum length = 1;
 
             // Find location in the shader
             const location = rlGetLocationAttrib(shader, attribute);
+
+            // If the array is empty
+            if (arr.length == 0) {
+
+                // For some reason type passed to rlSetVertexAttributeDefault doesn't match the one passed to
+                // rlSetVertexAttribute. If you look into the Raylib code then you'll notice that the type argument is
+                // actually completely unnecessary, but must match the length.
+                // For this reason, this code path is only implemented for this case.
+                assert(length == 1);
+                // BTW DMD incorrectly emits a warning here, this is the reason silenceWarnings is set.
+
+                const value = T.init;
+
+                // Set a default value for the attribute
+                rlSetVertexAttributeDefault(location, &value, rlShaderAttributeDataType.RL_SHADER_ATTRIB_FLOAT, length);
+                rlDisableVertexAttribute(location);
+
+                return 0;
+
+            }
+
+            // Load the buffer
+            auto bufferID = rlLoadVertexBuffer(arr.ptr, cast(int) (arr.length * T.sizeof), false);
 
             // Stop if the attribute isn't set
             if (location == -1) return bufferID;
 
             // Assign to a shader attribute
-            rlSetVertexAttribute(location, T.tupleof.length, type, 0, 0, null);
+            rlSetVertexAttribute(location, length, type, 0, 0, null);
 
             // Turn the attribute on
             rlEnableVertexAttribute(location);
@@ -327,9 +381,6 @@ struct IsodiModel {
             return bufferID;
 
         }
-
-        // Dunno what this does
-        const dynamic = false;
 
         // Prepare the shader
         makeShader();
@@ -340,13 +391,13 @@ struct IsodiModel {
         scope (exit) rlDisableVertexArray;
 
         // Send vertex positions
-        verticesBufferID = registerBuffer(vertices, "vertexPosition", RL_FLOAT);
-        variantsBufferID = registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
-        texcoordsBufferID = registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
-        //normalsBufferID = registerBuffer(normals, "vertexNormal", RL_FLOAT);
-        anchorsBufferID = registerBuffer(anchors, "vertexAnchor", RL_FLOAT);
-        trianglesBufferID = rlLoadVertexBufferElement(triangles.ptr, cast(int) (triangles.length * 3 * ushort.sizeof),
-            false);
+        registerBuffer(vertices, "vertexPosition", RL_FLOAT);
+        registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
+        registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
+        //registerBuffer(normals, "vertexNormal", RL_FLOAT);
+        registerBuffer(anchors, "vertexAnchor", RL_FLOAT);
+        bonesBufferID = registerBuffer(bones, "vertexBone", RL_FLOAT);
+        rlLoadVertexBufferElement(triangles.ptr, cast(int) (triangles.length * 3 * ushort.sizeof), false);
 
 
     }
@@ -373,12 +424,31 @@ struct IsodiModel {
         float[4] colDiffuse = [properties.tint.tupleof] / 255f;
         rlSetUniform(colDiffuseLoc, &colDiffuse, Type.RL_SHADER_UNIFORM_VEC4, 1);
 
+        /// Set active texture.
+        void setTexture(int slot, int loc, Texture2D texture) {
+
+            // Ignore if there isn't any
+            if (texture.id == 0) return;
+
+            rlActiveTextureSlot(slot);
+            rlEnableTexture(texture.id);
+            rlSetUniform(loc, &slot, Type.RL_SHADER_UNIFORM_INT, 1);
+
+        }
+
+        /// Disable the texture.
+        void unsetTexture(int slot) {
+            rlActiveTextureSlot(slot);
+            rlDisableTexture;
+        }
+
         // Set texture to use
-        int slot = 0;
-        rlActiveTextureSlot(slot);
-        rlEnableTexture(texture.id);
-        rlSetUniform(textureLoc, &slot, Type.RL_SHADER_UNIFORM_INT, 1);
-        scope (exit) rlDisableTexture;
+        setTexture(0, textureLoc, texture);
+        scope (exit) unsetTexture(0);
+
+        // Set matrix texture
+        setTexture(1, textureLoc, texture);
+        scope (exit) unsetTexture(1);
 
         // Set transform matrix
         const transformMatrix = properties.transform

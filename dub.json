@@ -39,5 +39,6 @@
 	"license": "BSL-1.0",
 	"name": "isodi",
 	"targetPath": "build",
-	"targetType": "library"
+	"targetType": "library",
+	"buildRequirements": ["silenceWarnings"]
 }

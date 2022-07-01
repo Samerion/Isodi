@@ -119,6 +119,9 @@ void main() {
 
     }
 
+    Texture2D matrixTexture;
+    scope (exit) UnloadTexture(matrixTexture);
+
     // Load a skeleton
     {
 
@@ -190,9 +193,12 @@ void main() {
 
         }
 
+        // Create a matrix texture
+        matrixTexture = LoadTextureFromImage(skeleton.matrixImage);
+
         // Instance one: on terrain
         skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
-        models ~= skeleton.makeModel(modelTexture);
+        models ~= skeleton.makeModel(modelTexture, matrixTexture);
 
         // Test instances for collisions etc
         foreach (i; 2..8) {

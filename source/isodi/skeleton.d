@@ -61,7 +61,14 @@ struct Skeleton {
         => addBone(type, MatrixIdentity, Vector3(0, 1, 0));
 
     /// Make a model out of the skeleton.
-    IsodiModel makeModel(return Texture2D texture) const @trusted {
+    ///
+    /// Note: `texture` and `matrixImage` will not be automatically freed. This must be done manually.
+    IsodiModel makeModel(return Texture2D texture, return Texture2D matrixTexture = Texture2D.init) const @trusted
+    in (matrixTexture.height == 0 || matrixTexture.height == bones.length,
+        format!"Matrix texture height (%s) must match bone count (%s) or be 0"(matrixTexture.height, bones.length))
+    in (matrixTexture.height == 0 || matrixTexture.width == 4,  // note: width == 0 isn't valid if height != 0
+        format!"Matrix texture width (%s) must be 4"(matrixTexture.width))
+    do {
 
         const atlasSize = Vector2(texture.width, texture.height);
 
@@ -73,6 +80,7 @@ struct Skeleton {
         IsodiModel model = {
             properties: properties,
             texture: texture,
+            matrices: matrixTexture,
             flatten: true,
         };
         model.vertices.reserve = vertexCount;
@@ -80,13 +88,11 @@ struct Skeleton {
         model.texcoords.reserve = vertexCount;
         model.normals.length = vertexCount;
         model.anchors.reserve = vertexCount;
+        model.bones.length = matrixTexture.height * 4;
         model.triangles.reserve = triangleCount;
 
-        // Copy the bones and apply all the transformations
-        auto transBones = bones[].dup;
-
         // Add each bone
-        foreach (i, ref bone; transBones) with (model) {
+        foreach (i, const bone; bones) with (model) {
 
             const boneUV = bone.type in atlas;
             assert(boneUV, format!"%s not present in skeleton atlas"(bone));
@@ -99,26 +105,6 @@ struct Skeleton {
             Vector2 boneSize;
             boneSize.y = Vector3Length(bone.vector);
             boneSize.x = boneSize.y * boneVariant.width / boneVariant.height;
-
-            /// Matrix for the start of the bone
-            Matrix startMatrix = bone.transform;
-
-            // Inherit transform
-            if (bone.parent) {
-
-                // Get the parent bone
-                const parent = transBones[bone.parent.index];
-
-                // Inherit parent's transform
-                startMatrix = MatrixMultiply(startMatrix, parent.transform);
-
-            }
-
-            /// Matrix for getting the other end of the bone
-            const toEnd = MatrixTranslate(bone.vector.tupleof);
-
-            /// Matrix for the end of the bone
-            bone.transform = mul(toEnd, startMatrix);
 
             bool invertX, invertY;
 
@@ -133,15 +119,12 @@ struct Skeleton {
                 /// Matrix to adjust the horizontal position of the vertex
                 const translation = MatrixTranslate(sign * boneSize.x / 2, 0, 0);
 
-                /// Matrix to move to the start point of the bone
-                const toStart = startMatrix;
+                /// Vector to use for transformation — one for start, one for end
+                const vector = start
+                    ? Vector3()
+                    : bone.vector;
 
-                /// Final matrix
-                const matrix = start
-                    ? mul(translation, toStart)
-                    : mul(toEnd, translation, toStart);
-
-                return Vector3().Vector3Transform(matrix);
+                return vector.Vector3Transform(translation);
 
             }
 
@@ -202,6 +185,10 @@ struct Skeleton {
             // Variants
             variants.assign(i, 4, boneVariant);
 
+            // Bones
+            if (bones.length != 0)
+            bones.assign(i, 4, cast(float) i / bones.length);
+
             ushort[3] value(int[] offsets) => [
                 cast(ushort) (i*4 + offsets[0]),
                 cast(ushort) (i*4 + offsets[1]),
@@ -220,6 +207,83 @@ struct Skeleton {
         model.upload();
 
         return model;
+
+    }
+
+    /// Generate a matrix image for the skeleton.
+    Image matrixImage() const
+    in (bones.length <= int.max, "There are too many bones to fit in an image")
+    do {
+
+        auto data = matrixImageData;
+
+        Image result = {
+            data: &data[0],
+            width: 4,
+            height: cast(int) data.length,
+            mipmaps: 1,
+            format: PixelFormat.PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,
+        };
+
+        return result;
+
+    }
+
+    /// Generate a matrix image data for the skeleton.
+    Vector4[4][] matrixImageData() const {
+
+        // Create a buffer
+        auto result = new Vector4[4][bones.length];
+
+        // Write data to it
+        matrixImageData(result);
+
+        return result;
+
+    }
+
+    /// ditto
+    void matrixImageData(Vector4[4][] buffer) const @trusted
+    in (bones.length > 0, "Cannot generate image for an empty model")
+    in (buffer.length == bones.length, "Buffer height differs from bone count")
+
+        => matrixImageData(buffer.ptr);
+
+
+    /// ditto
+    void matrixImageData(Vector4[4]* buffer) const @system {
+
+        import std.array, std.range;
+
+        // Create a matrix array for the bones
+        auto matrices = new Matrix[bones.length];
+
+        // Prepare matrices for each bone
+        foreach (i, ref matrix, bone; zip(matrices, bones).enumerate) {
+
+            /// Matrix for the start of the bone
+            matrix = bone.transform;
+
+            // Inherit transform
+            if (bone.parent) {
+
+                // Get the parent transform
+                const parent = matrices[bone.parent.index];
+
+                // Inherit the parent's transform
+                matrix = MatrixMultiply(matrix, parent);
+
+            }
+
+            // Write to the buffer with a column-first layout
+            buffer[i] = [
+                Vector4(matrix.m0,  matrix.m1,  matrix.m2,  matrix.m3),
+                Vector4(matrix.m4,  matrix.m5,  matrix.m6,  matrix.m7),
+                Vector4(matrix.m8,  matrix.m9,  matrix.m10, matrix.m11),
+                Vector4(matrix.m12, matrix.m13, matrix.m14, matrix.m15),
+            ].staticArray;
+
+        }
 
     }
 
