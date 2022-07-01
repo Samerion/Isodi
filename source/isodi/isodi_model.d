@@ -27,7 +27,7 @@ struct IsodiModel {
         /// pixels wide and as high as the model's bone count.
         ///
         /// Requires setting `bones` for each vertex.
-        Texture2D matrices;
+        Texture2D matrixTexture;
         // TODO embed variant data in this texture as well. Using two booleans we could control if matrices are to be
         // embedded or not and dictate texture size based on that.
 
@@ -86,7 +86,7 @@ struct IsodiModel {
         uint colDiffuseLoc;
         uint performFoldLoc;
         uint flattenLoc;
-        uint matricesLoc;
+        uint matrixTextureLoc;
 
     }
 
@@ -109,7 +109,7 @@ struct IsodiModel {
             uniform mat4 modelview;
             uniform mat4 projection;
             uniform int flatten;
-            uniform sampler2D matrices;
+            uniform sampler2D matrixTexture;
 
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
@@ -122,11 +122,21 @@ struct IsodiModel {
                 fragVariantUV = vertexVariantUV;
                 fragAnchor = vertexAnchor;
 
+                // Get the matrix for this bone
+                mat4 boneMatrix = isnan(vertexBone)
+                    ? mat4(1.0)
+                    : mat4(
+                        texture2D(matrixTexture, vec2(0.0/4, vertexBone)),
+                        texture2D(matrixTexture, vec2(1.0/4, vertexBone)),
+                        texture2D(matrixTexture, vec2(2.0/4, vertexBone)),
+                        texture2D(matrixTexture, vec2(3.0/4, vertexBone))
+                    );
+
                 // Regular shape
                 if (flatten == 0) {
 
                     // Calculate final vertex position
-                    gl_Position = projection * modelview * transform * vec4(vertexPosition, 1.0);
+                    gl_Position = projection * modelview * transform * boneMatrix * vec4(vertexPosition, 1.0);
 
                 }
 
@@ -152,7 +162,7 @@ struct IsodiModel {
                     gl_Position = projection * flatview * (
 
                         // Use flat positions for each vertex
-                        vec4(vertexPosition, 1)
+                        boneMatrix * vec4(vertexPosition, 1)
 
                         // And regular (flat+sharp) for model transform
                         + sharpview * (transform * vec4(1, 1, 1, 1) - vec4(1, 1, 1, 1))
@@ -301,7 +311,7 @@ struct IsodiModel {
         colDiffuseLoc = rlGetLocationUniform(shader, "colDiffuse");
         performFoldLoc = rlGetLocationUniform(shader, "performFold");
         flattenLoc = rlGetLocationUniform(shader, "flatten");
-        matricesLoc = rlGetLocationUniform(shader, "matrices");
+        matrixTextureLoc = rlGetLocationUniform(shader, "matrixTexture");
 
     }
 
@@ -321,18 +331,18 @@ struct IsodiModel {
         assert(anchors.length == vertices.length,
             format!"Anchor count (%s) doesn't match vertex count (%s)"(anchors.length, vertices.length));
 
-        // Check matrices
-        if (matrices.id != 0) {
+        // Check matrixTexture
+        if (matrixTexture.id != 0) {
 
-            assert(matrices.width == 4,
-                format!"Matrix texture width (%s) must be 4."(matrices.width));
-            assert(matrices.height != 0, format!"Matrix texture height must not be 0.");
+            assert(matrixTexture.width == 4,
+                format!"Matrix texture width (%s) must be 4."(matrixTexture.width));
+            assert(matrixTexture.height != 0, format!"Matrix texture height must not be 0.");
             assert(bones.length == vertices.length,
                 format!"Bone count (%s) doesn't match vertex count (%s)"(bones.length, vertices.length));
 
         }
 
-        else assert(bones.length == 0, "Vertex bone definitions are present, but no matrices are attached");
+        else assert(bones.length == 0, "Vertex bone definitions are present, but no matrixTexture is attached");
 
     }
     do {
@@ -447,7 +457,7 @@ struct IsodiModel {
         scope (exit) unsetTexture(0);
 
         // Set matrix texture
-        setTexture(1, textureLoc, texture);
+        setTexture(1, matrixTextureLoc, matrixTexture);
         scope (exit) unsetTexture(1);
 
         // Set transform matrix

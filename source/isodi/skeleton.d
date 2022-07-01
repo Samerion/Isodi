@@ -80,8 +80,8 @@ struct Skeleton {
         IsodiModel model = {
             properties: properties,
             texture: texture,
-            matrices: matrixTexture,
-            flatten: true,
+            matrixTexture: matrixTexture,
+            flatten: false,
         };
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;
@@ -186,8 +186,9 @@ struct Skeleton {
             variants.assign(i, 4, boneVariant);
 
             // Bones
-            if (bones.length != 0)
-            bones.assign(i, 4, cast(float) i / bones.length);
+            if (bones.length != 0) {
+                bones.assign(i, 4, cast(float) i / this.bones.length);
+            }
 
             ushort[3] value(int[] offsets) => [
                 cast(ushort) (i*4 + offsets[0]),
@@ -253,16 +254,14 @@ struct Skeleton {
     /// ditto
     void matrixImageData(Vector4[4]* buffer) const @system {
 
-        import std.array, std.range;
-
         // Create a matrix array for the bones
         auto matrices = new Matrix[bones.length];
 
         // Prepare matrices for each bone
-        foreach (i, ref matrix, bone; zip(matrices, bones).enumerate) {
+        foreach (i, bone; bones) {
 
             /// Matrix for the start of the bone
-            matrix = bone.transform;
+            matrices[i] = bone.transform;
 
             // Inherit transform
             if (bone.parent) {
@@ -271,9 +270,15 @@ struct Skeleton {
                 const parent = matrices[bone.parent.index];
 
                 // Inherit the parent's transform
-                matrix = MatrixMultiply(matrix, parent);
+                matrices[i] = MatrixMultiply(matrices[i], parent);
 
             }
+
+            // Save the start matrix
+            const matrix = matrices[i];
+
+            // Finally, transform the matrix to the bone's end
+            matrices[i] = MatrixMultiply(MatrixTranslate(bone.vector.tupleof), matrix);
 
             // Write to the buffer with a column-first layout
             buffer[i] = [
