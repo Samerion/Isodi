@@ -123,9 +123,8 @@ void main() {
     scope (exit) UnloadTexture(matrixTexture);
 
     // Load a skeleton
+    Skeleton skeleton;
     {
-
-        Skeleton skeleton;
 
         const cellSize = 16;
 
@@ -196,11 +195,7 @@ void main() {
         // Create a matrix texture
         matrixTexture = LoadTextureFromImage(skeleton.matrixImage);
 
-        // Instance one: on terrain
-        skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
-        models ~= skeleton.makeModel(modelTexture, matrixTexture);
-
-        // Test instances for collisions etc
+        // Test instances for billboard behavior etc
         foreach (i; 2..8) {
 
             skeleton.properties.transform = MatrixTranslate(i + 0.5, 2.0, 3.5);
@@ -208,7 +203,13 @@ void main() {
 
         }
 
+        // Instance one
+        skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
+        models ~= skeleton.makeModel(modelTexture, matrixTexture);
+
     }
+
+    auto buf = new Matrix[skeleton.bones.length];
 
     // Drawing loop
     while (!WindowShouldClose) {
@@ -226,11 +227,16 @@ void main() {
 
             DrawGrid(100, 1);
 
+            // Draw each model
             foreach (model; models) {
 
                 model.draw();
 
             }
+
+            // Draw skeleton debug
+            skeleton.drawBoneLines(buf);
+            skeleton.drawBoneNormals(buf);
 
             // Draw spheres to show the terrain direction
             DrawSphere(Vector3( 0, 0, -1), 0.2, Colors.GREEN);   // North

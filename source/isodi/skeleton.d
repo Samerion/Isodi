@@ -231,6 +231,12 @@ struct Skeleton {
     }
 
     /// Generate a matrix image data for the skeleton.
+    ///
+    /// Both buffer parameters are optional, but can be provided to prevent allocation on subsequent calls.
+    ///
+    /// Params:
+    ///     buffer = Buffer for use in the image. Filled with bone-start matrices.
+    ///     matrices = Array filled with bone-end matrices. Byproduct of the matrix image generation.
     Vector4[4][] matrixImageData() const {
 
         // Create a buffer
@@ -244,53 +250,139 @@ struct Skeleton {
     }
 
     /// ditto
-    void matrixImageData(Vector4[4][] buffer) const @trusted
+    void matrixImageData(Vector4[4][] buffer) const
     in (bones.length > 0, "Cannot generate image for an empty model")
     in (buffer.length == bones.length, "Buffer height differs from bone count")
-
-        => matrixImageData(buffer.ptr);
-
-
-    /// ditto
-    void matrixImageData(Vector4[4]* buffer) const @system {
+    do {
 
         // Create a matrix array for the bones
         auto matrices = new Matrix[bones.length];
 
-        // Prepare matrices for each bone
-        foreach (i, bone; bones) {
+        matrixImageData(buffer, matrices);
 
-            /// Matrix for the start of the bone
-            matrices[i] = bone.transform;
+    }
 
-            // Inherit transform
-            if (bone.parent) {
+    /// ditto
+    void matrixImageData(Vector4[4][] buffer, Matrix[] matrices) const
+    in (buffer.length == bones.length, "Buffer count differs from bone count")
+    in (matrices.length == bones.length, "Matrix count differs from bone count")
+    do {
 
-                // Get the parent transform
-                const parent = matrices[bone.parent.index];
+        size_t i;
 
-                // Inherit the parent's transform
-                matrices[i] = MatrixMultiply(matrices[i], parent);
-
-            }
-
-            // Save the start matrix
-            const matrix = matrices[i];
-
-            // Finally, transform the matrix to the bone's end
-            matrices[i] = MatrixMultiply(MatrixTranslate(bone.vector.tupleof), matrix);
+        // Convert the matrices
+        globalMatrices(matrices, (matrix) {
 
             // Write to the buffer with a column-first layout
-            buffer[i] = [
+            buffer[i++] = [
                 Vector4(matrix.m0,  matrix.m1,  matrix.m2,  matrix.m3),
                 Vector4(matrix.m4,  matrix.m5,  matrix.m6,  matrix.m7),
                 Vector4(matrix.m8,  matrix.m9,  matrix.m10, matrix.m11),
                 Vector4(matrix.m12, matrix.m13, matrix.m14, matrix.m15),
             ].staticArray;
 
+        });
+
+    }
+
+    /// Fill the given array with matrices each transforming a zero vector to the end of corresponding bones, relative
+    /// to the model.
+    ///
+    /// Given delegate will be called, for each bone, with the current matrix but pointing to the *start* of the bone.
+    void globalMatrices(Matrix[] matrices, void delegate(Matrix) @safe startCb = null) const @trusted
+    in (matrices.length == bones.length, "Length of the given matrix buffer doesn't match bones count")
+    do {
+
+        // Prepare matrices for each bone
+        foreach (i, bone; bones) {
+
+            // Get the bone's relative transform
+            Matrix matrix = bone.transform;
+
+            // If there's a parent
+            if (bone.parent) {
+
+                // Get the parent transform
+                const parent = matrices[bone.parent.index];
+
+                // Inherit it
+                matrix = MatrixMultiply(matrix, parent);
+
+            }
+
+            // Finally, transform the matrix to the bone's end
+            matrices[i] = MatrixMultiply(MatrixTranslate(bone.vector.tupleof), matrix);
+
+            // Emit the matrix
+            if (startCb) startCb(matrix);
+
         }
 
     }
+
+    /// Draw lines for each bone in the skeleton.
+    /// Params:
+    ///     buffer = Optional matrix buffer for the function to operate on. Can be specified to prevent memory
+    ///         allocation on subsequent calls to this function.
+    void drawBoneLines() const {
+
+        auto buffer = new Matrix[bones.length];
+        drawBoneLines(buffer);
+
+    }
+
+    /// ditto
+    void drawBoneLines(Matrix[] buffer) const @trusted
+    in (buffer.length == bones.length, "Buffer length must equal bone count")
+    do {
+
+        size_t i;
+
+        globalMatrices(buffer, (matrix) @trusted {
+
+            scope (success) i++;
+
+            matrix = MatrixMultiply(matrix, properties.transform);
+
+            const start = Vector3().Vector3Transform(matrix);
+            const end = bones[i].vector.Vector3Transform(matrix);
+
+            DrawCylinderEx(start, end, 0.03, 0.03, 3, boneColor(i));
+
+        });
+
+    }
+
+    /// Draw normals for each bone.
+    void drawBoneNormals(Matrix[] buffer) const @trusted
+    in (buffer.length == bones.length, "Buffer length must equal bone count")
+    do {
+
+        size_t i;
+
+        globalMatrices(buffer, (matrix) @trusted {
+
+            scope (success) i++;
+
+            matrix = mul(
+                MatrixTranslate(Vector3Divide(bones[i].vector, Vector3(2, 2, 2)).tupleof),
+                matrix,
+                properties.transform,
+            );
+
+            const start = Vector3().Vector3Transform(matrix);
+            const end = Vector3(0, 0, -0.1).Vector3Transform(matrix);
+
+            DrawCylinderEx(start, end, 0.02, 0.02, 3, boneColor(i, 0.4));
+
+        });
+
+    }
+
+    /// Get a representative color for the bone based on its index. Useful for debugging.
+    static Color boneColor(size_t i, float saturation = 0.6, float value = 0.9) @trusted
+
+        => ColorFromHSV(i * 35 % 360, saturation, value);
 
 }
 
