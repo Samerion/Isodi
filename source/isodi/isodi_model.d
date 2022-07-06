@@ -37,6 +37,9 @@ struct IsodiModel {
         /// If true, the model will stay aligned to the camera on the Y camera-space axis.
         int flatten;
 
+        /// If true, backface culling will be disabled. Used for rendering skeleton models.
+        bool showBackfaces;
+
         /// Vertices making up the model.
         Vector3[] vertices;
 
@@ -76,7 +79,7 @@ struct IsodiModel {
         ///
         /// Note: Currently TLS'd but it might be thread-safe — I'm not sure. Regardless though GPU data should only be
         /// accessed from a single thread.
-        uint shader;
+        uint _shader;
 
         // Locations of shader uniforms
         uint textureLoc;
@@ -157,8 +160,8 @@ struct IsodiModel {
                     );
 
                     // Get the normal in camera view, only as seen from top in 2D
-                    // TODO consider `transform`
-                    // TODO this doesn't correctly rotate the bone in all cases
+                    // TODO Consider `transform`
+                    // TODO This doesn't correctly rotate the bone in some cases
                     vec2 normal = normalize(
                         (flatview * boneMatrix * vec4(0, 0, 1, 0)).xz
                     );
@@ -170,8 +173,10 @@ struct IsodiModel {
                     // TODO Use the bone's angle property
                     float snapped = round(orientation * 2 / PI);
 
+                    // Revert the rotation for textures
                     angle = (4-int(snapped)) %% 4;
 
+                    // Convert angle index to radians
                     orientation = snapped * PI / 2 / 2;
 
                     // Create a quaternion to counter the orientation
@@ -338,6 +343,9 @@ struct IsodiModel {
 
     }
 
+    /// Get the shader used by the model.
+    static uint shader() @nogc => _shader;
+
     /// Prepare the model shader.
     ///
     /// Automatically performed when making the model.
@@ -349,7 +357,7 @@ struct IsodiModel {
         if (shader != 0) return;
 
         // Load the shader
-        shader = rlLoadShaderCode(vertexShader.ptr, fragmentShader.ptr);
+        _shader = rlLoadShaderCode(vertexShader.ptr, fragmentShader.ptr);
 
         // Find locations
         textureLoc = rlGetLocationUniform(shader, "texture0");
@@ -521,6 +529,12 @@ struct IsodiModel {
         const enabled = rlEnableVertexArray(vertexArrayID);
         assert(enabled, "Failed to enable a vertex array");
         scope (exit) rlDisableVertexArray;
+
+        // Toggle backface culling
+        if (showBackfaces) rlDisableBackfaceCulling();
+        scope (exit) rlEnableBackfaceCulling();
+        // Note: Reordering the vertices in the vertex shader in skeleton models doesn't appear achievable without
+        // sending otherwise unnecessary data. So we disable it entirely instead.
 
         rlDrawVertexArrayElements(0, cast(int) triangles.length * 3, null);
 
