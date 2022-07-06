@@ -115,6 +115,7 @@ struct IsodiModel {
             out vec2 fragTexCoord;
             out vec4 fragVariantUV;
             out vec2 fragAnchor;
+            flat out int angle;
 
             /// Rotate a vector by a quaternion.
             /// See: https://stackoverflow.com/questions/9037174/glsl-rotation-with-a-rotation-vector/9037454#9037454
@@ -142,6 +143,7 @@ struct IsodiModel {
                 // Transform matrix for this bone
                 mat4 boneMatrix = mat4(1.0);
                 vec4 boneQuat = vec4(0, 0, 0, 1);
+                angle = 0;
 
                 // If we do have bone data
                 if (!isnan(vertexBone)) {
@@ -156,28 +158,35 @@ struct IsodiModel {
 
                     // Get the normal in camera view, only as seen from top in 2D
                     // TODO consider `transform`
+                    // TODO this doesn't correctly rotate the bone in all cases
                     vec2 normal = normalize(
-                        (flatview * boneMatrix * vec4(-1, 0, 0, 0)).xz
+                        (flatview * boneMatrix * vec4(0, 0, 1, 0)).xz
                     );
 
-                    // Get the angle around its axis
-                    float angle = atan(normal.y, normal.x);
+                    // Get the bone's orientation in the 2D plane (around Z axis)
+                    float orientation = atan(normal.y, normal.x) + PI / 2;
 
                     // Snap the angle to texture angles
                     // TODO Use the bone's angle property
-                    angle = round(angle * 2 / PI) * PI / 2 / 2;
+                    float snapped = round(orientation * 2 / PI);
 
-                    // Create a quaternion to counter the rotation
-                    boneQuat = vec4(0, sin(angle), 0, cos(angle));
+                    angle = (4-int(snapped)) %% 4;
+
+                    orientation = snapped * PI / 2 / 2;
+
+                    // Create a quaternion to counter the orientation
+                    boneQuat = vec4(0, sin(orientation), 0, cos(orientation));
 
                 }
 
+                // Transform the vertex according to bone properties
+                vec4 position = boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat);
 
                 // Regular shape
                 if (flatten == 0) {
 
                     // Calculate final vertex position
-                    gl_Position = projection * modelview * transform * boneMatrix * vec4(vertexPosition, 1.0);
+                    gl_Position = projection * modelview * transform * position;
 
                 }
 
@@ -195,13 +204,14 @@ struct IsodiModel {
                     // Calculate the final position in flat mode
                     gl_Position = projection * flatview * (
 
-                        // Use flat positions for each vertex
-                        boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat)
+                        // Get the regular position
+                        position
 
-                        // And regular (flat+sharp) for model transform
+                        // Apply transform
                         + sharpview * (transform * vec4(1, 1, 1, 1) - vec4(1, 1, 1, 1))
 
                     );
+                    // TODO Fix transform to work properly with rotations.
 
                 }
 
@@ -220,6 +230,7 @@ struct IsodiModel {
             in vec2 fragTexCoord;
             in vec4 fragVariantUV;
             in vec2 fragAnchor;
+            flat in int angle;
 
             uniform sampler2D texture0;
             uniform vec4 colDiffuse;
@@ -264,6 +275,9 @@ struct IsodiModel {
                         + fract(max(vec2(0), fragTexCoord - ratio + 1))*size.x;
 
                 }
+
+                // Apply angle offset
+                offset.x += angle * size.x;
 
                 // Fetch the data from the texture
                 vec4 texelColor = texture(texture0, coords + offset);

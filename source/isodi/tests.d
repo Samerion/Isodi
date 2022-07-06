@@ -119,8 +119,11 @@ void main() {
 
     }
 
-    Texture2D matrixTexture;
-    scope (exit) UnloadTexture(matrixTexture);
+    Texture2D defaultPoseTexture, advancedPoseTexture;
+    scope (exit) {
+        UnloadTexture(defaultPoseTexture);
+        UnloadTexture(advancedPoseTexture);
+    }
 
     // Load a skeleton
     Skeleton skeleton;
@@ -172,40 +175,53 @@ void main() {
 
             // Arms
             const upperArmBone = skeleton.addBone(upperArm, torsoBone,
-                mul(MatrixRotateX(PI/5), MatrixRotateY(PI/4), invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
+                mul(invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
                 vec3(0, -13, 0));
-            const forearmBone = skeleton.addBone(forearm, upperArmBone,
-                mul(MatrixRotateZ(PI/2), vec3!MatrixTranslate(0, 1, 0)),
-                vec3(0, -9, 0));
-            const handBone = skeleton.addBone(hand, forearmBone,
-                mul(MatrixRotateX(PI/4), vec3!MatrixTranslate(1, 1, 0)),
-                vec3(0, -3, 0));
+            const forearmBone = skeleton.addBone(forearm, upperArmBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+            const handBone = skeleton.addBone(hand, forearmBone, vec3!MatrixTranslate(1, 1, 0), vec3(0, -3, 0));
 
             // Legs
             const thighBone = skeleton.addBone(thigh, hipsBone,
                 mul(invert, vec3!MatrixTranslate(direction * 2.5, -3, 0)),
                 vec3(0, -12, 0));
-            const lowerLegBone = skeleton.addBone(lowerLeg, thighBone,
-                vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
-            const footBone = skeleton.addBone(foot, lowerLegBone,
-                vec3!MatrixTranslate(0, 1, 0), vec3(0, -4, 0));
+            const lowerLegBone = skeleton.addBone(lowerLeg, thighBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
+            const footBone = skeleton.addBone(foot, lowerLegBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -4, 0));
 
         }
 
-        // Create a matrix texture
-        matrixTexture = LoadTextureFromImage(skeleton.matrixImage);
+        // Create a matrix texture for the default pose
+        defaultPoseTexture = LoadTextureFromImage(skeleton.matrixImage);
 
         // Test instances for billboard behavior etc
         foreach (i; 2..8) {
 
             skeleton.properties.transform = MatrixTranslate(i + 0.5, 2.0, 3.5);
-            models ~= skeleton.makeModel(modelTexture);
+            models ~= skeleton.makeModel(modelTexture, defaultPoseTexture);
 
         }
 
-        // Instance one
+        void mulbone(T...)(T matrices, ref Matrix matrix) {
+
+            matrix = mul(matrices, matrix);
+
+        }
+
+        // Create a more advanced pose
+        foreach (i; 0..2) {
+
+            const im = 4 + 6*i;
+            mulbone(MatrixRotateX(PI/5), MatrixRotateY(PI/4), skeleton.bones[im].transform);
+            mulbone(MatrixRotateZ(PI/2), skeleton.bones[im+1].transform);
+            mulbone(MatrixRotateX(PI/4), skeleton.bones[im+2].transform);
+
+        }
+
+        // Make a matrix for it
+        advancedPoseTexture = LoadTextureFromImage(skeleton.matrixImage);
+
+        // Instance one with it
         skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
-        models ~= skeleton.makeModel(modelTexture, matrixTexture);
+        models ~= skeleton.makeModel(modelTexture, advancedPoseTexture);
 
     }
 
