@@ -81,7 +81,7 @@ struct Skeleton {
             properties: properties,
             texture: texture,
             matrixTexture: matrixTexture,
-            flatten: false,
+            flatten: true,
         };
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;

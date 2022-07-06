@@ -98,6 +98,7 @@ struct IsodiModel {
         immutable vertexShader = q{
 
             #version 330
+            #define PI %s
 
             in vec3 vertexPosition;
             in vec2 vertexTexCoord;
@@ -115,6 +116,15 @@ struct IsodiModel {
             out vec4 fragVariantUV;
             out vec2 fragAnchor;
 
+            /// Rotate a vector by a quaternion.
+            /// See: https://stackoverflow.com/questions/9037174/glsl-rotation-with-a-rotation-vector/9037454#9037454
+            vec4 rotate(vec4 vector, vec4 quat) {
+
+                vec3 temp = cross(quat.xyz, vector.xyz) + quat.w * vector.xyz;
+                return vector + vec4(2.0 * cross(quat.xyz, temp), 0.0);
+
+            }
+
             void main() {
 
                 // Send vertex attributes to fragment shader
@@ -122,15 +132,46 @@ struct IsodiModel {
                 fragVariantUV = vertexVariantUV;
                 fragAnchor = vertexAnchor;
 
-                // Get the matrix for this bone
-                mat4 boneMatrix = isnan(vertexBone)
-                    ? mat4(1.0)
-                    : mat4(
+                // Flatview: Camera transform (modelview) excluding vertex height
+                mat4 flatview = modelview;
+                flatview[0].y = 0;
+                flatview[1].y = 1;
+                flatview[2].y = 0;
+                // Keep [3] to let translations (such as sharpview) through
+
+                // Transform matrix for this bone
+                mat4 boneMatrix = mat4(1.0);
+                vec4 boneQuat = vec4(0, 0, 0, 1);
+
+                // If we do have bone data
+                if (!isnan(vertexBone)) {
+
+                    // Load the matrix
+                    boneMatrix = mat4(
                         texture2D(matrixTexture, vec2(0.0/4, vertexBone)),
                         texture2D(matrixTexture, vec2(1.0/4, vertexBone)),
                         texture2D(matrixTexture, vec2(2.0/4, vertexBone)),
                         texture2D(matrixTexture, vec2(3.0/4, vertexBone))
                     );
+
+                    // Get the normal in camera view, only as seen from top in 2D
+                    // TODO consider `transform`
+                    vec2 normal = normalize(
+                        (flatview * boneMatrix * vec4(-1, 0, 0, 0)).xz
+                    );
+
+                    // Get the angle around its axis
+                    float angle = atan(normal.y, normal.x);
+
+                    // Snap the angle to texture angles
+                    // TODO Use the bone's angle property
+                    angle = round(angle * 2 / PI) * PI / 2 / 2;
+
+                    // Create a quaternion to counter the rotation
+                    boneQuat = vec4(0, sin(angle), 0, cos(angle));
+
+                }
+
 
                 // Regular shape
                 if (flatten == 0) {
@@ -142,13 +183,6 @@ struct IsodiModel {
 
                 // Flattened shape
                 else {
-
-                    // Flat: Camera transform excluding vertex height
-                    mat4 flatview = modelview;
-                    flatview[0].y = 0;
-                    flatview[1].y = 1;
-                    flatview[2].y = 0;
-                    // Keep [3] to let sharpview through
 
                     // Sharp: Camera transform only affecting height
                     mat4 sharpview = mat4(
@@ -162,7 +196,7 @@ struct IsodiModel {
                     gl_Position = projection * flatview * (
 
                         // Use flat positions for each vertex
-                        boneMatrix * vec4(vertexPosition, 1)
+                        boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat)
 
                         // And regular (flat+sharp) for model transform
                         + sharpview * (transform * vec4(1, 1, 1, 1) - vec4(1, 1, 1, 1))
@@ -174,7 +208,7 @@ struct IsodiModel {
             }
 
 
-        } ~ '\0';
+        }.format(raylib.PI) ~ '\0';
 
         /// Default fragment shader used to render the model.
         ///
