@@ -82,11 +82,11 @@ struct LoadTilemap {
     ///
     /// The parameters define the position of the entry. Following block calls will start from this position, each new
     /// block should increment x.
-    void delegate(long x, long y, long layer) @safe onEntry;
+    void delegate(int x, int y, int layer) @safe onEntry;
 
     /// This delegate is called when found a block. It is called with an ID corresponding to the tile type declaration
     /// (from [onDeclarations]) and a definition of the block's height.
-    void delegate(ulong blockID, long heightTop, long depth) @safe onBlock;
+    void delegate(ulong blockID, int heightTop, int depth) @safe onBlock;
 
     /// Begin parsing. A callback member will be ran for each matched element of the input.
     void parse(T)(T range) {

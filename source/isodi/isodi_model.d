@@ -3,6 +3,7 @@ module isodi.isodi_model;
 import raylib;
 import std.format;
 
+import isodi.utils;
 import isodi.properties;
 
 
@@ -48,12 +49,6 @@ struct IsodiModel {
 
         /// Texture coordinates within given variants.
         Vector2[] texcoords;
-
-        /// Normals of each model face.
-        Vector3[] normals;
-
-        /// Position of the middle of each vertex on the Z axis. Used to calculate face depth.
-        Vector2[] anchors;
 
         /// Bone each vertex belongs to. Each should be a fraction (bone index/bone count).
         float[] bones;
@@ -106,7 +101,6 @@ struct IsodiModel {
             in vec3 vertexPosition;
             in vec2 vertexTexCoord;
             in vec4 vertexVariantUV;
-            in vec2 vertexAnchor;
             in float vertexBone;
 
             uniform mat4 transform;
@@ -134,7 +128,6 @@ struct IsodiModel {
                 // Send vertex attributes to fragment shader
                 fragTexCoord = vertexTexCoord;
                 fragVariantUV = vertexVariantUV;
-                fragAnchor = vertexAnchor;
 
                 // Flatview: Camera transform (modelview) excluding vertex height
                 mat4 flatview = modelview;
@@ -160,8 +153,6 @@ struct IsodiModel {
                     );
 
                     // Get the normal in camera view, only as seen from top in 2D
-                    // TODO Consider `transform`
-                    // TODO This doesn't correctly rotate the bone in some cases
                     vec2 normal = normalize(
                         (flatview * boneMatrix * vec4(0, 0, 1, 0)).xz
                     );
@@ -186,6 +177,9 @@ struct IsodiModel {
 
                 // Transform the vertex according to bone properties
                 vec4 position = boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat);
+
+                // Set the anchor
+                fragAnchor = (boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat)).xz;
 
                 // Regular shape
                 if (flatten == 0) {
@@ -382,10 +376,6 @@ struct IsodiModel {
             format!"Variant count (%s) doesn't match vertex count (%s)"(variants.length, vertices.length));
         assert(texcoords.length == vertices.length,
             format!"Texcoord count (%s) doesn't match vertex count (%s)"(texcoords.length, vertices.length));
-        assert(normals.length == vertices.length,
-            format!"Normal count (%s) doesn't match vertex count (%s)"(normals.length, vertices.length));
-        assert(anchors.length == vertices.length,
-            format!"Anchor count (%s) doesn't match vertex count (%s)"(anchors.length, vertices.length));
 
         // Check matrixTexture
         if (matrixTexture.id != 0) {
@@ -460,8 +450,6 @@ struct IsodiModel {
         registerBuffer(vertices, "vertexPosition", RL_FLOAT);
         registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
         registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
-        //registerBuffer(normals, "vertexNormal", RL_FLOAT);
-        registerBuffer(anchors, "vertexAnchor", RL_FLOAT);
         bonesBufferID = registerBuffer(bones, "vertexBone", RL_FLOAT);
         rlLoadVertexBufferElement(triangles.ptr, cast(int) (triangles.length * 3 * ushort.sizeof), false);
 

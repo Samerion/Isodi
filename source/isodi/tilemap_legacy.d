@@ -57,7 +57,7 @@ void parseVersion0(T)(T bin, ref LoadTilemap loader) @trusted {
         // Load each cell
         foreach (cell; entry.cells) {
 
-            loader.onBlock(cell.cellID, to!long(cell.height * 1000), to!long(cell.depth * 1000));
+            loader.onBlock(cell.cellID, to!int(cell.height * 1000), to!int(cell.depth * 1000));
 
         }
 

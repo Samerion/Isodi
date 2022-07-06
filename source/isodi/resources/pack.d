@@ -42,12 +42,12 @@ struct ResourceOptions {
     /// Defaults to `4`.
     uint angles = 4;
 
-    long[4] tileArea;
-    long[4] sideArea;
+    int[4] tileArea;
+    int[4] sideArea;
 
     auto blockUV() const => BlockUV(
-        cast(RectangleL) tileArea,
-        cast(RectangleL) sideArea,
+        cast(RectangleI) tileArea,
+        cast(RectangleI) sideArea,
         tileSize,
         sideSize,
     );

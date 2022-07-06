@@ -87,8 +87,6 @@ struct Skeleton {
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;
         model.texcoords.reserve = vertexCount;
-        model.normals.length = vertexCount;
-        model.anchors.reserve = vertexCount;
         model.bones.length = matrixTexture.height * 4;
         model.triangles.reserve = triangleCount;
 
@@ -165,23 +163,12 @@ struct Skeleton {
                 bone.transform,
             );
 
-            // Normals
-            normals.assign(i, 4, Vector3(0, 1, 0).Vector3Transform(normalMatrix));
-
             Vector2 anchor(bool start) {
                 return Vector2(
                     makeVertex(start, 0).x.round,
                     makeVertex(start, 0).z.round,
                 );
             }
-
-            // Anchors
-            anchors ~= [
-                anchor(false),
-                anchor(false),
-                anchor(true),
-                anchor(true),
-            ];
 
             // Variants
             variants.assign(i, 4, boneVariant);
@@ -395,10 +382,10 @@ struct BoneType {
 
 struct BoneUV {
 
-    RectangleL[] boneAreas;
+    RectangleI[] boneAreas;
 
     /// Get random bone variant within the UV.
-    RectangleL getBone(ulong seed) const {
+    RectangleI getBone(ulong seed) const {
 
         import std.random;
 

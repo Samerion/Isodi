@@ -142,7 +142,7 @@ void main() {
         const lowerLeg = BoneType(8);
         const foot     = BoneType(9);
 
-        auto simpleUV(long[4] data...) => BoneUV([RectangleL(data[0], data[1], data[2], data[3])]);
+        auto simpleUV(int[4] data...) => BoneUV([RectangleI(data[0], data[1], data[2], data[3])]);
 
         skeleton.atlas[hips]     = simpleUV(1,  52,  40, 6);
         skeleton.atlas[abdomen]  = simpleUV(1,  33,  32, 7);

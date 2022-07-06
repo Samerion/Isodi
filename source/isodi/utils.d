@@ -11,11 +11,14 @@ import std.functional;
 @safe:
 
 
-struct Vector2L {
+/// Integer vector.
+///
+/// Note: Internally this might be later translated to a float anyway, so it might not be precise.
+struct Vector2I {
 
-    long x, y;
+    int x, y;
 
-    Vector2L opBinary(string op)(Vector2L vec) const => Vector2L(
+    Vector2I opBinary(string op)(Vector2I vec) const => Vector2I(
         mixin("x" ~ op ~ "vec.x"),
         mixin("y" ~ op ~ "vec.y"),
     );
@@ -27,10 +30,10 @@ struct Vector2L {
 
 }
 
-struct RectangleL {
+struct RectangleI {
 
-    long x, y;
-    long width, height;
+    int x, y;
+    int width, height;
 
     /// Convert the rectangle to a shader rectangle relative to texture size.
     Rectangle toShader(Vector2 textureSize) @nogc const => Rectangle(
@@ -252,7 +255,7 @@ do {
 ///     resultSize = Expected size of the result
 ///     seed = Seed to use
 /// Returns: Offset of the variant texture in the given atlas.
-Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) @nogc {
+Vector2I randomVariant(Vector2I atlasSize, Vector2I resultSize, ulong seed) @nogc {
 
     auto rng = Mt19937_64(seed);
 
@@ -266,7 +269,7 @@ Vector2L randomVariant(Vector2L atlasSize, Vector2L resultSize, ulong seed) @nog
     const variant = randomNumber(0, tileVariantCount-1, rng);
 
     // Get the offset
-    return resultSize * Vector2L(
+    return resultSize * Vector2I(
         variant % gridSize.x,
         variant / gridSize.x,
     );

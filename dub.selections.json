@@ -8,6 +8,7 @@
 		"mir-core": "1.1.108",
 		"mir-linux-kernel": "1.2.1",
 		"mir-random": "2.2.19",
+		"opengl": "1.0.1",
 		"raylib-d": "4.0.1",
 		"rcdata": "1.0.0-alpha.2",
 		"silly": "1.1.1",

@@ -31,11 +31,11 @@ struct Chunk {
         BlockUV[BlockType] atlas;
 
         /// Blocks making up the chunk.
-        Block[Vector2L] blocks;
+        Block[Vector2I] blocks;
 
     }
 
-    inout(Block*) find(Vector2L position) inout {
+    inout(Block*) find(Vector2I position) inout {
 
         return position in blocks;
 
@@ -118,8 +118,6 @@ struct Chunk {
         model.vertices.reserve = vertexCount;
         model.variants.length = vertexCount;
         model.texcoords.reserve = vertexCount;
-        model.normals.length = vertexCount;
-        model.anchors.length = vertexCount;
         model.triangles.reserve = triangleCount;
         // TODO: side culling
 
@@ -187,16 +185,6 @@ struct Chunk {
 
             const chunkIndex = i * trianglesPerBlock/2;
 
-            // Normals
-            normals.assign(chunkIndex + 0, 4, Vector3( 0, 1,  0));  // Tile
-            normals.assign(chunkIndex + 1, 4, Vector3( 0, 1, -1));  // North (-Z)
-            normals.assign(chunkIndex + 2, 4, Vector3(+1, 1,  0));  // East (X)
-            normals.assign(chunkIndex + 3, 4, Vector3( 0, 1, +1));  // South (Z)
-            normals.assign(chunkIndex + 4, 4, Vector3(-1, 1,  0));  // West (-X)
-
-            // Anchors
-            anchors.assign(i, 5*4, Vector2(position.x, position.z));
-
             // Get the variants
             const blockUV = block.type in atlas;
             assert(blockUV, format!"%s is not present in chunk atlas"(block.type));
@@ -242,10 +230,11 @@ struct Chunk {
 
 struct BlockPosition {
 
-    long x, y;
-    long height, depth;
+    int x, y;
+    int height, depth;
 
-    Vector2L vector() @nogc const => Vector2L(x, y);
+    Vector2I vector() @nogc const => Vector2I(x, y);
+    Vector2 vectorf() @nogc const => Vector2(x, y);
 
 }
 
@@ -266,22 +255,22 @@ struct BlockType {
 /// Texture position data for given block.
 struct BlockUV {
 
-    RectangleL tileArea;
-    RectangleL sideArea;
+    RectangleI tileArea;
+    RectangleI sideArea;
     uint tileSize;
     uint sideSize;
 
     /// Get random tile variant within the UV.
-    RectangleL getTile(Vector2L position, ulong seed) @nogc @trusted const {
+    RectangleI getTile(Vector2I position, ulong seed) @nogc @trusted const {
 
         // Get tile variant to use
         const variant = randomVariant(
-            Vector2L(tileArea.width, tileArea.height),
-            Vector2L(tileSize, tileSize),
+            Vector2I(tileArea.width, tileArea.height),
+            Vector2I(tileSize, tileSize),
             seed + position.toHash,
         );
 
-        return RectangleL(
+        return RectangleI(
             tileArea.x + variant.x,
             tileArea.y + variant.y,
             tileSize,
@@ -291,16 +280,16 @@ struct BlockUV {
     }
 
     /// Get random side variant within the UV.
-    RectangleL getSide(Vector2L position, ulong seed) @nogc @trusted const {
+    RectangleI getSide(Vector2I position, ulong seed) @nogc @trusted const {
 
         // Get tile variant to use
         const variant = randomVariant(
-            Vector2L(sideArea.width, sideArea.height),
-            Vector2L(tileSize, sideSize),
+            Vector2I(sideArea.width, sideArea.height),
+            Vector2I(tileSize, sideSize),
             seed + position.toHash,
         );
 
-        return RectangleL(
+        return RectangleI(
             sideArea.x + variant.x,
             sideArea.y + variant.y,
             tileSize,
