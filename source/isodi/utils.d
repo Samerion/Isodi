@@ -60,16 +60,6 @@ Matrix mul(Matrix[] ms...) @trusted @nogc nothrow {
 
 }
 
-/// Malloc an array and return it.
-T[] mallocArray(T)(size_t count) @system @nogc {
-
-    // TODO check mallocArray for safety, specifically against signal 6
-
-    auto ptr = cast(T*) malloc(T.sizeof * count);
-    return ptr[0..count];
-
-}
-
 /// Assign a single chunk of values to an array, assuming the array is made up of fixed size chunks.
 void assignChunk(T)(T[] range, size_t index, T[] values...) @nogc pure {
 

@@ -98,7 +98,7 @@ struct Skeleton {
 
             // Get the variant
             auto boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
-            boneVariant.width /= 4;  // TODO
+            boneVariant.width /= 4;  // TODO use variant count instead
 
             // Get the size of the bone
             Vector2 boneSize;

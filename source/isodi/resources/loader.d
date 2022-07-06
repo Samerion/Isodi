@@ -17,22 +17,3 @@ enum TextureResourceType {
     bone,
 
 }
-
-// TODO refile below
-
-struct TextureAtlas {
-
-    /// Texture with the atlas.
-    Texture2D texture;
-
-    /// Position of each texture. Indexes are the same as given on creation.
-    Rectangle[] positions;
-
-}
-
-/// Create a square texture atlas out of other square textures. Each texture must be of size `2^n`.
-TextureAtlas makeAtlas(Texture2D[] tiles) {
-
-    assert(false, "Not implemented");
-
-}
