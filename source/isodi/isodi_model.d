@@ -136,7 +136,13 @@ struct IsodiModel {
                 flatview[2].y = 0;
                 // Keep [3] to let translations (such as sharpview) through
 
-                // Transform matrix for this bone
+                // Also correct Z result, required for proper angle checking
+                flatview[1].z = 0;
+                flatview[2].z /= modelview[1].y;
+                // Note: I achieved this correction by experimenting. It might not be mathematically accurate, but
+                // it looks good enough.
+
+                // Set transform matrix, angle quaternion and angle index for this bone
                 mat4 boneMatrix = mat4(1.0);
                 vec4 boneQuat = vec4(0, 0, 0, 1);
                 angle = 0;
@@ -179,7 +185,7 @@ struct IsodiModel {
                 vec4 position = boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat);
 
                 // Set the anchor
-                fragAnchor = (boneMatrix * rotate(vec4(vertexPosition, 1), boneQuat)).xz;
+                fragAnchor = position.xz;
 
                 // Regular shape
                 if (flatten == 0) {
