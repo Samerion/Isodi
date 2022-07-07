@@ -176,7 +176,7 @@ class Pack : ResourceLoader {
         const resPath = globalPath(format!"bone/%s.json"(name));
 
         // Try to read & parse the file
-        try return parseBoneSet(name, resPath.readText);
+        try return parseBoneSet(resPath.readText, bone => boneType(name, bone.to!string));
 
         // Oops.
         catch (Exception exc) {
@@ -185,55 +185,6 @@ class Pack : ResourceLoader {
             throw new PackException(format!"Failed to load boneSet %s from file '%s'; %s"(name, resPath, exc.msg));
 
         }
-
-    }
-
-    /// Parse a bone set from a JSON string.
-    private BoneUV[BoneType] parseBoneSet(string name, string json) @trusted {
-
-        auto parser = JSONParser(json);
-        BoneUV[BoneType] result;
-
-        // Get each
-        foreach (key; parser.getObject) {
-
-            // Get the bone type
-            const type = boneType(name, key.to!string);
-
-            // Load the value
-            const uv = cast(RectangleI) parser.get!(int[4]);
-
-            result[type] = BoneUV(uv);
-            // TODO support variants
-
-        }
-
-        return result;
-
-    }
-
-    unittest {
-
-        auto pack = new Pack();
-        auto boneSet = pack.parseBoneSet("model", q{
-            {
-                "torso": [1, 1, 56, 16],
-                "head": [1, 18, 40, 14],
-                "thigh": [43, 18, 20, 12],
-                "abdomen": [1, 33, 31, 7],
-                "upper-arm": [43, 31, 20, 13],
-                "lower-leg": [1, 41, 12, 9],
-                "hips": [1, 52, 40, 6],
-                "hand": [43, 45, 20, 3],
-                "forearm": [51, 49, 12, 9],
-                "foot": [11, 59, 52, 4]
-            }
-        });
-
-        assert(boneSet[BoneType(0)] == BoneUV(RectangleI(1, 1, 56, 16)));
-
-        const forearm = pack.boneType("model", "forearm");
-        assert(boneSet[forearm] == BoneUV(RectangleI(51, 49, 12, 9)));
 
     }
 
@@ -271,68 +222,6 @@ class Pack : ResourceLoader {
             throw new PackException(format!"Failed to load skeleton %s from file '%s'; %s"(name, resPath, exc.msg));
 
         }
-
-    }
-
-    private Bone[] parseSkeleton(BoneType delegate(wstring) @safe bonePicker, string json) const {
-
-        auto parser = JSONParser(json);
-        return parseSkeletonImpl(bonePicker, parser, 0, 0);
-
-    }
-
-    private Bone[] parseSkeletonImpl(BoneType delegate(wstring) @safe bonePicker, ref JSONParser parser, size_t parent,
-    size_t index, float divisor = 1) const @trusted
-    do {
-
-        auto result = [Bone(index, BoneType.init, parent, MatrixIdentity)];
-        size_t childIndex = index;
-
-        foreach (key; parser.getObject) {
-
-            switch (key) {
-
-                case "name":
-                    result[0].type = bonePicker(parser.getString);
-                    break;
-
-                case "matrix":
-                    result[0].transform = Matrix(parser.get!(float[16]).tupleof);
-                    break;
-
-                case "transform":
-                    parser.skipValue;
-                    break; // TODO
-
-                case "vector":
-                    result[0].vector = Vector3(parser.get!(float[3]).tupleof) / divisor;
-                    break;
-
-                case "children":
-                    foreach (child; parser.getArray) {
-                        result ~= parseSkeletonImpl(bonePicker, parser, index, ++childIndex, divisor);
-                    }
-                    break;
-
-                case "divisor":
-
-                    // TODO It would be nice to remove those restrictions
-                    enforce!PackException(result[0].transform == MatrixIdentity,
-                        "`divisor` must precede `matrix` & `transform` fields");
-                    enforce!PackException(result[0].vector == Vector3.init,
-                        "`divisor` must precede the `vector` field");
-
-                    divisor = parser.get!float;
-                    break;
-
-                default:
-                    throw new PackException(format!"Unknown key '%s' on line %s"(key, parser.lineNumber));
-
-            }
-
-        }
-
-        return result;
 
     }
 

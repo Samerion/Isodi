@@ -1,7 +1,5 @@
 /// This module implements pack loading.
 ///
-/// Only pack manifest parsing functions can be found here. Other JSON loads can be found in `isodi.resources.pack`.
-///
 /// See_Also:
 ///     `isodi.resources.pack`
 module isodi.resources.pack_json;
@@ -16,6 +14,7 @@ import std.string;
 import std.algorithm;
 
 import isodi.utils;
+import isodi.skeleton;
 import isodi.exception;
 import isodi.resources.pack;
 import isodi.resources.loader;
@@ -138,5 +137,119 @@ unittest {
     assert(!grassOptions.interpolate);
     assert(grassOptions.tileSize == 32);
     assert(grassOptions.tileArea == [0, 32, 128, 96]);
+
+}
+
+/// Parse a bone set from a JSON string.
+BoneUV[BoneType] parseBoneSet(string json, BoneType delegate(wstring) @safe bonePicker) @trusted {
+
+    auto parser = JSONParser(json);
+    BoneUV[BoneType] result;
+
+    // Get each
+    foreach (key; parser.getObject) {
+
+        // Get the bone type
+        const type = bonePicker(key);
+
+        // Load the value
+        const uv = cast(RectangleI) parser.get!(int[4]);
+
+        // Save the UV
+        result[type] = BoneUV(uv);
+        // TODO support variants
+
+    }
+
+    return result;
+
+}
+
+unittest {
+
+    auto pack = new Pack();
+    auto boneSet = parseBoneSet(q{
+        {
+            "torso": [1, 1, 56, 16],
+            "head": [1, 18, 40, 14],
+            "thigh": [43, 18, 20, 12],
+            "abdomen": [1, 33, 31, 7],
+            "upper-arm": [43, 31, 20, 13],
+            "lower-leg": [1, 41, 12, 9],
+            "hips": [1, 52, 40, 6],
+            "hand": [43, 45, 20, 3],
+            "forearm": [51, 49, 12, 9],
+            "foot": [11, 59, 52, 4]
+        }
+    }, bone => pack.boneType("model", bone.to!string));
+
+    assert(boneSet[BoneType(0)] == BoneUV(RectangleI(1, 1, 56, 16)));
+
+    const forearm = pack.boneType("model", "forearm");
+    assert(boneSet[forearm] == BoneUV(RectangleI(51, 49, 12, 9)));
+
+}
+
+Bone[] parseSkeleton(BoneType delegate(wstring) @safe bonePicker, string json) {
+
+    auto parser = JSONParser(json);
+    return parseSkeletonImpl(bonePicker, parser, 0, 0);
+
+}
+
+Bone[] parseSkeletonImpl(BoneType delegate(wstring) @safe bonePicker, ref JSONParser parser, size_t parent,
+size_t index, float divisor = 1) @trusted
+do {
+
+    import raylib;
+
+    auto result = [Bone(index, BoneType.init, parent, MatrixIdentity)];
+    size_t childIndex = index;
+
+    foreach (key; parser.getObject) {
+
+        switch (key) {
+
+            case "name":
+                result[0].type = bonePicker(parser.getString);
+                break;
+
+            case "matrix":
+                result[0].transform = Matrix(parser.get!(float[16]).tupleof);
+                break;
+
+            case "transform":
+                parser.skipValue;
+                break; // TODO
+
+            case "vector":
+                result[0].vector = Vector3(parser.get!(float[3]).tupleof) / divisor;
+                break;
+
+            case "children":
+                foreach (child; parser.getArray) {
+                    result ~= parseSkeletonImpl(bonePicker, parser, index, ++childIndex, divisor);
+                }
+                break;
+
+            case "divisor":
+
+                // TODO It would be nice to remove those restrictions
+                enforce!PackException(result[0].transform == MatrixIdentity,
+                    "`divisor` must precede `matrix` & `transform` fields");
+                enforce!PackException(result[0].vector == Vector3.init,
+                    "`divisor` must precede the `vector` field");
+
+                divisor = parser.get!float;
+                break;
+
+            default:
+                throw new PackException(format!"Unknown key '%s' on line %s"(key, parser.lineNumber));
+
+        }
+
+    }
+
+    return result;
 
 }
