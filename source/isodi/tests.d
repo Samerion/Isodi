@@ -16,7 +16,6 @@ version (unittest):
 // This never detects anything useful. Only false-positives.
 private extern(C) __gshared string[] rt_options = ["oncycle=ignore"];
 
-
 shared static this() {
 
     // Redirect to our main
@@ -131,53 +130,9 @@ void main() {
         const cellSize = 16;
         const model = "white-wraith";
 
-        // Load bone types
-        const hips     = pack.boneType(model, "hips");
-        const abdomen  = pack.boneType(model, "abdomen");
-        const torso    = pack.boneType(model, "torso");
-        const head     = pack.boneType(model, "head");
-        const upperArm = pack.boneType(model, "upper-arm");
-        const forearm  = pack.boneType(model, "forearm");
-        const hand     = pack.boneType(model, "hand");
-        const thigh    = pack.boneType(model, "thigh");
-        const lowerLeg = pack.boneType(model, "lower-leg");
-        const foot     = pack.boneType(model, "foot");
-
+        // Load the skeleton
+        skeleton.bones = pack.skeleton("humanoid", "white-wraith");
         skeleton.atlas = pack.boneSet(model);
-
-        auto vec3(alias f = Vector3)(float[3] vals...) {
-
-            vals[] /= cellSize;
-            return f(vals[0], vals[1], vals[2]);
-
-        }
-
-        // Torso
-        const hipsBone    = skeleton.addBone(hips, vec3!MatrixTranslate(0, 20, 0), vec3(0, 6, 0));
-        const abdomenBone = skeleton.addBone(abdomen, hipsBone, vec3!MatrixTranslate(0, -1, 1), vec3(0, 7, 0));
-        const torsoBone   = skeleton.addBone(torso, abdomenBone, vec3!MatrixTranslate(0, -3, -1), vec3(0, 16, 0));
-        const headBone    = skeleton.addBone(head, torsoBone, vec3!MatrixTranslate(0, -1, 0), vec3(0, 14, 0));
-
-        foreach (i; 0..2) {
-
-            const direction = i ? -1 : 1;
-            const invert = i ? MatrixIdentity : MatrixScale(-1, 1, 1);
-
-            // Arms
-            const upperArmBone = skeleton.addBone(upperArm, torsoBone,
-                mul(invert, vec3!MatrixTranslate(direction * 7.5, 0, 0)),
-                vec3(0, -13, 0));
-            const forearmBone = skeleton.addBone(forearm, upperArmBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
-            const handBone = skeleton.addBone(hand, forearmBone, vec3!MatrixTranslate(1, 1, 0), vec3(0, -3, 0));
-
-            // Legs
-            const thighBone = skeleton.addBone(thigh, hipsBone,
-                mul(invert, vec3!MatrixTranslate(direction * 2.5, -3, 0)),
-                vec3(0, -12, 0));
-            const lowerLegBone = skeleton.addBone(lowerLeg, thighBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -9, 0));
-            const footBone = skeleton.addBone(foot, lowerLegBone, vec3!MatrixTranslate(0, 1, 0), vec3(0, -4, 0));
-
-        }
 
         // Create a matrix texture for the default pose
         defaultPoseTexture = LoadTextureFromImage(skeleton.matrixImage);

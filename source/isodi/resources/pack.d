@@ -56,11 +56,11 @@ class Pack : ResourceLoader {
 
         /// Option fields applied to specific files. Filename extensions are to be omitted in keys.
         ///
-        /// The keys are a relative path to a resource or a directory. Options defined under an empty key in the JSON
-        /// file will affect all resources, unless overwritten. In JSON, you can provide that key with an `options`
-        /// field instead, for readability.
+        /// If no option is found for a file, the entry of its parent directory will be checked, then the grandparent
+        /// and so on until an empty string.
         ///
-        /// Also note, in JSON option overrides are applied per field, while in the map they're per entry.
+        /// In JSON, the `options` property is an alias to an empty string key. Additionally, the JSON parser will
+        /// inherit fields from the parent entries instead of using `.init` values.
         ///
         /// Fields missing in the JSON will be inherited from parent directories or will use the default value.
         @JSONExclude
@@ -238,19 +238,101 @@ class Pack : ResourceLoader {
     }
 
     /// Get the bone type for the given model/bone string. Registers a new bone type if the path doesn't exist
-    BoneType boneType(string model, string bone) {
+    BoneType boneType(string boneSet, string bone) {
 
         return boneTypes.require(
-            AbsoluteBoneType(model, bone),
+            AbsoluteBoneType(boneSet, bone),
             BoneType(nextBoneType++),
         );
 
     }
 
     /// Load a skeleton.
-    Bone[] skeleton(string name) {
+    /// Params:
+    ///     name = Name for the skeleton.
+    ///     boneSet = Bone set to use.
+    ///     bonePicker = Delegate to determine what bone type to use for each bone.
+    Bone[] skeleton(string name, string boneSet)
 
-        assert(false);
+        => skeleton(name, bone => boneType(boneSet, bone.to!string));
+
+
+    Bone[] skeleton(string name, BoneType delegate(wstring) @safe bonePicker) const {
+
+        const resPath = globalPath(format!"skeleton/%s.json"(name));
+
+        // Try to read & parse the file
+        try return parseSkeleton(bonePicker, resPath.readText);
+
+        // Oops.
+        catch (Exception exc) {
+
+            // Convert all exceptions to PackException.
+            throw new PackException(format!"Failed to load skeleton %s from file '%s'; %s"(name, resPath, exc.msg));
+
+        }
+
+    }
+
+    private Bone[] parseSkeleton(BoneType delegate(wstring) @safe bonePicker, string json) const {
+
+        auto parser = JSONParser(json);
+        return parseSkeletonImpl(bonePicker, parser, 0, 0);
+
+    }
+
+    private Bone[] parseSkeletonImpl(BoneType delegate(wstring) @safe bonePicker, ref JSONParser parser, size_t parent,
+    size_t index, float divisor = 1) const @trusted
+    do {
+
+        auto result = [Bone(index, BoneType.init, parent, MatrixIdentity)];
+        size_t childIndex = index;
+
+        foreach (key; parser.getObject) {
+
+            switch (key) {
+
+                case "name":
+                    result[0].type = bonePicker(parser.getString);
+                    break;
+
+                case "matrix":
+                    result[0].transform = Matrix(parser.get!(float[16]).tupleof);
+                    break;
+
+                case "transform":
+                    parser.skipValue;
+                    break; // TODO
+
+                case "vector":
+                    result[0].vector = Vector3(parser.get!(float[3]).tupleof) / divisor;
+                    break;
+
+                case "children":
+                    foreach (child; parser.getArray) {
+                        result ~= parseSkeletonImpl(bonePicker, parser, index, ++childIndex, divisor);
+                    }
+                    break;
+
+                case "divisor":
+
+                    // TODO It would be nice to remove those restrictions
+                    enforce!PackException(result[0].transform == MatrixIdentity,
+                        "`divisor` must precede `matrix` & `transform` fields");
+                    enforce!PackException(result[0].vector == Vector3.init,
+                        "`divisor` must precede the `vector` field");
+
+                    divisor = parser.get!float;
+                    break;
+
+                default:
+                    throw new PackException(format!"Unknown key '%s' on line %s"(key, parser.lineNumber));
+
+            }
+
+        }
+
+        return result;
 
     }
 

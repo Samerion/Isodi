@@ -18,7 +18,7 @@ interface ResourceLoader {
     /// Get options for the given resource.
     const(ResourceOptions)* options(ResourceType resource, string name);
 
-    /// Load texture for the
+    /// Load texture for a block.
     Texture2D blockTexture(string name);
 
     /// Load texture for the given bone set.
@@ -31,8 +31,8 @@ interface ResourceLoader {
     /// Returns: An associative array mapping each bone to their rectangles in the texture.
     BoneUV[BoneType] boneSet(string name);
 
-    /// Load bones for the given skeleton.
-    Bone[] skeleton(string name);
+    /// Load bones for a skeleton, using the given bone set.
+    Bone[] skeleton(string name, string boneSet);
 
 }
 

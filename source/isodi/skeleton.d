@@ -41,20 +41,34 @@ struct Skeleton {
     }
 
     /// Add a bone from the given bone set.
-    Bone* addBone(BoneType type, const Bone* parent, Matrix matrix, Vector3 vector) return {
+    /// Params:
+    ///     type = Type of the bone.
+    ///     parentIndex = Index of the parent, if any.
+    ///     parent = Parent node, if any.
+    ///     matrix = Transform for the bone.
+    ///     vector = Vector the bone will align to.
+    Bone* addBone(BoneType type, size_t parentIndex, Matrix matrix, Vector3 vector) return {
 
-        bones ~= Bone(bones.length, type, parent, matrix, vector);
+        bones ~= Bone(bones.length, type, parentIndex, matrix, vector);
         return &bones[$-1];
 
     }
 
     /// ditto
+    Bone* addBone(BoneType type, const Bone* parent, Matrix matrix, Vector3 vector) return
+        => addBone(type, parent.index, matrix, vector);
+
+    /// ditto
     Bone* addBone(BoneType type, Matrix matrix, Vector3 vector) return
-        => addBone(type, null, matrix, vector);
+        => addBone(type, 0, matrix, vector);
+
+    /// ditto
+    Bone* addBone(BoneType type, size_t parentIndex) @trusted return
+        => addBone(type, parentIndex, MatrixIdentity, Vector3(0, 1, 0));
 
     /// ditto
     Bone* addBone(BoneType type, const Bone* parent) @trusted return
-        => addBone(type, parent, MatrixIdentity, Vector3(0, 1, 0));
+        => addBone(type, parent.index, MatrixIdentity, Vector3(0, 1, 0));
 
     /// ditto
     Bone* addBone(BoneType type) @trusted return
@@ -95,6 +109,8 @@ struct Skeleton {
 
             const boneUV = bone.type in atlas;
             assert(boneUV, format!"%s not present in skeleton atlas"(bone.type));
+            // TODO This shouldn't be an error; We should allow bones to be less detailed than expected by the
+            // skeletons.
 
             // Get the variant
             auto boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
@@ -288,10 +304,10 @@ struct Skeleton {
             Matrix matrix = bone.transform;
 
             // If there's a parent
-            if (bone.parent) {
+            if (i) {
 
                 // Get the parent transform
-                const parent = matrices[bone.parent.index];
+                const parent = matrices[bone.parent];
 
                 // Inherit it
                 matrix = MatrixMultiply(matrix, parent);
@@ -395,7 +411,7 @@ struct Bone {
 
     const size_t index;
     BoneType type;
-    const(Bone)* parent;
+    size_t parent;
     Matrix transform;
     Vector3 vector;
 

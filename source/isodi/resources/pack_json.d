@@ -1,5 +1,7 @@
 /// This module implements pack loading.
 ///
+/// Only pack manifest parsing functions can be found here. Other JSON loads can be found in `isodi.resources.pack`.
+///
 /// See_Also:
 ///     `isodi.resources.pack`
 module isodi.resources.pack_json;
