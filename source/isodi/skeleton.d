@@ -94,7 +94,7 @@ struct Skeleton {
         foreach (i, const bone; bones) with (model) {
 
             const boneUV = bone.type in atlas;
-            assert(boneUV, format!"%s not present in skeleton atlas"(bone));
+            assert(boneUV, format!"%s not present in skeleton atlas"(bone.type));
 
             // Get the variant
             auto boneVariant = boneUV.getBone(seed + i).toShader(atlasSize);
@@ -382,18 +382,12 @@ struct BoneType {
 
 struct BoneUV {
 
-    RectangleI[] boneAreas;
+    RectangleI boneAreas;
+
+    // TODO support variants
 
     /// Get random bone variant within the UV.
-    RectangleI getBone(ulong seed) const {
-
-        import std.random;
-
-        auto rng = Mt19937_64(seed);
-
-        return boneAreas[].choice(rng);
-
-    }
+    RectangleI getBone(ulong seed) const => boneAreas;
 
 }
 
@@ -407,7 +401,7 @@ struct Bone {
 
 }
 
-/// Polyfill from Raylib master branch
+/// Polyfill from Raylib master branch.
 private float Vector3Angle(Vector3 v1, Vector3 v2) @nogc pure {
 
     float result = 0.0f;

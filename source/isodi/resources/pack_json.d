@@ -16,6 +16,7 @@ import std.algorithm;
 import isodi.utils;
 import isodi.exception;
 import isodi.resources.pack;
+import isodi.resources.loader;
 
 
 @safe:
@@ -51,7 +52,7 @@ Pack getPack(ref JSONParser json) @trusted {
             foreach (path; json.getObject) {
 
                 // Save the state
-                options[path.strip("/")] = json.save;
+                options[path.strip("/").stripExtension] = json.save;
                 json.skipValue();
 
             }

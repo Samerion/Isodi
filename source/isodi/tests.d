@@ -13,6 +13,10 @@ import isodi;
 version (unittest):
 
 
+// This never detects anything useful. Only false-positives.
+private extern(C) __gshared string[] rt_options = ["oncycle=ignore"];
+
+
 shared static this() {
 
     // Redirect to our main
@@ -76,16 +80,9 @@ void main() {
     const grass = BlockType(0);
 
     // Load packs
-    const pack = getPack("res/samerion-retro/pack.json");
+    auto pack = getPack("res/samerion-retro/pack.json");
 
     IsodiModel[] models;
-
-    // Load textures
-    auto texture = LoadTexture("res/samerion-retro/blocks/grass.png");
-    scope (exit) UnloadTexture(texture);
-
-    auto modelTexture = LoadTexture("res/samerion-retro/bones/white-wraith.png");
-    scope (exit) UnloadTexture(modelTexture);
 
     // Load chunks
     foreach (map; "/home/soaku/git/samerion/server/resources/maps".dirEntries(SpanMode.shallow)) {
@@ -95,9 +92,9 @@ void main() {
 
         auto chunk = loadTilemap(cast(ubyte[]) map.read);
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
-        chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
+        chunk.atlas[grass] = pack.options(ResourceType.block, "grass").blockUV;
 
-        models ~= chunk.makeModel(texture);
+        models ~= chunk.makeModel(pack.blockTexture("grass"));
 
     }
 
@@ -106,7 +103,7 @@ void main() {
 
         Chunk chunk;
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
-        chunk.atlas[grass] = pack.getOptions("blocks/grass.png").blockUV;
+        chunk.atlas[grass] = pack.options(ResourceType.block, "grass").blockUV;
 
         chunk.addX(
             grass,
@@ -115,7 +112,9 @@ void main() {
             BlockPosition(2, 4, 0, 35), 60, 62, 64, 66, 68, 70,
         );
 
-        models ~= chunk.makeModel(texture);
+        models ~= chunk.makeModel(pack.blockTexture("grass"));
+
+        assert(pack.blockTexture("grass") == pack.blockTexture("grass"));
 
     }
 
@@ -130,30 +129,21 @@ void main() {
     {
 
         const cellSize = 16;
+        const model = "white-wraith";
 
-        const hips     = BoneType(0);
-        const abdomen  = BoneType(1);
-        const torso    = BoneType(2);
-        const head     = BoneType(3);
-        const upperArm = BoneType(4);
-        const forearm  = BoneType(5);
-        const hand     = BoneType(6);
-        const thigh    = BoneType(7);
-        const lowerLeg = BoneType(8);
-        const foot     = BoneType(9);
+        // Load bone types
+        const hips     = pack.boneType(model, "hips");
+        const abdomen  = pack.boneType(model, "abdomen");
+        const torso    = pack.boneType(model, "torso");
+        const head     = pack.boneType(model, "head");
+        const upperArm = pack.boneType(model, "upper-arm");
+        const forearm  = pack.boneType(model, "forearm");
+        const hand     = pack.boneType(model, "hand");
+        const thigh    = pack.boneType(model, "thigh");
+        const lowerLeg = pack.boneType(model, "lower-leg");
+        const foot     = pack.boneType(model, "foot");
 
-        auto simpleUV(int[4] data...) => BoneUV([RectangleI(data[0], data[1], data[2], data[3])]);
-
-        skeleton.atlas[hips]     = simpleUV(1,  52,  40, 6);
-        skeleton.atlas[abdomen]  = simpleUV(1,  33,  32, 7);
-        skeleton.atlas[torso]    = simpleUV(1,  1,   56, 16);
-        skeleton.atlas[head]     = simpleUV(1,  18,  40, 14);
-        skeleton.atlas[upperArm] = simpleUV(43, 31,  20, 13);
-        skeleton.atlas[forearm]  = simpleUV(51, 49,  12, 9);
-        skeleton.atlas[hand]     = simpleUV(43, 45,  20, 3);
-        skeleton.atlas[thigh]    = simpleUV(43, 18,  20, 12);
-        skeleton.atlas[lowerLeg] = simpleUV(1,  41,  12, 9);
-        skeleton.atlas[foot]     = simpleUV(11, 59,  52, 4);
+        skeleton.atlas = pack.boneSet(model);
 
         auto vec3(alias f = Vector3)(float[3] vals...) {
 
@@ -196,7 +186,7 @@ void main() {
         foreach (i; 2..8) {
 
             skeleton.properties.transform = MatrixTranslate(i + 0.5, 2.0, 3.5);
-            models ~= skeleton.makeModel(modelTexture, defaultPoseTexture);
+            models ~= skeleton.makeModel(pack.boneSetTexture("white-wraith"), defaultPoseTexture);
 
         }
 
@@ -221,7 +211,7 @@ void main() {
 
         // Instance one with it
         skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
-        models ~= skeleton.makeModel(modelTexture, advancedPoseTexture);
+        models ~= skeleton.makeModel(pack.boneSetTexture("white-wraith"), advancedPoseTexture);
 
     }
 

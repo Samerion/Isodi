@@ -1,7 +1,9 @@
 module isodi.properties;
 
 import raylib;
+
 import std.math;
+import std.typecons;
 
 import isodi.resources;
 
@@ -29,8 +31,8 @@ struct Properties {
         0, 0, 0, 1,
     );
 
-    /// Resource data to be used by this object.
-    ResourceData resources;
+    /// Resource loader to be used by this object.
+    Rebindable!(const ResourceLoader) resources;
 
     /// Color to modulate the object with.
     Color tint = Colors.WHITE;
@@ -57,11 +59,5 @@ struct Perspective {
         angleY = PI_2 - sgn(pos.x) * asin(sine.y);
 
     }
-
-}
-
-struct ResourceData {
-
-    ResourceLoader loader;
 
 }
