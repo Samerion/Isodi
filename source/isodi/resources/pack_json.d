@@ -4,6 +4,7 @@
 ///     `isodi.resources.pack`
 module isodi.resources.pack_json;
 
+import raylib;
 import rcdata.json;
 
 import std.conv;
@@ -201,10 +202,8 @@ Bone[] parseSkeletonImpl(BoneType delegate(wstring) @safe bonePicker, ref JSONPa
 size_t index, float divisor = 1) @trusted
 do {
 
-    import raylib;
-
     auto result = [Bone(index, BoneType.init, parent, MatrixIdentity)];
-    size_t childIndex = index;
+    size_t childIndex = index + 1;
 
     foreach (key; parser.getObject) {
 
@@ -219,8 +218,20 @@ do {
                 break;
 
             case "transform":
-                parser.skipValue;
-                break; // TODO
+
+                // Get the transform matrix
+                auto rhs = parser.parseTransforms;
+
+                // Reduce the translations
+                rhs.m12 /= divisor;
+                rhs.m13 /= divisor;
+                rhs.m14 /= divisor;
+
+                result[0].transform = mul(
+                    result[0].transform,
+                    rhs,
+                );
+                break;
 
             case "vector":
                 result[0].vector = Vector3(parser.get!(float[3]).tupleof) / divisor;
@@ -228,7 +239,14 @@ do {
 
             case "children":
                 foreach (child; parser.getArray) {
-                    result ~= parseSkeletonImpl(bonePicker, parser, index, ++childIndex, divisor);
+
+                    // Add the child
+                    const ret = parseSkeletonImpl(bonePicker, parser, index, childIndex, divisor);
+                    result ~= ret;
+
+                    // Advance the index
+                    childIndex += ret.length;
+
                 }
                 break;
 
@@ -245,6 +263,73 @@ do {
 
             default:
                 throw new PackException(format!"Unknown key '%s' on line %s"(key, parser.lineNumber));
+
+        }
+
+    }
+
+    return result;
+
+}
+
+/// Parse a JSON transform list.
+///
+/// Available transforms:
+/// * `["translate", float x, float y, float z]`
+/// * `["rotate", float angle, float x, float y, float z]`; angle in degrees, x,y,z multiplier
+/// * `["rotateX", float angle]`, `["rotateY", float]`, `["rotateZ", float]`; angle in degrees
+/// * `["scale", float x, float y, float z]`
+Matrix parseTransforms(ref JSONParser parser) @trusted {
+
+    auto result = MatrixIdentity;
+
+    enum TransformType {
+        translate,
+        rotate,
+        rotateX,
+        rotateY,
+        rotateZ,
+        scale,
+    }
+
+    // Get each option in the array
+    foreach (_; parser.getArray) {
+
+        TransformType type;
+        float[4] values;
+
+        // Run the transform
+        foreach (i; parser.getArray) {
+
+            // First entry: transform type
+            if (i == 0) {
+
+                // Set the type
+                type = parser.get!string.to!TransformType;
+                continue;
+
+            }
+
+            assert(i < 5, format!"Too many arguments for '%s'"(type));
+
+            // Other entries, set vector value
+            values[i-1] = parser.get!float;
+
+        }
+
+        // Perform the transform
+        with (TransformType) {
+
+            const rhs = type.predSwitch(
+                translate, MatrixTranslate(values.tupleof[0..3]),
+                rotate,    MatrixRotate(Vector3(values.tupleof[1..4]), values[0] * 180 / PI),
+                rotateX,   MatrixRotateX(values[0] * 180 / PI),
+                rotateY,   MatrixRotateY(values[0] * 180 / PI),
+                rotateZ,   MatrixRotateZ(values[0] * 180 / PI),
+                scale,     MatrixScale(values.tupleof[0..3]),
+            );
+
+            result = mul(result, rhs);
 
         }
 

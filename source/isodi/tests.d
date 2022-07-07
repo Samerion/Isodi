@@ -154,7 +154,7 @@ void main() {
         // Create a more advanced pose
         foreach (i; 0..2) {
 
-            const im = 4 + 6*i;
+            const im = 4 + 3*i;
             mulbone(MatrixRotateX(PI/5), MatrixRotateY(PI/4), skeleton.bones[im].transform);
             mulbone(MatrixRotateZ(PI/2), skeleton.bones[im+1].transform);
             mulbone(MatrixRotateX(PI/4), skeleton.bones[im+2].transform);
