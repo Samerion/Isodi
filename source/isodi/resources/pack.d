@@ -9,6 +9,7 @@ import std.path;
 import std.file;
 import std.string;
 
+import isodi.chunk;
 import isodi.utils;
 import isodi.skeleton;
 import isodi.exception;
@@ -46,9 +47,17 @@ class Pack : ResourceLoader {
         /// License of the pack.
         string license;
 
+        /// Block types registered in the pack.
+        @JSONExclude
+        BlockType[string] blockTypes;
+
         /// Bone types registered in the pack.
         @JSONExclude
         BoneType[AbsoluteBoneType] boneTypes;
+
+        /// Next block type ID to use.
+        @JSONExclude
+        size_t nextBlockType;
 
         /// Next bone type ID to use.
         @JSONExclude
@@ -72,12 +81,28 @@ class Pack : ResourceLoader {
     // Caches.
     static private {
 
-        /// Texture cache.
-        @JSONExclude
-        Texture2D[string] textureCache;
+        struct CacheEntry(UV, Type) {
+
+            Texture2D texture;
+            UV[Type] uv;
+
+        }
+
+        /// Image cache. `path => image`
+        Image[string] imageCache;
+
+        /// Block texture cache
+        CacheEntry!(BlockUV, BlockType)[string[]] blockCache;
+
+        /// Bone texture cache.
+        CacheEntry!(BoneUV, BoneType)[string[]] boneCache;
+
+    }
+
+    private {
 
         /// Bone set cache
-        RectangleI[BoneType] boneSetCache;
+        BoneUV[BoneType][string] boneSetCache;
 
     }
 
@@ -87,24 +112,37 @@ class Pack : ResourceLoader {
         // destroying those textures should be safe, as references on other threads are invalid anyway, so as a result,
         // no live references will be invalidated.
 
-        destroyTextures();
+        destroyGlobalCache();
 
     }
 
-    /// Free all textures loaded into the GPU and clear the texture cache. Make sure to remove all references to those
+    /// Free all textures loaded into the GPU and clear the image cache. Make sure to remove all references to those
     /// textures before calling.
     ///
     /// This is automatically done when the rendering thread is freed.
-    static void destroyTextures() @system {
+    static void destroyGlobalCache() @system {
+
+        import std.range, std.algorithm;
 
         // Empty the cache when done
-        scope (success) textureCache = null;
+        scope (success) {
+            imageCache = null;
+            blockCache = null;
+            boneCache = null;
+        }
 
         // If the window isn't open, there aren't any textures to free.
         if (!IsWindowReady) return;
 
+        // Unload images
+        foreach (image; imageCache) {
+
+            UnloadImage(image);
+
+        }
+
         // Unload all textures
-        foreach (texture; textureCache) {
+        foreach (texture; chain(blockCache.byValue.map!"a.texture", boneCache.byValue.map!"a.texture")) {
 
             UnloadTexture(texture);
 
@@ -112,13 +150,30 @@ class Pack : ResourceLoader {
 
     }
 
-    /// Load a texture by a filesystem path (from cache or filesystem).
-    static Texture2D loadTextureStatic(string path) {
+    /// Destroy the bone set cache.
+    void destroyLocalCache() {
+
+        boneSetCache = null;
+
+    }
+
+    /// Destroy both global and local cache.
+    void destroyAllCache() @system {
+
+        destroyGlobalCache();
+        destroyLocalCache();
+
+    }
+
+    /// Load an image by a filesystem path (from cache or filesystem).
+    ///
+    /// The image will be loaded into cache. Stored data must not be freed.
+    static Image loadImageStatic(string path) {
 
         // Load from cache
-        if (auto texture = path in textureCache) {
+        if (auto image = path in imageCache) {
 
-            return *texture;
+            return *image;
 
         }
 
@@ -126,12 +181,12 @@ class Pack : ResourceLoader {
         else {
 
             // Load the texture
-            const texture = (() @trusted => LoadTexture(path.toStringz))();
+            auto image = (() @trusted => LoadImage(path.toStringz))();
 
             // Write to cache
-            textureCache[path] = texture;
+            imageCache[path] = image;
 
-            return texture;
+            return image;
 
         }
 
@@ -140,10 +195,12 @@ class Pack : ResourceLoader {
     /// Get a filesystem path given a pack path.
     string globalPath(string file) const => buildPath(path, file);
 
-    /// Load a texture by a path relative to the pack. (from cache or filesystem).
-    Texture2D loadTexture(string file) const {
+    /// Load an image by a path relative to the pack. (from cache or filesystem).
+    ///
+    /// The image will be loaded into the cache. Image data must not be freed.
+    Image loadImage(string file) const {
 
-        return loadTextureStatic(globalPath(file));
+        return loadImageStatic(globalPath(file));
 
     }
 
@@ -165,18 +222,80 @@ class Pack : ResourceLoader {
     }
 
     /// Load a block.
-    Texture blockTexture(string name) const => loadTexture(format!"block/%s.png"(name));
+    ///
+    /// Returned texture is stored in the cache. Texture data must not be freed.
+    Texture blockTexture(string[] names, out BlockUV[BlockType] uv)
+         => modelTexture!(BlockUV, BlockType, "block/%s.png", blockCache, blockAtlas)(names, uv);
 
     /// Load a bone.
-    Texture boneSetTexture(string name) const => loadTexture(format!"bone/%s.png"(name));
+    ///
+    /// Returned texture is stored in the cache. Texture data must not be freed.
+    Texture boneSetTexture(string[] name, out BoneUV[BoneType] uv)
+        => modelTexture!(BoneUV, BoneType, "bone/%s.png", boneCache, boneSetAtlas)(name, uv);
 
-    /// Load a bone set.
-    BoneUV[BoneType] boneSet(string name) {
+
+    /// Load a model texture.
+    Texture2D modelTexture(UV, Type, string path, alias cache, alias atlasLoader)(string[] names, out UV[Type] uv) {
+
+        // This texture has already been loaded
+        if (auto entry = names in cache) {
+
+            uv = entry.uv;
+            return entry.texture;
+
+        }
+
+        Image[] images;
+        UV[Type][] maps;
+
+        images.reserve(names.length);
+        maps.reserve(names.length);
+
+        // Check each texture
+        foreach (i, name; names) {
+
+            // Load the image
+            images ~= loadImage(format!path(name));
+
+            // Load the options
+            maps ~= atlasLoader(name);
+
+        }
+
+        // Pack the images
+        auto image = packImages(maps, images, uv);
+        auto texture = (() @trusted => LoadTextureFromImage(image))();
+
+        cache[cast(const) names] = CacheEntry!(UV, Type)(texture, uv);
+
+        return texture;
+
+    }
+
+    /// Load a chunk UV map.
+    BlockUV[BlockType] blockAtlas(string name) => [
+        blockType(name): options(ResourceType.block, name).blockUV
+    ];
+
+    /// Load a bone UV map.
+    BoneUV[BoneType] boneSetAtlas(string name) {
+
+        // Check the cache first
+        if (auto set = name in boneSetCache) return *set;
 
         const resPath = globalPath(format!"bone/%s.json"(name));
 
-        // Try to read & parse the file
-        try return parseBoneSet(resPath.readText, bone => boneType(name, bone.to!string));
+        // Try to read from file
+        try {
+
+            auto set = parseBoneSet(resPath.readText, bone => boneType(name, bone.to!string));
+
+            // Write to cache
+            boneSetCache[name] = set;
+
+            return set;
+
+        }
 
         // Oops.
         catch (Exception exc) {
@@ -188,15 +307,24 @@ class Pack : ResourceLoader {
 
     }
 
-    /// Get the bone type for the given model/bone string. Registers a new bone type if the path doesn't exist
-    BoneType boneType(string boneSet, string bone) {
+    /// Get the block type for the given block string. Registers a new block type if the path doesn't exist.
+    BlockType blockType(string block)
 
-        return boneTypes.require(
+        => blockTypes.require(
+            block,
+            BlockType(nextBlockType++),
+        );
+
+
+    /// Get the bone type for the given model/bone strings. Registers a new bone type if the specified one wasn't
+    /// registered before.
+    BoneType boneType(string boneSet, string bone)
+
+        => boneTypes.require(
             AbsoluteBoneType(boneSet, bone),
             BoneType(nextBoneType++),
         );
 
-    }
 
     /// Load a skeleton.
     /// Params:

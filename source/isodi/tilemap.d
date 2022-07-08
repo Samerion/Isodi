@@ -7,6 +7,7 @@ import std.bitmanip;
 import isodi.chunk;
 import isodi.exception;
 import isodi.tilemap_legacy;
+import isodi.resources.pack;
 
 
 @safe:
@@ -22,7 +23,7 @@ enum FormatVersion : int {
 /// Params:
 ///     range    = Range of bytes containing map data.
 ///     modifier = Delegate to edit blocks before adding them into the chunk.
-Chunk loadTilemap(T)(T range, void delegate(ref Block block) @safe modifier = null) {
+Chunk loadTilemap(T)(Pack pack, T range, void delegate(ref Block block) @safe modifier = null) {
 
     Chunk chunk;
     LoadTilemap loader;
@@ -50,7 +51,7 @@ Chunk loadTilemap(T)(T range, void delegate(ref Block block) @safe modifier = nu
 
         // Create the block
         auto block = Block(
-            BlockType(id),
+            pack.blockType(declarations[id]),
             blockPosition,
         );
 

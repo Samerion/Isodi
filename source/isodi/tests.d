@@ -89,11 +89,14 @@ void main() {
         // They're legacy, so I'm gonna replace them with something new later on
         // Contact me for the proper ones, ok? Not feeling like having them here!
 
-        auto chunk = loadTilemap(cast(ubyte[]) map.read);
+        // Load the chunk
+        auto chunk = pack.loadTilemap(cast(ubyte[]) map.read);
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
-        chunk.atlas[grass] = pack.options(ResourceType.block, "grass").blockUV;
 
-        models ~= chunk.makeModel(pack.blockTexture("grass"));
+        // Build the model
+        auto texture = pack.blockTexture(["grass", "stone"], chunk.atlas);
+
+        models ~= chunk.makeModel(texture);
 
     }
 
@@ -111,9 +114,12 @@ void main() {
             BlockPosition(2, 4, 0, 35), 60, 62, 64, 66, 68, 70,
         );
 
-        models ~= chunk.makeModel(pack.blockTexture("grass"));
+        auto texture = pack.blockTexture(["grass"], chunk.atlas);
+        models ~= chunk.makeModel(texture);
 
-        assert(pack.blockTexture("grass") == pack.blockTexture("grass"));
+        BlockUV[BlockType] uv1, uv2;
+        assert(pack.blockTexture(["grass"], uv1) == pack.blockTexture(["grass"], uv2));
+        assert(uv1 == uv2);
 
     }
 
@@ -131,8 +137,10 @@ void main() {
         const model = "white-wraith";
 
         // Load the skeleton
-        skeleton.bones = pack.skeleton("humanoid", "white-wraith");
-        skeleton.atlas = pack.boneSet(model);
+        skeleton.bones = pack.skeleton("humanoid", model);
+
+        // Load the bone set texture
+        auto texture = pack.boneSetTexture([model], skeleton.atlas);
 
         // Create a matrix texture for the default pose
         defaultPoseTexture = LoadTextureFromImage(skeleton.matrixImage);
@@ -141,7 +149,8 @@ void main() {
         foreach (i; 2..8) {
 
             skeleton.properties.transform = MatrixTranslate(i + 0.5, 2.0, 3.5);
-            models ~= skeleton.makeModel(pack.boneSetTexture("white-wraith"), defaultPoseTexture);
+
+            models ~= skeleton.makeModel(texture, defaultPoseTexture);
 
         }
 
@@ -166,7 +175,7 @@ void main() {
 
         // Instance one with it
         skeleton.properties.transform = MatrixTranslate(0.5, 0.2, 0.5);
-        models ~= skeleton.makeModel(pack.boneSetTexture("white-wraith"), advancedPoseTexture);
+        models ~= skeleton.makeModel(texture, advancedPoseTexture);
 
     }
 

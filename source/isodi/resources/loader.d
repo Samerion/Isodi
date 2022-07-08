@@ -22,24 +22,17 @@ interface ResourceLoader {
     const(ResourceOptions)* options(ResourceType resource, string name);
 
     /// Load texture for a chunk.
-    //Texture2D blockTexture(string[] names)
-    //in (isSorted(names));
+    Texture2D blockTexture(string[] names, out BlockUV[BlockType] uv)
+    in (isSorted(names));
 
     ///// Load texture for the given bone sets.
-    //Texture2D boneSetTexture(string[] names)
-    //in (isSorted(names));
-
-    /// Load UVs for a bone set.
-    ///
-    /// Within packs, this data is stored in `bones/*.json`.
-    ///
-    /// Returns: An associative array mapping each bone to their rectangles in the texture.
-    BoneUV[BoneType] boneSet(string name);
+    Texture2D boneSetTexture(string[] names, out BoneUV[BoneType] uv)
+    in (isSorted(names));
 
     /// Load bones for a skeleton, using the given bone set.
     Bone[] skeleton(string name, string boneSet);
 
-    // TODO packImages wrapper to support variable sized images.
+    // TODO packImages wrapper to support variably sized images.
 
     /// Combine the given images to create an atlas map. Each image must be square with dimensions equal to a power of
     /// two, eg. 32×32 or 128x128. All images must be of equal size.
@@ -123,7 +116,7 @@ interface ResourceLoader {
 
         int i, j;
 
-        foreach (map, image; zip(mapping, images)) {
+        foreach (map, image; zip(mapping, cast(const(Image)[]) images)) {
 
             // Advance to the next spot
             scope (success) {
@@ -151,7 +144,7 @@ interface ResourceLoader {
                 foreach (y; 0 .. partSize)
                 foreach (x; 0 .. partSize) {
 
-                    ImageDrawPixel(&result, offsetX + x, offsetY + y, GetImageColor(image, x, y));
+                    ImageDrawPixel(&result, offsetX + x, offsetY + y, GetImageColor(cast() image, x, y));
 
                 }
 
