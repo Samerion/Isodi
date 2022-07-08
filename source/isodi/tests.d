@@ -32,7 +32,7 @@ shared static this() {
 
                 // Run them
                 ++result.executed;
-                cast(void) m.unitTest();
+                m.unitTest()();
                 ++result.passed;
 
             }

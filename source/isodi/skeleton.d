@@ -216,6 +216,8 @@ struct Skeleton {
     }
 
     /// Generate a matrix image for the skeleton.
+    ///
+    /// The resulting image will be freed by the GC. Do not use `UnloadImage` on it.
     Image matrixImage() const
     in (bones.length <= int.max, "There are too many bones to fit in an image")
     do {

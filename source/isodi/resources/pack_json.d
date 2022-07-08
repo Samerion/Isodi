@@ -134,10 +134,10 @@ unittest {
     assert(!rootOptions.interpolate);
     assert(rootOptions.tileSize == 32);
 
-    const grassOptions = pack.fileOptions["cells/grass"];
+    const grassOptions = pack.fileOptions["block/grass"];
     assert(!grassOptions.interpolate);
     assert(grassOptions.tileSize == 32);
-    assert(grassOptions.tileArea == [0, 32, 128, 96]);
+    assert(grassOptions.sideArea == [0, 32, 128, 96]);
 
 }
 

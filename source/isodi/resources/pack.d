@@ -52,7 +52,7 @@ class Pack : ResourceLoader {
 
         /// Next bone type ID to use.
         @JSONExclude
-        size_t nextBoneType = 1;
+        size_t nextBoneType;
 
         /// Option fields applied to specific files. Filename extensions are to be omitted in keys.
         ///

@@ -77,7 +77,7 @@ unittest {
 
     int[6] foo;
 
-    foreach (i; 0 .. foo.length/3) {
+    foreach (i; 0 .. foo.length/2) {
 
         foo[].assignChunk(i, 1, 2);
 
@@ -110,7 +110,7 @@ unittest {
 
     int[6] foo;
 
-    foreach (i; 0 .. foo.length/3) {
+    foreach (i; 0 .. foo.length/2) {
 
         foo[].assignChunk!(a => cast(int) i*2 + a)(i, 1, 2);
 
