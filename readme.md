@@ -9,7 +9,10 @@ The library uses Raylib to render by default, but it's designed so it shouldn't 
 
 **Note:** Isodi is currently in early development, most features aren't implemented. Use with care.
 
-## Testing
+## Building
 
-* `dub test` to run general raylib tests.
-* `dub run -c=headless-unittest -b=unittest` to run headless tests.
+Building is done using [DUB](https://dub.pm). Use `dub add isodi` in your project to use Isodi as a dependency, then add
+`"libs": ["raylib"]` to your DUB config. You must also install Raylib 4 in your system.
+
+By default Isodi will build with full feature set. You can specify `"subconfigurations": {"isodi": "mini-tilemap"}` to
+only include a minimal tilemap loader. This might come in handy when writing headless servers using Isodi maps.

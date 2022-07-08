@@ -11,13 +11,22 @@
 			"targetType": "library",
 			"versions": [
 				"Isodi_Regular"
-			]
+			],
+			"sourcePaths": ["source"],
+			"dependencies": {
+				"raylib-d": "~>4.0.0"
+			}
 		},
 		{
-			"name": "headless",
+			"name": "mini-tilemap",
 			"targetType": "library",
 			"versions": [
-				"Isodi_Headless"
+				"Isodi_MiniTilemapLoader"
+			],
+			"sourceFiles": [
+				"source/isodi/tilemap.d",
+				"source/isodi/tilemap_legacy.d",
+				"source/isodi/exception.d"
 			]
 		},
 		{
@@ -26,12 +35,18 @@
 			],
 			"mainSourceFile": "source/isodi/tests.d",
 			"name": "unittest",
-			"targetType": "executable"
+			"targetType": "executable",
+			"sourcePaths": ["source"],
+			"dependencies": {
+				"raylib-d": "~>4.0.0"
+			},
+			"versions": [
+				"Isodi_Regular"
+			]
 		}
 	],
 	"copyright": "Copyright © 2020, Artha",
 	"dependencies": {
-		"raylib-d": "~>4.0.0",
 		"rcdata": ">=1.0.0-alpha <1.1.0-0"
 	},
 	"description": "A 3D orthographic rendering engine",
@@ -41,6 +56,7 @@
 	],
 	"license": "BSL-1.0",
 	"name": "isodi",
+	"sourcePaths": [],
 	"targetPath": "build",
 	"targetType": "library"
 }
