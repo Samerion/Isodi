@@ -2,9 +2,6 @@
 	"authors": [
 		"Artha"
 	],
-	"buildRequirements": [
-		"silenceWarnings"
-	],
 	"configurations": [
 		{
 			"name": "raylib",

@@ -88,15 +88,17 @@ struct IsodiModel {
 
     }
 
-    immutable {
+    static immutable {
 
         /// Default fragment shader used to render the model.
         ///
         /// The data is null-terminated for C compatibility.
-        immutable vertexShader = q{
+        immutable vertexShader = format!"
 
             #version 330
             #define PI %s
+
+        "(raylib.PI) ~ q{
 
             in vec3 vertexPosition;
             in vec2 vertexTexCoord;
@@ -171,7 +173,7 @@ struct IsodiModel {
                     float snapped = round(orientation * 2 / PI);
 
                     // Revert the rotation for textures
-                    angle = (4-int(snapped)) %% 4;
+                    angle = (4-int(snapped)) % 4;
 
                     // Convert angle index to radians
                     orientation = snapped * PI / 2 / 2;
@@ -223,14 +225,16 @@ struct IsodiModel {
             }
 
 
-        }.format(raylib.PI) ~ '\0';
+        } ~ '\0';
 
         /// Default fragment shader used to render the model.
         ///
         /// The data is null-terminated for C compatibility.
-        immutable fragmentShader = q{
+        immutable fragmentShader = `
 
             #version 330
+
+        ` ~ q{
 
             in vec2 fragTexCoord;
             in vec4 fragVariantUV;
@@ -332,6 +336,12 @@ struct IsodiModel {
 
     }
 
+    void opAssign(ref IsodiModel model) {
+
+        this.tupleof = model.tupleof;
+
+    }
+
     /// Destroy the shader
     static ~this() @trusted @nogc {
 
@@ -415,7 +425,8 @@ struct IsodiModel {
                 // rlSetVertexAttribute. If you look into the Raylib code then you'll notice that the type argument is
                 // actually completely unnecessary, but must match the length.
                 // For this reason, this code path is only implemented for this case.
-                assert(length == 1);
+                bool ass = length == 1;
+                assert(ass);
                 // BTW DMD incorrectly emits a warning here, this is the reason silenceWarnings is set.
 
                 const value = T.init;
@@ -467,6 +478,7 @@ struct IsodiModel {
     /// Note: Each vertex in the model will be drawn as if it was on Y=0. It is recommended you draw other Isodi objects
     /// in order of height.
     void draw() const @trusted @nogc
+    in (vertices.length != 0, "This model cannot be drawn, there's no vertices")
     in (vertices.length <= ushort.max, "This model cannot be drawn, too many vertices exist")
     do {
 

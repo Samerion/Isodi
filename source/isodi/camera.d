@@ -27,12 +27,6 @@ private {
 
 }
 
-interface Followable {
-
-    Vector3 position() const;
-
-}
-
 struct CameraController {
 
     /// Camera yaw.
@@ -43,10 +37,10 @@ struct CameraController {
     /// Must be between 0° (side view) and 90° (top-down), defaults to 45°
     float pitch = PI_4;
 
-    /// Object this camera follows.
+    /// Convience function to determine the camera's position.
     ///
     /// This can be null. If so, follows position (0, 0, 0).
-    Followable follow;
+    Vector3 delegate() @safe follow;
 
     /// Distance between the camera and the followed object.
     float distance = 15;
@@ -248,7 +242,7 @@ void controllerOutput(const CameraController controller, ref Camera camera) {
     // Calculate the target
     const target = controller.follow is null
         ? Vector3()
-        : controller.follow.position;
+        : controller.follow();
 
     // Update the camera
     // not sure how to get the correct fovy from distance, this is just close to the expected result.
