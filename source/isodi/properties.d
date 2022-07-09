@@ -34,8 +34,8 @@ struct Properties {
     /// Resource loader to be used by this object.
     Rebindable!(const ResourceLoader) resources;
 
-    /// Color to modulate the object with.
-    Color tint = Colors.WHITE;
+    /// Value each color channel will be multiplied by. (1, 1, 1, 1) does no changes.
+    Vector4 tint = Vector4(1, 1, 1, 1);
 
 }
 

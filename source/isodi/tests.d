@@ -1,12 +1,11 @@
 module isodi.tests;
 
+import isodi;
 import raylib;
 import core.runtime;
 
 import std.file;
 import std.stdio;
-
-import isodi;
 
 
 @system:
@@ -105,6 +104,7 @@ void main() {
 
         Chunk chunk;
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
+        chunk.properties.tint = Vector4(0.8, 0.8, 0.8, 1);
         chunk.atlas[grass] = pack.options(ResourceType.block, "grass").blockUV;
 
         chunk.addX(

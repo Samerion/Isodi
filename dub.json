@@ -24,9 +24,10 @@
 				"Isodi_MiniTilemapLoader"
 			],
 			"sourceFiles": [
+				"source/isodi/exception.d",
+				"source/isodi/package.d",
 				"source/isodi/tilemap.d",
-				"source/isodi/tilemap_legacy.d",
-				"source/isodi/exception.d"
+				"source/isodi/tilemap_legacy.d"
 			]
 		},
 		{

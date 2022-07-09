@@ -481,8 +481,7 @@ struct IsodiModel {
         rlSetUniform(flattenLoc, &flatten, Type.RL_SHADER_UNIFORM_INT, 1);
 
         // Set colDiffuse
-        float[4] colDiffuse = [properties.tint.tupleof] / 255f;
-        rlSetUniform(colDiffuseLoc, &colDiffuse, Type.RL_SHADER_UNIFORM_VEC4, 1);
+        rlSetUniform(colDiffuseLoc, &properties.tint, Type.RL_SHADER_UNIFORM_VEC4, 1);
 
         /// Set active texture.
         void setTexture(int slot, int loc, Texture2D texture) {

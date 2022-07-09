@@ -2,18 +2,34 @@ module isodi;
 
 public {
 
-    // Subpackages
-    import isodi.resources;
+    // Regular build, import majority of Isodi
+    version (Isodi_Regular) {
 
-    // Modules
-    import isodi.chunk;
-    import isodi.isodi_model;
-    import isodi.exception;
-    import isodi.properties;
-    import isodi.skeleton;
-    import isodi.tests;
-    import isodi.tilemap;
-        // tilemap_legacy omitted
-    import isodi.utils;
+        // Subpackages
+        import isodi.resources;
+
+        // Modules
+        import isodi.camera;
+        import isodi.chunk;
+        import isodi.exception;
+        import isodi.isodi_model;
+            // package.d
+        import isodi.properties;
+        import isodi.skeleton;
+            // isodi.tests omitted
+        import isodi.tilemap;
+            // isodi.tilemap_legacy omitted
+        import isodi.utils;
+
+    }
+
+    // Tilemap build, include only source files
+    version (Isodi_MiniTilemapLoader) {
+
+        import isodi.exception;
+        import isodi.tilemap;
+        import isodi.tilemap_legacy;
+
+    }
 
 }
