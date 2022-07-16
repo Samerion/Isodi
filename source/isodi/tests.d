@@ -67,13 +67,18 @@ void main() {
     scope (exit) CloseWindow();
 
     /// Prepare the camera
-    Camera camera = {
-        position: Vector3(-1, 1, -1) * 10,
-        up: Vector3(0.0f, 1f, 0.0f),
-        fovy: 10.0f,
-        projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
+    CameraController controller;
+    CameraKeybindings cameraKeys = {
+
+        zoomIn:  KeyboardKey.KEY_EQUAL,
+        zoomOut: KeyboardKey.KEY_MINUS,
+
+        rotateLeft:  KeyboardKey.KEY_Q,
+        rotateRight: KeyboardKey.KEY_E,
+        rotateUp:    KeyboardKey.KEY_R,
+        rotateDown:  KeyboardKey.KEY_F,
+
     };
-    SetCameraMode(camera, CameraMode.CAMERA_FREE);
 
     const grass = BlockType(0);
 
@@ -88,12 +93,16 @@ void main() {
         // They're legacy, so I'm gonna replace them with something new later on
         // Contact me for the proper ones, ok? Not feeling like having them here!
 
+        import std.array, std.algorithm;
+
+        string[] declarations;
+
         // Load the chunk
-        auto chunk = pack.loadTilemap(cast(ubyte[]) map.read);
+        auto chunk = pack.loadTilemap(cast(ubyte[]) map.read, declarations);
         chunk.properties.transform = MatrixTranslate(0.5, 0, 0.5);
 
         // Build the model
-        auto texture = pack.blockTexture(["grass", "stone"], chunk.atlas);
+        auto texture = pack.blockTexture(declarations.sort.array, chunk.atlas);
 
         models ~= chunk.makeModel(texture);
 
@@ -188,7 +197,9 @@ void main() {
         scope (exit) EndDrawing();
 
         ClearBackground(Colors.WHITE);
-        UpdateCamera(&camera);
+
+        // Update the camera
+        auto camera = controller.update(cameraKeys);
 
         {
 

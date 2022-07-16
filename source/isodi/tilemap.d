@@ -26,15 +26,17 @@ enum FormatVersion : int {
 
 /// Load tilemaps
 /// Params:
-///     range    = Range of bytes containing map data.
-///     modifier = Delegate to edit blocks before adding them into the chunk.
+///     range        = Range of bytes containing map data.
+///     declarations = All blocks defined in the tilemap. Must be sorted before passing to a pack.
+///     modifier     = Delegate to edit blocks before adding them into the chunk.
 version (Isodi_Regular)
-Chunk loadTilemap(T)(Pack pack, T range, void delegate(ref Block block) @safe modifier = null) {
+Chunk loadTilemap(T)(Pack pack, T range, out string[] declarations,
+    void delegate(ref Block block) @safe modifier = null)
+do {
 
     Chunk chunk;
     LoadTilemap loader;
 
-    string[] declarations;
     BlockPosition blockPosition;
 
     loader.onDeclarations = (decl, heightSteps) @safe {

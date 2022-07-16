@@ -27,45 +27,6 @@ private {
 
 }
 
-struct CameraController {
-
-    /// Camera yaw.
-    float yaw = PI_4;
-
-    /// Camera pitch.
-    ///
-    /// Must be between 0° (side view) and 90° (top-down), defaults to 45°
-    float pitch = PI_4;
-
-    /// Convience function to determine the camera's position.
-    ///
-    /// This can be null. If so, follows position (0, 0, 0).
-    Vector3 delegate() @safe follow;
-
-    /// Distance between the camera and the followed object.
-    float distance = 15;
-
-    /// Offset between camera and the followed object.
-    Vector3 offset;
-
-    /// Change the offset relative to the screen
-    void offsetScreenX(float value) {
-
-        offset.x += value * yaw.cos;
-        offset.z += value * yaw.sin;
-
-    }
-
-    /// Change the offset relative to the screen
-    void offsetScreenZ(float value) {
-
-        offset.x += value * yaw.sin;
-        offset.z += value * yaw.cos;
-
-    }
-
-}
-
 /// Keys to connect to camera actions.
 struct CameraKeybindings {
 
@@ -145,12 +106,12 @@ struct CameraKeybindings {
 
         /// Zoom speed, cell per second.
         @Affects!"distance"
-        float zoomSpeed = 10;
+        float zoomSpeed = 15;
 
-        /// Rotation speed, degrees per second.
+        /// Rotation speed, radians per second.
         @Affects!"yaw"
         @Affects!"pitch"
-        float rotateSpeed = 90;
+        float rotateSpeed = PI_2;
 
         /// Movement speed, cells per second.
         @Affects!"offsetScreenX"
@@ -168,96 +129,159 @@ struct CameraKeybindings {
 
 }
 
-/// Move the camera using bound keys.
-void controllerInput(ref CameraController controller, CameraKeybindings keybinds) @trusted {
+struct CameraController {
 
-    alias SpeedFields = getSymbolsByUDA!(CameraKeybindings, Speed);
+    /// Camera yaw.
+    float yaw = PI_4;
 
-    const delta = GetFrameTime();
+    /// Camera pitch.
+    ///
+    /// Must be between 0° (side view) and 90° (top-down), defaults to 45°
+    float pitch = PI_4;
 
-    // Check each field
-    static foreach (actionName; FieldNameTuple!CameraKeybindings) {{
+    /// Convience function to determine the camera's position.
+    ///
+    /// This can be null. If so, follows position (0, 0, 0).
+    Vector3 delegate() @safe follow;
 
-        alias BindField = mixin("CameraKeybindings." ~ actionName);
+    /// Distance between the camera and the followed object.
+    float distance = 15;
 
-        // This is a key field
-        static if (hasUDA!(BindField, Change)) {
+    /// Distance to FOV ratio, used to correct projection parameters.
+    float distanceFOVRatio = 5;
 
-            alias ChangeDeco = getUDAs!(BindField, Change)[0];
-            enum direction = ChangeDeco.value;
+    /// Offset between camera and the followed object.
+    Vector3 offset;
 
-            // Pressed
-            if (mixin("keybinds." ~ actionName).IsKeyDown) {
+    /// Change the offset relative to the screen
+    void offsetScreenX(float value) {
 
-                // Get the affected field
-                alias AffectDeco = getUDAs!(BindField, Affects)[0];
-                enum controllerField = "controller." ~ AffectDeco.name;
-                alias ControllerField = typeof(mixin(controllerField));
+        offset.x += value * yaw.cos;
+        offset.z += value * yaw.sin;
 
-                // Get the speed field for the deco
-                alias HasAffectDeco = ApplyRight!(hasUDA, AffectDeco);
-                alias speedSymbol = Filter!(HasAffectDeco, SpeedFields)[0];
-                enum speedField = __traits(identifier, speedSymbol);
+    }
 
-                // Get the total change
-                const change = direction * delta * mixin("keybinds." ~ speedField);
+    /// Change the offset relative to the screen
+    void offsetScreenZ(float value) {
 
-                // Check if the given type is a field or property
-                enum IsField(alias T) = !isFunction!T || functionAttributes!T & FunctionAttribute.property;
+        offset.x += value * yaw.sin;
+        offset.z += value * yaw.cos;
 
-                // If so
-                static if (IsField!(mixin(controllerField))) {
+    }
 
-                    import std.algorithm : clamp;
+    /// Get input and update the camera.
+    void update(CameraKeybindings keybinds, ref Camera camera) {
 
-                    // Get the new value
-                    auto newValue = mixin(controllerField) + change;
+        input(keybinds);
+        output(camera);
 
-                    // Clamp camera distance
-                    static if (AffectDeco.name == "distance") {
+    }
 
-                        newValue = newValue.clamp(keybinds.zoomInLimit, keybinds.zoomOutLimit);
+    /// ditto
+    Camera update(CameraKeybindings keybinds) {
+
+        Camera camera = {
+            up: Vector3(0, 1, 0),
+            projection: CameraProjection.CAMERA_ORTHOGRAPHIC,
+        };
+
+        update(keybinds, camera);
+
+        return camera;
+
+    }
+
+    /// Move the camera using bound keys.
+    void input(CameraKeybindings keybinds) @trusted {
+
+        alias SpeedFields = getSymbolsByUDA!(CameraKeybindings, Speed);
+
+        const delta = GetFrameTime();
+
+        // Check each field
+        static foreach (actionName; FieldNameTuple!CameraKeybindings) {{
+
+            alias BindField = mixin("CameraKeybindings." ~ actionName);
+
+            // This is a key field
+            static if (hasUDA!(BindField, Change)) {
+
+                alias ChangeDeco = getUDAs!(BindField, Change)[0];
+                enum direction = ChangeDeco.value;
+
+                // Pressed
+                if (mixin("keybinds." ~ actionName).IsKeyDown) {
+
+                    // Get the affected field
+                    alias AffectDeco = getUDAs!(BindField, Affects)[0];
+                    enum controllerField = "this." ~ AffectDeco.name;
+                    alias ControllerField = typeof(mixin(controllerField));
+
+                    // Get the speed field for the deco
+                    alias HasAffectDeco = ApplyRight!(hasUDA, AffectDeco);
+                    alias speedSymbol = Filter!(HasAffectDeco, SpeedFields)[0];
+                    enum speedField = __traits(identifier, speedSymbol);
+
+                    // Get the total change
+                    const change = direction * delta * mixin("keybinds." ~ speedField);
+
+                    // Check if the given type is a field or property
+                    enum IsField(alias T) = !isFunction!T || functionAttributes!T & FunctionAttribute.property;
+
+                    // If so
+                    static if (IsField!(mixin(controllerField))) {
+
+                        import std.algorithm : clamp;
+
+                        // Get the new value
+                        auto newValue = mixin(controllerField) + change;
+
+                        // Clamp camera distance
+                        static if (AffectDeco.name == "distance") {
+
+                            newValue = newValue.clamp(keybinds.zoomInLimit, keybinds.zoomOutLimit);
+
+                        }
+
+                        // Update the field
+                        mixin(controllerField) = newValue;
 
                     }
 
-                    // Update the field
-                    mixin(controllerField) = newValue;
+                    // Call the function otherwise
+                    else mixin(controllerField)(change);
 
                 }
 
-                // Call the function otherwise
-                else mixin(controllerField)(change);
-
             }
 
-        }
+        }}
 
-    }}
+    }
 
-}
+    /// Update the camera based on controller data.
+    void output(ref Camera camera) const {
 
-/// Update the camera based on controller data.
-void controllerOutput(const CameraController controller, ref Camera camera) {
+        // Calculate the target
+        const target = follow is null
+            ? Vector3()
+            : follow();
 
-    // Calculate the target
-    const target = controller.follow is null
-        ? Vector3()
-        : controller.follow();
+        // Update the camera
+        // not sure how to get the correct fovy from distance, this is just close to the expected result.
+        // TODO: figure it out.
+        camera.fovy = distance;
 
-    // Update the camera
-    // not sure how to get the correct fovy from distance, this is just close to the expected result.
-    // TODO: figure it out.
-    camera.fovy = controller.distance;
+        // Get the target
+        camera.target = target + offset;
 
-    // Get the target
-    camera.target = target + controller.offset;
+        // And place the camera
+        camera.position = camera.target + Vector3(
+            pitch.cos * yaw.sin,
+            pitch.sin,
+            pitch.cos * yaw.cos,
+        ) * (distance * distanceFOVRatio);
 
-    // And place the camera
-    camera.position = camera.target + Vector3(
-        controller.pitch.cos * controller.yaw.sin,
-        controller.pitch.sin,
-        controller.pitch.cos * controller.yaw.cos,
-    ) * controller.distance;
-
+    }
 
 }

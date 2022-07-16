@@ -225,12 +225,14 @@ class Pack : ResourceLoader {
     ///
     /// Returned texture is stored in the cache. Texture data must not be freed.
     Texture blockTexture(string[] names, out BlockUV[BlockType] uv)
+    in (false)  // inherit contracts
          => modelTexture!(BlockUV, BlockType, "block/%s.png", blockCache, blockAtlas)(names, uv);
 
     /// Load a bone.
     ///
     /// Returned texture is stored in the cache. Texture data must not be freed.
     Texture boneSetTexture(string[] name, out BoneUV[BoneType] uv)
+    in (false)  // inherit contracts
         => modelTexture!(BoneUV, BoneType, "bone/%s.png", boneCache, boneSetAtlas)(name, uv);
 
 

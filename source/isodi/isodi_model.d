@@ -336,7 +336,7 @@ struct IsodiModel {
 
     }
 
-    void opAssign(ref IsodiModel model) {
+    void opAssign(IsodiModel model) {
 
         this.tupleof = model.tupleof;
 
