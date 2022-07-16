@@ -68,25 +68,25 @@ struct CameraKeybindings {
 
     @Affects!"offsetScreenX" {
 
-        /// Move the camera towards negative X.
+        /// Move the camera to the left.
         @Change!(-1)
-        KeyboardKey moveWest;
+        KeyboardKey moveLeft;
 
-        /// Move the camera towards positive X.
+        /// Move the camera to the right.
         @Change!(+1)
-        KeyboardKey moveEast;
+        KeyboardKey moveRight;
 
     }
 
     @Affects!"offsetScreenZ" {
 
-        /// Move the camera towards positive Z.
+        /// Move the camera backward.
         @Change!(+1)
-        KeyboardKey moveSouth;
+        KeyboardKey moveBackward;
 
-        /// Move the camera towards negative Z.
+        /// Move the camera forward.
         @Change!(-1)
-        KeyboardKey moveNorth;
+        KeyboardKey moveForward;
 
     }
 
@@ -117,7 +117,7 @@ struct CameraKeybindings {
         @Affects!"offsetScreenX"
         @Affects!"offsetScreenZ"
         @Affects!"offset.y"
-        float movementSpeed = 4;
+        float movementSpeed = 8;
 
     }
 

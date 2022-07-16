@@ -73,10 +73,14 @@ void main() {
         zoomIn:  KeyboardKey.KEY_EQUAL,
         zoomOut: KeyboardKey.KEY_MINUS,
 
-        rotateLeft:  KeyboardKey.KEY_Q,
-        rotateRight: KeyboardKey.KEY_E,
-        rotateUp:    KeyboardKey.KEY_R,
-        rotateDown:  KeyboardKey.KEY_F,
+        moveForward:  KeyboardKey.KEY_W,
+        moveBackward: KeyboardKey.KEY_S,
+        moveLeft:     KeyboardKey.KEY_A,
+        moveRight:    KeyboardKey.KEY_D,
+        rotateLeft:   KeyboardKey.KEY_Q,
+        rotateRight:  KeyboardKey.KEY_E,
+        rotateUp:     KeyboardKey.KEY_R,
+        rotateDown:   KeyboardKey.KEY_F,
 
     };
 
@@ -142,7 +146,6 @@ void main() {
     Skeleton skeleton;
     {
 
-        const cellSize = 16;
         const model = "white-wraith";
 
         // Load the skeleton
