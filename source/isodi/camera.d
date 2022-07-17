@@ -243,6 +243,13 @@ struct CameraController {
 
                         }
 
+                        // Clamp pitch
+                        else static if (AffectDeco.name == "pitch") {
+
+                            newValue = newValue.clamp(0, PI_2 - 2e-6);
+
+                        }
+
                         // Update the field
                         mixin(controllerField) = newValue;
 
