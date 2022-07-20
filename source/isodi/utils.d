@@ -16,6 +16,7 @@ import std.functional;
 /// Note: Internally this might be later translated to a float anyway, so it might not be precise.
 struct Vector2I {
 
+    align (4):
     int x, y;
 
     Vector2I opBinary(string op)(Vector2I vec) const => Vector2I(
@@ -32,6 +33,7 @@ struct Vector2I {
 
 struct RectangleI {
 
+    align (4):
     int x, y;
     int width, height;
 
@@ -42,6 +44,37 @@ struct RectangleI {
         width  / textureSize.x,
         height / textureSize.y,
     );
+
+}
+
+/// Perform a reinterpret cast.
+///
+/// Note: Using `cast()` for reinterpret casts is not legal for values, per spec. DMD does allow that, but LDC segfaults.
+To reinterpret(To, From)(From from)
+in {
+    static assert(From.sizeof == To.sizeof, "From and To type size mismatch");
+}
+do {
+
+    union Union {
+        From before;
+        To after;
+    }
+
+    // Write the value to the union and read as the target
+    return Union(from).after;
+
+}
+
+/// Make a simple struct out of a static array. Used to apply `.tupleof` on the arrays in DMD 2.099.
+auto structof(T, size_t size)(T[size] value) {
+
+    struct StructOf {
+        static foreach (i; 0..size) {
+            mixin(format!"T t%s;"(i));
+        }
+    }
+    return value.reinterpret!StructOf;
 
 }
 

@@ -154,7 +154,7 @@ BoneUV[BoneType] parseBoneSet(string json, BoneType delegate(wstring) @safe bone
         const type = bonePicker(key);
 
         // Load the value
-        const uv = cast(RectangleI) parser.get!(int[4]);
+        const uv = parser.get!(int[4]).reinterpret!RectangleI;
 
         // Save the UV
         result[type] = BoneUV(uv);
@@ -214,7 +214,7 @@ do {
                 break;
 
             case "matrix":
-                result[0].transform = Matrix(parser.get!(float[16]).tupleof);
+                result[0].transform = parser.get!(float[16]).reinterpret!Matrix;
                 break;
 
             case "transform":
@@ -234,7 +234,7 @@ do {
                 break;
 
             case "vector":
-                result[0].vector = Vector3(parser.get!(float[3]).tupleof) / divisor;
+                result[0].vector = parser.get!(float[3]).reinterpret!Vector3 / divisor;
                 break;
 
             case "children":
@@ -321,12 +321,12 @@ Matrix parseTransforms(ref JSONParser parser) @trusted {
         with (TransformType) {
 
             const rhs = type.predSwitch(
-                translate, MatrixTranslate(values.tupleof[0..3]),
-                rotate,    MatrixRotate(Vector3(values.tupleof[1..4]), values[0] * 180 / PI),
+                translate, MatrixTranslate(values.structof.tupleof[0..3]),
+                rotate,    MatrixRotate(Vector3(values.structof.tupleof[1..4]), values[0] * 180 / PI),
                 rotateX,   MatrixRotateX(values[0] * 180 / PI),
                 rotateY,   MatrixRotateY(values[0] * 180 / PI),
                 rotateZ,   MatrixRotateZ(values[0] * 180 / PI),
-                scale,     MatrixScale(values.tupleof[0..3]),
+                scale,     MatrixScale(values.structof.tupleof[0..3]),
             );
 
             result = mul(result, rhs);

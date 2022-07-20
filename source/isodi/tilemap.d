@@ -98,7 +98,7 @@ struct LoadTilemap {
     void delegate(ulong blockID, int heightTop, int depth) @safe onBlock;
 
     /// Begin parsing. A callback member will be ran for each matched element of the input.
-    void parse(T)(T range) {
+    void parse(T)(T range) @trusted {  // system but shut
 
         // Create the parser
         auto bin = rcbinParser(range);
