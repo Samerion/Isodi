@@ -92,7 +92,7 @@ void main() {
     IsodiModel[] models;
 
     // Load chunks
-    foreach (map; "/home/soaku/git/samerion/server/resources/maps".dirEntries(SpanMode.shallow)) {
+    foreach (map; "../server/resources/maps".dirEntries(SpanMode.shallow)) {
         // Yes, I'm loading some chunks I have not uploaded to the repository
         // They're legacy, so I'm gonna replace them with something new later on
         // Contact me for the proper ones, ok? Not feeling like having them here!
@@ -212,7 +212,7 @@ void main() {
             DrawGrid(100, 1);
 
             // Draw each model
-            foreach (model; models) {
+            foreach (ref model; models) {
 
                 model.draw();
 

@@ -60,11 +60,46 @@ struct IsodiModel {
 
     private {
 
-        /// ID of the uploaded array.
-        uint vertexArrayID;
+        // TODO Refactor this struct to reduce memory usage. It should only be used to construct models & upload data to
+        // the GPU. A class holding the buffers should be used afterwards.
+        // The `Buffers` class is just as a workaround to reduce memory usage without breaking stuff.
 
-        /// ID of the bone buffer, if any.
-        uint bonesBufferID;
+        class Buffers {
+
+            /// ID of the uploaded array.
+            uint vertexArrayID;
+
+            /// ID of buffers
+            uint positionID;
+            uint variantID;
+            uint texcoordID;
+            uint bonesID;
+            uint indicesID;
+            // TODO autogenerate loads/unloads with UDAs?
+
+            ~this() @trusted {
+
+                // Ignore if the window isn't open anymore
+                if (!IsWindowReady) return;
+
+                // Stop if the model wasn't uploaded
+                if (vertexArrayID == 0) return;
+
+                // Unload vertices
+                rlUnloadVertexArray(vertexArrayID);
+
+                // Unload vertex buffers
+                rlUnloadVertexBuffer(positionID);
+                rlUnloadVertexBuffer(texcoordID);
+                rlUnloadVertexBuffer(indicesID);
+                rlUnloadVertexBuffer(bonesID);
+                rlUnloadVertexBuffer(variantID);
+
+            }
+
+        }
+
+        Buffers buffers;
 
     }
 
@@ -336,12 +371,6 @@ struct IsodiModel {
 
     }
 
-    void opAssign(IsodiModel model) {
-
-        this.tupleof = model.tupleof;
-
-    }
-
     /// Destroy the shader
     static ~this() @trusted @nogc {
 
@@ -386,7 +415,7 @@ struct IsodiModel {
     in {
 
         // Check buffers
-        assert(vertexArrayID == 0, "The model has already been uploaded");  // TODO: allow updates
+        assert(buffers is null, "The model has already been uploaded");  // TODO: allow updates
         assert(vertices.length <= ushort.max, "Model cannot be drawn, too many vertices exist");
         assert(variants.length == vertices.length,
             format!"Variant count (%s) doesn't match vertex count (%s)"(variants.length, vertices.length));
@@ -418,16 +447,13 @@ struct IsodiModel {
             // Find location in the shader
             const location = rlGetLocationAttrib(shader, attribute);
 
+            // For some reason type passed to rlSetVertexAttributeDefault doesn't match the one passed to
+            // rlSetVertexAttribute. If you look into the Raylib code then you'll notice that the type argument is
+            // actually completely unnecessary, but must match the length.
+            assert(arr.length != 0 || length == 1, "Only floats are supported for default values, expand the code!");
+
             // If the array is empty
             if (arr.length == 0) {
-
-                // For some reason type passed to rlSetVertexAttributeDefault doesn't match the one passed to
-                // rlSetVertexAttribute. If you look into the Raylib code then you'll notice that the type argument is
-                // actually completely unnecessary, but must match the length.
-                // For this reason, this code path is only implemented for this case.
-                bool ass = length == 1;
-                assert(ass);
-                // BTW DMD incorrectly emits a warning here, this is the reason silenceWarnings is set.
 
                 const value = T.init;
 
@@ -458,17 +484,26 @@ struct IsodiModel {
         // Prepare the shader
         makeShader();
 
-        // Create the vertex array
-        vertexArrayID = rlLoadVertexArray();
-        rlEnableVertexArray(vertexArrayID);
-        scope (exit) rlDisableVertexArray;
+        // Create a class to hold the buffers
+        with (buffers = new Buffers) {
 
-        // Send vertex positions
-        registerBuffer(vertices, "vertexPosition", RL_FLOAT);
-        registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
-        registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
-        bonesBufferID = registerBuffer(bones, "vertexBone", RL_FLOAT);
-        rlLoadVertexBufferElement(triangles.ptr, cast(int) (triangles.length * 3 * ushort.sizeof), false);
+            // Create the vertex array
+            vertexArrayID = rlLoadVertexArray();
+            rlEnableVertexArray(vertexArrayID);
+            scope (exit) rlDisableVertexArray;
+
+            // Send vertex positions
+            positionID = registerBuffer(vertices, "vertexPosition", RL_FLOAT);
+            variantID  = registerBuffer(variants, "vertexVariantUV", RL_FLOAT);
+            texcoordID = registerBuffer(texcoords, "vertexTexCoord", RL_FLOAT);
+            bonesID    = registerBuffer(bones, "vertexBone", RL_FLOAT);
+            indicesID  = rlLoadVertexBufferElement(
+                triangles.ptr,
+                cast(int) (triangles.length * 3 * ushort.sizeof),
+                false
+            );
+
+        }
 
 
     }
@@ -531,7 +566,7 @@ struct IsodiModel {
         rlSetUniformMatrix(projectionLoc, rlGetMatrixProjection);
 
         // Enable the vertex array
-        const enabled = rlEnableVertexArray(vertexArrayID);
+        const enabled = rlEnableVertexArray(buffers.vertexArrayID);
         assert(enabled, "Failed to enable a vertex array");
         scope (exit) rlDisableVertexArray;
 

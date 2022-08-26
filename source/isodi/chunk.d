@@ -261,7 +261,7 @@ struct BlockUV {
     uint sideSize;
 
     /// Get random tile variant within the UV.
-    RectangleI getTile(Vector2I position, ulong seed) @nogc @trusted const
+    RectangleI getTile(Vector2I position, ulong seed) @nogc const
     in (tileArea.width > 0, "Tile area width must be positive")
     in (tileArea.height > 0, "Tile area height must be positive")
     do {
